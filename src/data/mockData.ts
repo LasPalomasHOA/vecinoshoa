@@ -203,7 +203,7 @@ export const initialReservaciones: Reservacion[] = [
     brazaletes: 'Verde 2301-2305',
     pago_tipo: 'Sin pago',
     balance: 0,
-    estado: 'Checked-out',
+    estado: 'Pendiente',
     created_at: '2026-09-02 09:23'
   },
   {
@@ -220,7 +220,7 @@ export const initialReservaciones: Reservacion[] = [
     brazaletes: 'Verde 2310-2317',
     pago_tipo: 'Sin pago',
     balance: 0,
-    estado: 'Checked-out',
+    estado: 'Pendiente',
     created_at: '2026-09-02 10:48'
   },
   {
@@ -237,7 +237,7 @@ export const initialReservaciones: Reservacion[] = [
     brazaletes: 'Verde 2401-2408',
     pago_tipo: 'Sin pago',
     balance: 0,
-    estado: 'Checked-out',
+    estado: 'Pendiente',
     created_at: '2026-09-05 08:19'
   },
   {
@@ -254,7 +254,7 @@ export const initialReservaciones: Reservacion[] = [
     brazaletes: 'Verde 2420-2425',
     pago_tipo: 'Sin pago',
     balance: 0,
-    estado: 'Checked-out',
+    estado: 'Pendiente',
     created_at: '2026-09-05 12:31'
   },
   {
@@ -271,7 +271,7 @@ export const initialReservaciones: Reservacion[] = [
     brazaletes: 'Verde 2450-2451',
     pago_tipo: 'Sin pago',
     balance: 0,
-    estado: 'Checked-out',
+    estado: 'Pendiente',
     created_at: '2026-08-17 11:00'
   },
   {
@@ -288,7 +288,7 @@ export const initialReservaciones: Reservacion[] = [
     brazaletes: 'Amenidades 990-993',
     pago_tipo: 'Uso de amenidades',
     balance: 0,
-    estado: 'Checked-out',
+    estado: 'Pendiente',
     created_at: '2026-09-06 12:44'
   },
   {
@@ -305,7 +305,7 @@ export const initialReservaciones: Reservacion[] = [
     brazaletes: 'Verde 2501-2507',
     pago_tipo: 'Sin pago',
     balance: 0,
-    estado: 'Checked-out',
+    estado: 'Pendiente',
     created_at: '2026-09-06 13:44'
   },
   {
@@ -322,7 +322,7 @@ export const initialReservaciones: Reservacion[] = [
     brazaletes: 'Verde 2520-2525',
     pago_tipo: 'Sin pago',
     balance: 0,
-    estado: 'Checked-out',
+    estado: 'Pendiente',
     created_at: '2026-09-06 15:21'
   },
   {
@@ -339,7 +339,7 @@ export const initialReservaciones: Reservacion[] = [
     brazaletes: 'Verde 2550-2551',
     pago_tipo: 'Sin pago',
     balance: 0,
-    estado: 'Checked-out',
+    estado: 'Pendiente',
     created_at: '2026-09-07 14:08'
   },
   {
@@ -356,7 +356,7 @@ export const initialReservaciones: Reservacion[] = [
     brazaletes: 'Verde 2580-2583',
     pago_tipo: 'Sin pago',
     balance: 0,
-    estado: 'Checked-out',
+    estado: 'Pendiente',
     created_at: '2026-08-24 13:31'
   },
   {
@@ -373,7 +373,7 @@ export const initialReservaciones: Reservacion[] = [
     brazaletes: 'Verde 2601-2602',
     pago_tipo: 'Sin pago',
     balance: 0,
-    estado: 'Checked-out',
+    estado: 'Pendiente',
     created_at: '2026-09-08 09:52'
   },
   {
@@ -390,7 +390,7 @@ export const initialReservaciones: Reservacion[] = [
     brazaletes: 'Verde 2650-2651',
     pago_tipo: 'Sin pago',
     balance: 0,
-    estado: 'Checked-out',
+    estado: 'Pendiente',
     created_at: '2026-09-09 10:55'
   },
   {
@@ -407,7 +407,7 @@ export const initialReservaciones: Reservacion[] = [
     brazaletes: 'Verde 2670-2675',
     pago_tipo: 'Sin pago',
     balance: 0,
-    estado: 'Checked-out',
+    estado: 'Pendiente',
     created_at: '2026-09-12 08:11'
   },
   {
@@ -424,7 +424,7 @@ export const initialReservaciones: Reservacion[] = [
     brazaletes: 'Verde 2710-2711',
     pago_tipo: 'Sin pago',
     balance: 0,
-    estado: 'Checked-out',
+    estado: 'Pendiente',
     created_at: '2026-09-19 08:25'
   },
   {
@@ -441,7 +441,7 @@ export const initialReservaciones: Reservacion[] = [
     brazaletes: 'Verde 2740-2747',
     pago_tipo: 'Sin pago',
     balance: 0,
-    estado: 'Checked-out',
+    estado: 'Pendiente',
     created_at: '2026-09-18 10:20'
   },
   {
