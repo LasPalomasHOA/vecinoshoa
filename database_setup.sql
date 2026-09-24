@@ -1,6 +1,7 @@
 -- ==============================================================================
 -- LAS PALOMAS SEASIDE GOLF COMMUNITY - BASE DE DATOS POSTGRESQL / SUPABASE
 -- Esquema: gestion_residencial
+-- Copia este script y ejecútalo en el SQL Editor de Supabase / Postgres / Neon
 -- ==============================================================================
 
 -- 0. Crear el esquema gestion_residencial si no existe
