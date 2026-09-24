@@ -33,8 +33,17 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || errorData.message || `Error ${response.status}: ${response.statusText}`);
+      const text = await response.text().catch(() => '');
+      let errorMsg = `Error ${response.status}: ${response.statusText}`;
+      try {
+        const errorData = JSON.parse(text);
+        errorMsg = errorData.error || errorData.message || errorData.detail || errorMsg;
+      } catch {
+        if (text) {
+          errorMsg = `Error ${response.status}: ${text.substring(0, 200)}`;
+        }
+      }
+      throw new Error(errorMsg);
     }
 
     const data = await response.json();
