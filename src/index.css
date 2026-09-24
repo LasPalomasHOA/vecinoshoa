@@ -11,6 +11,11 @@
     --bg-main: #f8fafc;
   }
 
+  html {
+    scrollbar-gutter: stable;
+    overflow-y: scroll;
+  }
+
   body {
     background-color: #f8fafc;
     background-image: 
