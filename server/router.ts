@@ -44,8 +44,6 @@ export function sendJson(res: ServerResponse, statusCode: number, data: any) {
 }
 
 export async function handleApiRequest(req: IncomingMessage, res: ServerResponse): Promise<boolean> {
-  const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
-  const pathname = url.pathname.replace(/\/+$/, '') || '/';
   const method = (req.method || 'GET').toUpperCase();
 
   // Handle CORS preflight
@@ -58,16 +56,50 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
     return true;
   }
 
-  // Only handle routes starting with /api/
-  if (!pathname.startsWith('/api')) {
-    return false;
+  // Determine requested route path (compatible with Vite dev server and Vercel Serverless)
+  let rawUrl = req.url || '/';
+  const vercelReq = req as any;
+
+  if (vercelReq.query && vercelReq.query.route) {
+    const routeVal = Array.isArray(vercelReq.query.route) 
+      ? vercelReq.query.route.join('/') 
+      : vercelReq.query.route;
+    rawUrl = `/api/${routeVal}`;
   }
 
-  const endpoint = pathname.replace(/^\/api/, '');
-  const parts = endpoint.split('/').filter(Boolean);
-  const resource = parts[0] || '';
+  const url = new URL(rawUrl.startsWith('http') ? rawUrl : `http://${req.headers.host || 'localhost'}${rawUrl.startsWith('/') ? '' : '/'}${rawUrl}`);
+  let pathname = url.pathname.replace(/\/+$/, '') || '/';
+
+  // Extract resource and id from path (e.g. /api/propiedades/12 or /propiedades/12)
+  const cleanPath = pathname.replace(/^\/api\/?/, '').replace(/^\//, '');
+  const parts = cleanPath.split('/').filter(Boolean);
+  const resource = (parts[0] || '').toLowerCase();
   const idStr = parts[1];
-  const id = idStr ? parseInt(idStr, 10) : undefined;
+  const id = idStr && !isNaN(parseInt(idStr, 10)) ? parseInt(idStr, 10) : undefined;
+
+  // Recognized resources in our system
+  const validResources = [
+    'health',
+    'edificios',
+    'grupos_propiedad',
+    'grupos',
+    'usuarios',
+    'propiedades',
+    'propiedad_usuarios',
+    'huespedes',
+    'reservaciones',
+    'solicitudes',
+    'solicitudes_acceso'
+  ];
+
+  if (!validResources.includes(resource)) {
+    // If not starting with /api and not a recognized resource, let next middleware handle it
+    if (!pathname.startsWith('/api')) {
+      return false;
+    }
+    sendJson(res, 404, { error: `Endpoint '/api/${cleanPath}' no encontrado` });
+    return true;
+  }
 
   try {
     // -------------------------------------------------------------
@@ -336,8 +368,7 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
       }
     }
 
-    // Unmatched API route
-    sendJson(res, 404, { error: `Endpoint '${pathname}' no encontrado` });
+    sendJson(res, 404, { error: `Método ${method} no soportado para ${pathname}` });
     return true;
 
   } catch (err: any) {
