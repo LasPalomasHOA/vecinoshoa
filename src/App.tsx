@@ -124,11 +124,7 @@ export const App: React.FC = () => {
       <div className="flex-1 flex flex-col min-w-0 print:block print:w-full print:p-0 print:m-0">
         
         {/* Top Navbar */}
-        <Navbar
-          onOpenNewReservation={handleOpenNewReservation}
-          onOpenNewProperty={handleOpenNewProperty}
-          onOpenNewRequest={handleOpenNewRequest}
-        />
+        <Navbar />
 
         {/* Content Container */}
         <main className="flex-1 p-6 max-w-7xl w-full mx-auto print:p-0 print:m-0 print:max-w-none print:w-full print:block">
