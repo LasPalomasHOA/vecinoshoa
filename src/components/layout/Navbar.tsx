@@ -96,25 +96,25 @@ export const Navbar: React.FC<NavbarProps> = ({
         {activeTab === 'frontdesk' || activeTab === 'calendar' ? (
           <button
             onClick={onOpenNewReservation}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-sm shadow-teal-700/20 transition-all active:scale-95"
+            className="flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs transition-colors duration-150 cursor-pointer active:scale-98"
           >
-            <Plus className="w-4 h-4 stroke-[3]" />
+            <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>+ Nueva Reservación</span>
           </button>
         ) : activeTab === 'properties' ? (
           <button
             onClick={onOpenNewProperty}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-sm shadow-teal-700/20 transition-all active:scale-95"
+            className="flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs transition-colors duration-150 cursor-pointer active:scale-98"
           >
-            <Plus className="w-4 h-4 stroke-[3]" />
+            <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>+ Nueva Propiedad</span>
           </button>
         ) : activeTab === 'requests' ? (
           <button
             onClick={onOpenNewRequest}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-sm shadow-teal-700/20 transition-all active:scale-95"
+            className="flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs transition-colors duration-150 cursor-pointer active:scale-98"
           >
-            <Plus className="w-4 h-4 stroke-[3]" />
+            <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>+ Nuevo Pase</span>
           </button>
         ) : null}
