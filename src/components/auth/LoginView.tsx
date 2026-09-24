@@ -114,7 +114,7 @@ export const LoginView: React.FC = () => {
           </h1>
 
           <p className="mt-4 text-slate-200 text-sm lg:text-base leading-relaxed font-normal text-balance drop-shadow-md">
-            Plataforma centralizada para la administración de condominios, control de ocupación timeline tipo Gantt, recepción de huéspedes, brazaletes y autorizaciones de acceso.
+            Plataforma centralizada para la administración de condominios, control de ocupación timeline en tiempo real, recepción de huéspedes, brazaletes y autorizaciones de acceso.
           </p>
         </div>
 

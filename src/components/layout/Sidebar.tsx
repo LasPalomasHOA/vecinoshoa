@@ -11,7 +11,6 @@ import {
   RotateCcw,
   LogOut
 } from 'lucide-react';
-import { DatabaseStatusBadge } from '../common/DatabaseStatusBadge';
 
 import logoImg from '../../assets/logo.png';
 
@@ -42,8 +41,6 @@ export const Sidebar: React.FC = () => {
       id: 'calendar' as const,
       label: 'Calendario Timeline',
       icon: CalendarIcon,
-      badge: 'Gantt',
-      badgeColor: 'bg-sky-100 text-sky-800'
     },
     {
       id: 'properties' as const,
@@ -137,10 +134,8 @@ export const Sidebar: React.FC = () => {
         })}
       </div>
 
-      {/* Footer Profile, DB Status & Logout / Reset */}
-      <div className="p-3.5 border-t border-slate-100 bg-slate-50/80 space-y-2.5">
-        <DatabaseStatusBadge />
-        
+      {/* Footer Profile & Logout / Reset */}
+      <div className="p-3.5 border-t border-slate-100 bg-slate-50/80">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-8 h-8 rounded-full bg-teal-600 text-white font-bold text-xs flex items-center justify-center ring-2 ring-white shadow-xs shrink-0">
