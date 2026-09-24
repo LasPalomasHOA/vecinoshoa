@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth, DEMO_ACCOUNTS } from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { 
   Mail, 
   Lock, 
@@ -12,13 +12,12 @@ import {
   Building2, 
   HelpCircle, 
   X,
-  UserCheck,
   AlertCircle
 } from 'lucide-react';
 import logoImg from '../../assets/logo.png';
 
 export const LoginView: React.FC = () => {
-  const { login, quickLoginAs, isLoading } = useAuth();
+  const { login, isLoading } = useAuth();
 
   const [email, setEmail] = useState('admin@laspalomas.com');
   const [password, setPassword] = useState('admin123');
@@ -26,7 +25,6 @@ export const LoginView: React.FC = () => {
   const [rememberMe, setRememberMe] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
-  const [selectedDemoIndex, setSelectedDemoIndex] = useState<number>(0);
 
   // Saludo dinámico según la hora del día
   const getGreeting = () => {
@@ -45,7 +43,7 @@ export const LoginView: React.FC = () => {
       return;
     }
     if (!password) {
-      setErrorMessage('Por favor ingresa tu contraseña de acceso');
+      setErrorMessage('Por favor ingresa tu contraseña');
       return;
     }
 
@@ -53,14 +51,6 @@ export const LoginView: React.FC = () => {
     if (!res.success && res.error) {
       setErrorMessage(res.error);
     }
-  };
-
-  const handleSelectDemo = (index: number) => {
-    setSelectedDemoIndex(index);
-    const demo = DEMO_ACCOUNTS[index];
-    setEmail(demo.usuario.email);
-    setPassword(demo.passwordDefault);
-    setErrorMessage(null);
   };
 
   return (
@@ -179,44 +169,8 @@ export const LoginView: React.FC = () => {
               Iniciar Sesión
             </h2>
             <p className="text-xs sm:text-sm text-slate-400 mt-1">
-              Ingresa tus credenciales autorizadas para acceder al sistema.
+              Ingresa al panel administrativo de Las Palomas HOA.
             </p>
-          </div>
-
-          {/* Quick Access Roles Selector */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                <UserCheck className="w-3.5 h-3.5 text-teal-400" />
-                Perfiles de Acceso Rápido Demo:
-              </label>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              {DEMO_ACCOUNTS.map((account, idx) => {
-                const isSelected = selectedDemoIndex === idx;
-                return (
-                  <button
-                    key={account.usuario.id}
-                    type="button"
-                    onClick={() => handleSelectDemo(idx)}
-                    className={`p-2.5 rounded-xl text-left border transition-all text-xs flex flex-col justify-between ${
-                      isSelected
-                        ? 'bg-teal-500/15 border-teal-500 text-teal-200 ring-1 ring-teal-500/50 shadow-sm'
-                        : 'bg-slate-800/60 border-slate-700/70 text-slate-300 hover:bg-slate-800 hover:border-slate-600'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between w-full mb-1">
-                      <span className="font-bold text-white truncate">{account.badgeLabel}</span>
-                      {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-teal-400 shrink-0" />}
-                    </div>
-                    <span className="text-[10px] text-slate-400 truncate">
-                      {account.usuario.nombre} {account.usuario.apellido}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
           </div>
 
           {/* Error Banner */}
@@ -249,7 +203,7 @@ export const LoginView: React.FC = () => {
                     setEmail(e.target.value);
                     setErrorMessage(null);
                   }}
-                  placeholder="ejemplo@laspalomas.com"
+                  placeholder="admin@laspalomas.com"
                   className="w-full pl-10 pr-4 py-2.5 bg-slate-800/90 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all"
                   required
                 />
@@ -265,7 +219,7 @@ export const LoginView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsHelpModalOpen(true)}
-                  className="text-[11px] font-medium text-teal-400 hover:text-teal-300 transition-colors"
+                  className="text-[11px] font-medium text-teal-400 hover:text-teal-300 transition-colors cursor-pointer"
                 >
                   ¿Olvidaste tu contraseña?
                 </button>
@@ -288,7 +242,7 @@ export const LoginView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-200 transition-colors"
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
                   title={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -320,11 +274,11 @@ export const LoginView: React.FC = () => {
               {isLoading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>Validando credenciales...</span>
+                  <span>Iniciando sesión...</span>
                 </>
               ) : (
                 <>
-                  <span>Entrar al Sistema</span>
+                  <span>Ingresar al Sistema</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -351,7 +305,7 @@ export const LoginView: React.FC = () => {
           <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl relative text-left">
             <button
               onClick={() => setIsHelpModalOpen(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
+              className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -362,7 +316,7 @@ export const LoginView: React.FC = () => {
 
             <h3 className="text-lg font-bold text-white">Recuperación de Acceso</h3>
             <p className="text-xs text-slate-400 mt-1">
-              Por políticas de seguridad de Las Palomas HOA, el restablecimiento de contraseñas de personal y propietarios se realiza mediante la administración central.
+              Por políticas de seguridad de Las Palomas HOA, el restablecimiento de contraseñas se realiza mediante la administración central.
             </p>
 
             <div className="mt-4 p-3.5 rounded-xl bg-slate-800/70 border border-slate-700/60 space-y-2 text-xs">
@@ -382,7 +336,7 @@ export const LoginView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsHelpModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs transition-colors"
+                className="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs transition-colors cursor-pointer"
               >
                 Entendido
               </button>

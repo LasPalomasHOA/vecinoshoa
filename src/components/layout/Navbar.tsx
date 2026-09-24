@@ -1,11 +1,13 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 import { 
   Search, 
   Plus, 
   ChevronRight,
   Sparkles,
-  CalendarCheck
+  CalendarCheck,
+  UserCheck
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -24,6 +26,8 @@ export const Navbar: React.FC<NavbarProps> = ({
     searchQuery, 
     setSearchQuery
   } = useApp();
+
+  const { currentUser } = useAuth();
 
   const getBreadcrumbTitle = () => {
     switch (activeTab) {
@@ -73,11 +77,21 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center gap-3 shrink-0">
+      <div className="flex items-center gap-2.5 shrink-0">
         <div className="hidden lg:flex items-center gap-1.5 text-[11px] font-semibold text-teal-800 bg-teal-50/60 px-2.5 py-1.5 rounded-xl border border-teal-100">
           <CalendarCheck className="w-3.5 h-3.5 text-teal-600" />
-          <span>23 Sep 2026</span>
+          <span>24 Sep 2026</span>
         </div>
+
+        {currentUser && (
+          <div className="hidden sm:flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-slate-100/90 border border-slate-200/80 text-xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-emerald-200" />
+            <span className="font-bold text-slate-800 truncate max-w-[120px]">{currentUser.nombre}</span>
+            <span className="text-[10px] bg-white px-1.5 py-0.5 rounded-md font-semibold text-teal-700 border border-slate-200">
+              {currentUser.rol}
+            </span>
+          </div>
+        )}
 
         {activeTab === 'frontdesk' || activeTab === 'calendar' ? (
           <button
