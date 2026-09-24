@@ -1,27 +1,27 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
-import { 
-  Building2, 
-  Calendar as CalendarIcon, 
-  Users, 
-  Home, 
-  FileSpreadsheet, 
+import {
+  Building2,
+  Calendar as CalendarIcon,
+  Users,
+  Home,
+  FileSpreadsheet,
   FileCheck,
   RotateCcw,
   LogOut
 } from 'lucide-react';
 
-import logoImg from '../../assets/logo.png';
+import logoImg from '../../assets/logoDashboard.png';
 
 export const Sidebar: React.FC = () => {
-  const { 
-    activeTab, 
-    setActiveTab, 
-    reservaciones, 
-    solicitudes, 
-    propiedades, 
-    resetToDefaults 
+  const {
+    activeTab,
+    setActiveTab,
+    reservaciones,
+    solicitudes,
+    propiedades,
+    resetToDefaults
   } = useApp();
 
   const { currentUser, logout } = useAuth();
@@ -70,12 +70,12 @@ export const Sidebar: React.FC = () => {
 
   return (
     <aside className="w-64 bg-white/95 backdrop-blur-md border-r border-slate-200/90 flex flex-col shrink-0 h-screen sticky top-0 z-40 shadow-xs no-print print:hidden">
-      
+
       {/* Brand Header */}
       <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-center">
-        <img 
-          src={logoImg} 
-          alt="Las Palomas HOA Logo" 
+        <img
+          src={logoImg}
+          alt="Las Palomas HOA Logo"
           className="w-full max-h-12 object-contain"
         />
       </div>
@@ -83,9 +83,9 @@ export const Sidebar: React.FC = () => {
       {/* Resort Mini Card with Glass styling */}
       <div className="mx-4 my-3 p-3 rounded-2xl bg-gradient-to-r from-teal-50/90 to-sky-50/70 border border-teal-100/90 flex items-center gap-3 relative overflow-hidden shadow-xs">
         <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-teal-200/80 shadow-xs">
-          <img 
-            src="/las_palomas_resort.jpg" 
-            alt="Las Palomas" 
+          <img
+            src="/las_palomas_resort.jpg"
+            alt="Las Palomas"
             className="w-full h-full object-cover"
           />
         </div>
@@ -109,9 +109,9 @@ export const Sidebar: React.FC = () => {
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`w-full h-10 flex items-center justify-between px-3.5 rounded-xl text-xs font-semibold transition-colors duration-150 group cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-colors duration-150 group cursor-pointer ${
                 isActive
-                  ? 'bg-teal-600 text-white shadow-xs'
+                  ? 'bg-teal-600 text-white shadow-xs font-bold'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/90'
               }`}
             >
