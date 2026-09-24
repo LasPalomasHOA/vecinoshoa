@@ -11,7 +11,6 @@ import {
   RotateCcw,
   LogOut
 } from 'lucide-react';
-import { DatabaseStatusBadge } from '../common/DatabaseStatusBadge';
 
 import logoImg from '../../assets/logo.png';
 
@@ -42,8 +41,6 @@ export const Sidebar: React.FC = () => {
       id: 'calendar' as const,
       label: 'Calendario Timeline',
       icon: CalendarIcon,
-      badge: 'Gantt',
-      badgeColor: 'bg-sky-100 text-sky-800'
     },
     {
       id: 'properties' as const,
@@ -112,21 +109,21 @@ export const Sidebar: React.FC = () => {
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all group ${
+              className={`w-full h-10 flex items-center justify-between px-3.5 rounded-xl text-xs font-semibold transition-colors duration-150 group cursor-pointer ${
                 isActive
-                  ? 'bg-teal-600 text-white shadow-md shadow-teal-600/20 font-bold'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                  ? 'bg-teal-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/90'
               }`}
             >
-              <div className="flex items-center gap-3">
-                <Icon className={`w-4 h-4 transition-colors ${
+              <div className="flex items-center gap-3 min-w-0">
+                <Icon className={`w-4 h-4 shrink-0 transition-colors ${
                   isActive ? 'text-white' : 'text-slate-400 group-hover:text-teal-600'
                 }`} />
-                <span>{item.label}</span>
+                <span className="truncate">{item.label}</span>
               </div>
 
               {item.badge && (
-                <span className={`text-[10px] px-2 py-0.5 rounded-md font-medium ${
+                <span className={`text-[10px] px-2 py-0.5 rounded-md font-semibold shrink-0 transition-colors ${
                   isActive ? 'bg-white/20 text-white' : item.badgeColor
                 }`}>
                   {item.badge}
@@ -137,10 +134,8 @@ export const Sidebar: React.FC = () => {
         })}
       </div>
 
-      {/* Footer Profile, DB Status & Logout / Reset */}
-      <div className="p-3.5 border-t border-slate-100 bg-slate-50/80 space-y-2.5">
-        <DatabaseStatusBadge />
-        
+      {/* Footer Profile & Logout / Reset */}
+      <div className="p-3.5 border-t border-slate-100 bg-slate-50/80">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-8 h-8 rounded-full bg-teal-600 text-white font-bold text-xs flex items-center justify-center ring-2 ring-white shadow-xs shrink-0">
