@@ -30,23 +30,15 @@ const AUTH_STORAGE_KEY = 'lp_auth_session';
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<Usuario | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  // Cargar sesión guardada al iniciar
-  useEffect(() => {
+  const [currentUser, setCurrentUser] = useState<Usuario | null>(() => {
     try {
       const savedSession = localStorage.getItem(AUTH_STORAGE_KEY) || sessionStorage.getItem(AUTH_STORAGE_KEY);
-      if (savedSession) {
-        const parsed = JSON.parse(savedSession);
-        setCurrentUser(parsed);
-      }
-    } catch (err) {
-      console.error('Error al restaurar sesión de usuario:', err);
-    } finally {
-      setIsLoading(false);
+      return savedSession ? JSON.parse(savedSession) : null;
+    } catch {
+      return null;
     }
-  }, []);
+  });
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const login = async (
     email: string, 
@@ -55,8 +47,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   ): Promise<{ success: boolean; error?: string }> => {
     setIsLoading(true);
 
-    // Pequeño retraso suave para dar retroalimentación visual de inicio seguro
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Breve transición fluida para respuesta visual
+    await new Promise(resolve => setTimeout(resolve, 200));
 
     const cleanEmail = email.trim().toLowerCase();
 
