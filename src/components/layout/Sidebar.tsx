@@ -109,20 +109,23 @@ export const Sidebar: React.FC = () => {
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all group ${isActive
-                  ? 'bg-teal-600 text-white shadow-md shadow-teal-600/20 font-bold'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
-                }`}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-colors duration-150 group cursor-pointer ${
+                isActive
+                  ? 'bg-teal-600 text-white shadow-xs font-bold'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/90'
+              }`}
             >
-              <div className="flex items-center gap-3">
-                <Icon className={`w-4 h-4 transition-colors ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-teal-600'
-                  }`} />
-                <span>{item.label}</span>
+              <div className="flex items-center gap-3 min-w-0">
+                <Icon className={`w-4 h-4 shrink-0 transition-colors ${
+                  isActive ? 'text-white' : 'text-slate-400 group-hover:text-teal-600'
+                }`} />
+                <span className="truncate">{item.label}</span>
               </div>
 
               {item.badge && (
-                <span className={`text-[10px] px-2 py-0.5 rounded-md font-medium ${isActive ? 'bg-white/20 text-white' : item.badgeColor
-                  }`}>
+                <span className={`text-[10px] px-2 py-0.5 rounded-md font-semibold shrink-0 transition-colors ${
+                  isActive ? 'bg-white/20 text-white' : item.badgeColor
+                }`}>
                   {item.badge}
                 </span>
               )}
