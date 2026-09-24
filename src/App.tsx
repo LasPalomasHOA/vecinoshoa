@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useApp } from './context/AppContext';
+import { useAuth } from './context/AuthContext';
 import { Sidebar } from './components/layout/Sidebar';
 import { Navbar } from './components/layout/Navbar';
 import { HeroBanner } from './components/common/HeroBanner';
 import { ToastContainer } from './components/common/ToastContainer';
+import { LoginView } from './components/auth/LoginView';
 
 // Views
 import { FrontDeskView } from './components/frontdesk/FrontDeskView';
@@ -26,6 +28,7 @@ import { Reservacion, Propiedad, Usuario } from './types';
 
 export const App: React.FC = () => {
   const { activeTab } = useApp();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
   // Modal states
   const [isResModalOpen, setIsResModalOpen] = useState(false);
@@ -101,6 +104,27 @@ export const App: React.FC = () => {
   const handleOpenNewRequest = () => {
     setIsRequestModalOpen(true);
   };
+
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-white">
+        <div className="w-16 h-16 relative flex items-center justify-center mb-4">
+          <div className="w-16 h-16 rounded-full border-4 border-teal-500/20 border-t-teal-400 animate-spin absolute" />
+          <div className="w-8 h-8 rounded-full bg-teal-500/20 animate-pulse" />
+        </div>
+        <p className="text-sm font-semibold tracking-wide text-slate-300">Cargando Las Palomas HOA...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <>
+        <LoginView />
+        <ToastContainer />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen flex bg-slate-50 text-slate-900 print:bg-white print:block print:p-0 print:m-0">

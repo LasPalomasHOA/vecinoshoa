@@ -1,5 +1,6 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 import { 
   Building2, 
   Calendar as CalendarIcon, 
@@ -7,10 +8,12 @@ import {
   Home, 
   FileSpreadsheet, 
   FileCheck,
-  Waves,
-  RotateCcw
+  RotateCcw,
+  LogOut
 } from 'lucide-react';
 import { DatabaseStatusBadge } from '../common/DatabaseStatusBadge';
+
+import logoImg from '../../assets/logo.png';
 
 export const Sidebar: React.FC = () => {
   const { 
@@ -21,6 +24,8 @@ export const Sidebar: React.FC = () => {
     propiedades, 
     resetToDefaults 
   } = useApp();
+
+  const { currentUser, logout } = useAuth();
 
   const inHouseCount = reservaciones.filter(r => r.estado === 'En Casa (Checked-in)').length;
   const pendingRequestsCount = solicitudes.filter(s => s.estatus === 'Pendiente' || s.estatus === 'En Proceso').length;
@@ -70,21 +75,12 @@ export const Sidebar: React.FC = () => {
     <aside className="w-64 bg-white/95 backdrop-blur-md border-r border-slate-200/90 flex flex-col shrink-0 h-screen sticky top-0 z-40 shadow-xs no-print print:hidden">
       
       {/* Brand Header */}
-      <div className="p-5 border-b border-slate-100 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-teal-600 to-teal-700 flex items-center justify-center text-white shadow-md shadow-teal-700/25 ring-2 ring-teal-50">
-          <Waves className="w-5 h-5" />
-        </div>
-        <div>
-          <div className="flex items-center gap-1.5">
-            <h1 className="font-extrabold text-sm tracking-tight text-slate-900">
-              LAS PALOMAS
-            </h1>
-            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200">
-              HOA
-            </span>
-          </div>
-          <p className="text-[11px] text-slate-500 font-medium">Seaside Golf Community</p>
-        </div>
+      <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-center">
+        <img 
+          src={logoImg} 
+          alt="Las Palomas HOA Logo" 
+          className="w-full max-h-12 object-contain"
+        />
       </div>
 
       {/* Resort Mini Card with Glass styling */}
@@ -141,27 +137,40 @@ export const Sidebar: React.FC = () => {
         })}
       </div>
 
-      {/* Footer Profile, DB Status & Demo Reset */}
-      <div className="p-3.5 border-t border-slate-100 bg-slate-50/70 space-y-2.5">
+      {/* Footer Profile, DB Status & Logout / Reset */}
+      <div className="p-3.5 border-t border-slate-100 bg-slate-50/80 space-y-2.5">
         <DatabaseStatusBadge />
         
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-teal-600 text-white font-bold text-xs flex items-center justify-center ring-2 ring-white shadow-xs">
-              FA
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-full bg-teal-600 text-white font-bold text-xs flex items-center justify-center ring-2 ring-white shadow-xs shrink-0">
+              {currentUser?.nombre?.[0] || 'U'}{currentUser?.apellido?.[0] || 'A'}
             </div>
-            <div className="text-left">
-              <p className="text-xs font-bold text-slate-800 leading-tight">Francisco Amado</p>
-              <p className="text-[10px] text-teal-700 font-semibold">Administrador HOA</p>
+            <div className="text-left min-w-0">
+              <p className="text-xs font-bold text-slate-800 leading-tight truncate">
+                {currentUser?.nombre} {currentUser?.apellido}
+              </p>
+              <p className="text-[10px] text-teal-700 font-semibold truncate">
+                {currentUser?.rol || 'Personal HOA'}
+              </p>
             </div>
           </div>
-          <button
-            onClick={resetToDefaults}
-            title="Restablecer catálogo demo oficial"
-            className="p-1.5 rounded-xl text-slate-400 hover:text-teal-700 hover:bg-teal-50 transition-colors"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-          </button>
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              onClick={resetToDefaults}
+              title="Restablecer catálogo demo oficial"
+              className="p-1.5 rounded-xl text-slate-400 hover:text-teal-700 hover:bg-teal-50 transition-colors cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={logout}
+              title="Cerrar sesión"
+              className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       </div>
 
