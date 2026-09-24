@@ -154,17 +154,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // CRUD Actions
   const addPropiedad = async (propData: Omit<Propiedad, 'id'>, ownerId?: number) => {
     try {
-      const created = await api.propiedades.create(propData);
+      const created = await api.propiedades.create(propData, ownerId);
       setPropiedades(prev => [created, ...prev]);
       
-      if (ownerId) {
-        const assigned = await api.propiedadUsuarios.create({
-          propiedad_id: created.id,
-          usuario_id: ownerId,
-          tipo_relacion: 'Owner',
-          es_principal: true,
-        });
-        setPropiedadUsuarios(prev => [...prev, assigned]);
+      if (ownerId && ownerId > 0) {
+        // Refresh assignments
+        const assignments = await api.propiedadUsuarios.getAll();
+        setPropiedadUsuarios(assignments);
       }
 
       showToast(`Propiedad ${created.nombre} creada exitosamente`, 'success');
@@ -175,23 +171,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updatePropiedad = async (id: number, propData: Partial<Propiedad>, ownerId?: number) => {
     try {
-      const updated = await api.propiedades.update(id, propData);
+      const updated = await api.propiedades.update(id, propData, ownerId);
       setPropiedades(prev => prev.map(p => (p.id === id ? updated : p)));
 
       if (ownerId !== undefined) {
-        const existing = propiedadUsuarios.find(pu => pu.propiedad_id === id && pu.es_principal);
-        if (existing) {
-          await api.propiedadUsuarios.delete(existing.id);
-        }
-        if (ownerId > 0) {
-          const newAssignment = await api.propiedadUsuarios.create({
-            propiedad_id: id,
-            usuario_id: ownerId,
-            tipo_relacion: 'Owner',
-            es_principal: true,
-          });
-          setPropiedadUsuarios(prev => [...prev.filter(pu => pu.propiedad_id !== id), newAssignment]);
-        }
+        const assignments = await api.propiedadUsuarios.getAll();
+        setPropiedadUsuarios(assignments);
       }
 
       showToast(`Propiedad ${updated.nombre} actualizada`, 'success');

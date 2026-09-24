@@ -1,32 +1,73 @@
-# React + TypeScript + Vite
+# Las Palomas HOA - Seaside Golf Community Management System
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Sistema integral de administración condominal y front desk para **Las Palomas Seaside Golf Community** con conexión directa a base de datos PostgreSQL (Supabase / Neon / Vercel Postgres).
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🚀 Arquitectura de Base de Datos y Backend
 
-## React Compiler
+El proyecto está diseñado para funcionar de manera unificada tanto en **desarrollo local** (`npm run dev`) como en producción en **Vercel** (`Serverless Functions`):
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Local (`npm run dev`)**: Vite integra un middleware API en `vite.config.ts` que atiende las solicitudes `/api/*` directamente contra la base de datos PostgreSQL especificada en tu `.env`.
+- **Producción (Vercel)**: Las funciones en `/api/[...route].ts` se ejecutan como Serverless Functions conectándose automáticamente usando las variables de entorno configuradas en el dashboard de Vercel.
 
-## Expanding the Oxlint configuration
+---
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+## ⚙️ Variables de Entorno
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+Configura en tu archivo `.env` local o en las variables de entorno de **Vercel**:
+
+```env
+# 1. URL de conexión a PostgreSQL (Cualquiera de estas variables es soportada)
+CUSTOM_DB_URL="postgres://usuario:password@host:6543/postgres?sslmode=require"
+DATABASE_URL="postgres://usuario:password@host:6543/postgres?sslmode=require"
+POSTGRES_URL="postgres://usuario:password@host:6543/postgres?sslmode=require"
+
+# 2. Puerto opcional para servidor local
+PORT=5000
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+---
+
+## 🗄️ Esquema de Base de Datos (PostgreSQL)
+
+Las tablas creadas y administradas por el sistema son:
+
+1. **`edificios`**: Catálogo de torres (Diamante, Topaz, Rubi, Opal, Cristales, Esmeralda).
+2. **`grupos_propiedad`**: Grupos de cobranza y HOA (NR, POOL, Premium).
+3. **`usuarios`**: Dueños, administradores, residentes y personal con roles y estatus.
+4. **`propiedades`**: Condominios con características (piso, cuartos, baños, medidores, cuota HOA, etc.).
+5. **`propiedad_usuarios`**: Relación N:M entre condominios y propietarios.
+6. **`huespedes`**: Directorio y datos de contacto de huéspedes.
+7. **`reservaciones`**: Reservaciones con fechas de check-in / check-out, ocupantes, brazaletes, vehículos, balance, estatus ('Confirmada', 'En Casa (Checked-in)', 'Checked-out', 'Cancelada') y validación de traslape.
+8. **`solicitudes_acceso`**: Pases de contratistas, entregas y proveedores con seguimiento de autorización.
+
+### 📥 Creación de Tablas en Supabase / Postgres:
+
+1. Abre el archivo [`database_setup.sql`](file:///c:/Users/omarz/Desktop/vecinoshoa/database_setup.sql).
+2. Copia y pega el contenido en el **SQL Editor** de tu proyecto Supabase o Postgres.
+3. Haz clic en **Run** para crear todas las tablas, índices y datos demo iniciales.
+
+---
+
+## 🌐 Endpoints de la API (`/api/*`)
+
+| Módulo | Endpoint | Métodos | Descripción |
+| :--- | :--- | :--- | :--- |
+| **Diagnóstico** | `/api/health` | `GET` | Estado de conexión y conteo de tablas en PostgreSQL |
+| **Edificios** | `/api/edificios` | `GET`, `POST`, `PUT`, `DELETE` | CRUD de Torres / Edificios |
+| **Grupos** | `/api/grupos_propiedad` | `GET`, `POST`, `PUT`, `DELETE` | CRUD de Grupos de Cobranza |
+| **Usuarios** | `/api/usuarios` | `GET`, `POST`, `PUT`, `DELETE` | CRUD de Residentes, Dueños y Personal |
+| **Propiedades** | `/api/propiedades` | `GET`, `POST`, `PUT`, `DELETE` | CRUD de Condominios con asignación de dueños |
+| **Asignaciones** | `/api/propiedad_usuarios`| `GET`, `POST`, `DELETE` | Relación N:M entre propiedades y dueños |
+| **Huéspedes** | `/api/huespedes` | `GET`, `POST`, `PUT`, `DELETE` | CRUD de Huéspedes |
+| **Reservaciones** | `/api/reservaciones` | `GET`, `POST`, `PUT`, `DELETE` | Reservaciones con prevención de doble reserva |
+| **Pases** | `/api/solicitudes` | `GET`, `POST`, `PUT` | Solicitudes y pases de acceso con flujo de aprobación |
+
+---
+
+## 💻 Comandos Disponibles
+
+- `npm run dev`: Inicia la aplicación localmente con el backend API y la base de datos integrados.
+- `npm run build`: Compila la aplicación para producción (TypeScript + Vite).
+- `npm run preview`: Previsualiza la versión compilada.

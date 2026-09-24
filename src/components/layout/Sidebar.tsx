@@ -10,6 +10,7 @@ import {
   Waves,
   RotateCcw
 } from 'lucide-react';
+import { DatabaseStatusBadge } from '../common/DatabaseStatusBadge';
 
 export const Sidebar: React.FC = () => {
   const { 
@@ -140,8 +141,10 @@ export const Sidebar: React.FC = () => {
         })}
       </div>
 
-      {/* Footer Profile & Demo Reset */}
-      <div className="p-3.5 border-t border-slate-100 bg-slate-50/70 space-y-2">
+      {/* Footer Profile, DB Status & Demo Reset */}
+      <div className="p-3.5 border-t border-slate-100 bg-slate-50/70 space-y-2.5">
+        <DatabaseStatusBadge />
+        
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-full bg-teal-600 text-white font-bold text-xs flex items-center justify-center ring-2 ring-white shadow-xs">
