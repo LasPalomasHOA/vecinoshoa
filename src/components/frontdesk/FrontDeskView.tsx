@@ -140,14 +140,14 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
       </div>
 
       {/* Filter Toolbar */}
-      <div className="p-3.5 rounded-2xl glass-card flex flex-wrap items-center justify-between gap-3">
+      <div className="p-3 rounded-2xl bg-white border border-slate-200/90 shadow-xs flex flex-wrap items-center justify-between gap-3 min-h-[56px]">
         
         <div className="flex flex-wrap items-center gap-2.5">
           {/* Segmented status buttons */}
-          <div className="flex items-center bg-slate-100/80 p-1 rounded-xl border border-slate-200 text-xs font-semibold">
+          <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 text-xs font-semibold h-9">
             <button
               onClick={() => setStatusFilter('ALL')}
-              className={`px-3 py-1 rounded-lg transition-all ${
+              className={`h-7.5 px-3 rounded-lg transition-colors duration-150 cursor-pointer ${
                 statusFilter === 'ALL' ? 'bg-white text-teal-900 font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -155,7 +155,7 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
             </button>
             <button
               onClick={() => setStatusFilter('IN_HOUSE')}
-              className={`px-3 py-1 rounded-lg transition-all ${
+              className={`h-7.5 px-3 rounded-lg transition-colors duration-150 cursor-pointer ${
                 statusFilter === 'IN_HOUSE' ? 'bg-teal-600 text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -163,7 +163,7 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
             </button>
             <button
               onClick={() => setStatusFilter('PENDING')}
-              className={`px-3 py-1 rounded-lg transition-all ${
+              className={`h-7.5 px-3 rounded-lg transition-colors duration-150 cursor-pointer ${
                 statusFilter === 'PENDING' ? 'bg-amber-600 text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -171,7 +171,7 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
             </button>
             <button
               onClick={() => setStatusFilter('CHECKED_OUT')}
-              className={`px-3 py-1 rounded-lg transition-all ${
+              className={`h-7.5 px-3 rounded-lg transition-colors duration-150 cursor-pointer ${
                 statusFilter === 'CHECKED_OUT' ? 'bg-slate-700 text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -183,7 +183,7 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
           <select
             value={tipoFilter}
             onChange={(e) => setTipoFilter(e.target.value)}
-            className="px-3 py-1.5 text-xs rounded-xl form-input font-medium cursor-pointer"
+            className="h-9 px-3 text-xs rounded-xl form-input font-medium cursor-pointer border-slate-200"
           >
             <option value="ALL">Todos los tipos de huéspedes</option>
             <option value="Bloqueo de Dueño">Bloqueo de Dueño</option>
@@ -197,7 +197,7 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
           <select
             value={edificioFilter}
             onChange={(e) => setEdificioFilter(e.target.value)}
-            className="px-3 py-1.5 text-xs rounded-xl form-input font-medium cursor-pointer"
+            className="h-9 px-3 text-xs rounded-xl form-input font-medium cursor-pointer border-slate-200"
           >
             <option value="ALL">Todas las Torres (A - J)</option>
             {edificios.map(ed => (
@@ -210,7 +210,7 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
 
         <button
           onClick={onOpenNewReservation}
-          className="px-4 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-sm shadow-teal-700/20 flex items-center gap-1.5 active:scale-95 transition-all"
+          className="h-9 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-colors duration-150 cursor-pointer"
         >
           <span>+ Registrar Reservación</span>
         </button>
