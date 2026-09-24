@@ -434,7 +434,7 @@ export const ReportsView: React.FC = () => {
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={handleExport}
-              className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs active:scale-95"
+              className="h-9 px-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors duration-150 flex items-center gap-1.5 cursor-pointer"
               title="Descargar reporte con formato y diseño oficial para Excel"
             >
               <Download className="w-3.5 h-3.5 text-teal-700" />
@@ -443,7 +443,7 @@ export const ReportsView: React.FC = () => {
 
             <button
               onClick={handlePrint}
-              className="px-4 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-700/20 transition-all flex items-center gap-1.5 active:scale-95"
+              className="h-9 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs transition-colors duration-150 flex items-center gap-1.5 cursor-pointer"
             >
               <Printer className="w-3.5 h-3.5" />
               <span>Imprimir</span>

@@ -69,7 +69,7 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
     <div className="space-y-5">
       
       {/* Filters Toolbar */}
-      <div className="p-3.5 rounded-xl bg-white border border-slate-200/90 shadow-xs flex flex-wrap items-center justify-between gap-3">
+      <div className="p-3 rounded-2xl bg-white border border-slate-200/90 shadow-xs flex flex-wrap items-center justify-between gap-3 min-h-[56px]">
         
         <div className="flex flex-wrap items-center gap-2.5">
           <div className="flex items-center gap-2">
@@ -77,7 +77,7 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
             <select
               value={selectedEdificio}
               onChange={(e) => setSelectedEdificio(e.target.value)}
-              className="px-3 py-1.5 text-xs rounded-lg form-input font-medium cursor-pointer"
+              className="h-9 px-3 text-xs rounded-xl form-input font-medium cursor-pointer border-slate-200"
             >
               <option value="ALL">Todas las Torres ({edificios.length})</option>
               {edificios.map(ed => (
@@ -93,7 +93,7 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
             <select
               value={selectedGrupo}
               onChange={(e) => setSelectedGrupo(e.target.value)}
-              className="px-3 py-1.5 text-xs rounded-lg form-input font-medium cursor-pointer"
+              className="h-9 px-3 text-xs rounded-xl form-input font-medium cursor-pointer border-slate-200"
             >
               <option value="ALL">Todos los Grupos HOA</option>
               {grupos.map(g => (
@@ -104,17 +104,17 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
             </select>
           </div>
 
-          <div className="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200">
+          <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 h-9">
             <button
               onClick={() => setViewMode('table')}
-              className={`p-1.5 rounded-md transition-all ${viewMode === 'table' ? 'bg-white text-teal-800 shadow-xs' : 'text-slate-500 hover:text-slate-900'}`}
+              className={`h-7.5 px-2.5 rounded-lg text-xs font-semibold transition-colors duration-150 flex items-center gap-1 cursor-pointer ${viewMode === 'table' ? 'bg-white text-teal-800 shadow-xs' : 'text-slate-500 hover:text-slate-900'}`}
               title="Vista en Tabla"
             >
               <List className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode('cards')}
-              className={`p-1.5 rounded-md transition-all ${viewMode === 'cards' ? 'bg-white text-teal-800 shadow-xs' : 'text-slate-500 hover:text-slate-900'}`}
+              className={`h-7.5 px-2.5 rounded-lg text-xs font-semibold transition-colors duration-150 flex items-center gap-1 cursor-pointer ${viewMode === 'cards' ? 'bg-white text-teal-800 shadow-xs' : 'text-slate-500 hover:text-slate-900'}`}
               title="Vista en Tarjetas"
             >
               <LayoutGrid className="w-4 h-4" />
@@ -125,7 +125,7 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
         <div className="flex items-center gap-2.5">
           <button
             onClick={onOpenBuildingsManager}
-            className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all flex items-center gap-1.5"
+            className="h-9 px-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors duration-150 flex items-center gap-1.5 cursor-pointer"
           >
             <Building2 className="w-4 h-4 text-teal-700" />
             <span>Administrar Torres</span>
@@ -133,9 +133,9 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
 
           <button
             onClick={onOpenNewProperty}
-            className="px-3.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5"
+            className="h-9 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-colors duration-150 cursor-pointer"
           >
-            <Plus className="w-4 h-4 stroke-[3]" />
+            <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>+ Agregar Propiedad</span>
           </button>
         </div>
