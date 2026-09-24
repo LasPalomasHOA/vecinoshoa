@@ -37,7 +37,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-30 glass-header px-6 py-3.5 flex items-center justify-between gap-4 border-b border-slate-200/80 shadow-xs">
+    <header className="sticky top-0 z-30 glass-header px-6 py-3.5 flex items-center justify-between gap-4 border-b border-slate-200/80 shadow-xs no-print print:hidden">
       
       {/* Breadcrumbs & Active Title */}
       <div className="flex items-center gap-2 shrink-0">

@@ -10,7 +10,7 @@ export const HeroBanner: React.FC = () => {
   const pendingRequests = solicitudes.filter(s => s.estatus === 'Pendiente' || s.estatus === 'En Proceso').length;
 
   return (
-    <div className="relative rounded-2xl overflow-hidden mb-6 border border-slate-200/80 shadow-md bg-slate-900 text-white group">
+    <div className="relative rounded-2xl overflow-hidden mb-6 border border-slate-200/80 shadow-md bg-slate-900 text-white group no-print print:hidden">
       
       {/* Background Resort Image with Subtle Movement */}
       <img

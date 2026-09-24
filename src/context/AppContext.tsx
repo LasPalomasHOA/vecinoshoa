@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { 
   Edificio, 
   GrupoPropiedad, 
@@ -7,19 +7,9 @@ import {
   PropiedadUsuario, 
   Huesped, 
   Reservacion, 
-  SolicitudAcceso,
-  EstadoReservacion
+  SolicitudAcceso
 } from '../types';
-import { 
-  initialEdificios, 
-  initialGrupos, 
-  initialUsuarios, 
-  initialPropiedades, 
-  initialPropiedadUsuarios, 
-  initialHuespedes, 
-  initialReservaciones, 
-  initialSolicitudes 
-} from '../data/mockData';
+import { api } from '../services/api';
 
 export type ActiveTab = 'frontdesk' | 'calendar' | 'properties' | 'users' | 'requests' | 'reports';
 
@@ -34,8 +24,11 @@ interface AppContextType {
   setActiveTab: (tab: ActiveTab) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  isLoading: boolean;
+  error: string | null;
+  refreshAllData: () => Promise<void>;
   
-  // Data
+  // Database Tables State
   edificios: Edificio[];
   grupos: GrupoPropiedad[];
   usuarios: Usuario[];
@@ -45,26 +38,26 @@ interface AppContextType {
   reservaciones: Reservacion[];
   solicitudes: SolicitudAcceso[];
   
-  // CRUD Actions
-  addPropiedad: (propiedad: Omit<Propiedad, 'id'>, ownerId?: number) => void;
-  updatePropiedad: (id: number, propiedad: Partial<Propiedad>, ownerId?: number) => void;
-  deletePropiedad: (id: number) => void;
+  // CRUD Actions connected to Database Layer
+  addPropiedad: (propiedad: Omit<Propiedad, 'id'>, ownerId?: number) => Promise<void>;
+  updatePropiedad: (id: number, propiedad: Partial<Propiedad>, ownerId?: number) => Promise<void>;
+  deletePropiedad: (id: number) => Promise<void>;
   
-  addEdificio: (nombre: string) => void;
-  deleteEdificio: (id: number) => void;
+  addEdificio: (nombre: string) => Promise<void>;
+  deleteEdificio: (id: number) => Promise<void>;
   
-  addUsuario: (usuario: Omit<Usuario, 'id'>) => void;
-  updateUsuario: (id: number, usuario: Partial<Usuario>) => void;
-  deleteUsuario: (id: number) => void;
+  addUsuario: (usuario: Omit<Usuario, 'id'>) => Promise<void>;
+  updateUsuario: (id: number, usuario: Partial<Usuario>) => Promise<void>;
+  deleteUsuario: (id: number) => Promise<void>;
   
-  addReservacion: (reservacion: Omit<Reservacion, 'id'>, huespedData?: Omit<Huesped, 'id'>) => void;
-  updateReservacion: (id: number, reservacion: Partial<Reservacion>) => void;
-  checkInReservacion: (id: number, brazaletes?: string, vehiculo?: string) => void;
-  checkOutReservacion: (id: number) => void;
-  deleteReservacion: (id: number) => void;
+  addReservacion: (reservacion: Omit<Reservacion, 'id'>, huespedData?: Omit<Huesped, 'id'>) => Promise<void>;
+  updateReservacion: (id: number, reservacion: Partial<Reservacion>) => Promise<void>;
+  checkInReservacion: (id: number, brazaletes?: string, vehiculo?: string) => Promise<void>;
+  checkOutReservacion: (id: number) => Promise<void>;
+  deleteReservacion: (id: number) => Promise<void>;
   
-  addSolicitud: (solicitud: Omit<SolicitudAcceso, 'id' | 'created_at'>) => void;
-  updateSolicitudStatus: (id: number, estatus: SolicitudAcceso['estatus'], comentario?: string) => void;
+  addSolicitud: (solicitud: Omit<SolicitudAcceso, 'id' | 'created_at'>) => Promise<void>;
+  updateSolicitudStatus: (id: number, estatus: SolicitudAcceso['estatus'], comentario?: string) => Promise<void>;
   
   // Helpers
   getPropiedadById: (id: number) => Propiedad | undefined;
@@ -78,327 +71,368 @@ interface AppContextType {
   toasts: Toast[];
   showToast: (message: string, type?: Toast['type']) => void;
   removeToast: (id: string) => void;
-  resetToDefaults: () => void;
+  resetToDefaults: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
-
-const STORAGE_KEY_PREFIX = 'lp_hoa_';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('frontdesk');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load state with fallback to seed data
-  const [edificios, setEdificios] = useState<Edificio[]>(() => {
-    const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}edificios`);
-    return saved ? JSON.parse(saved) : initialEdificios;
-  });
+  // Live Database State
+  const [edificios, setEdificios] = useState<Edificio[]>([]);
+  const [grupos, setGrupos] = useState<GrupoPropiedad[]>([]);
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [propiedades, setPropiedades] = useState<Propiedad[]>([]);
+  const [propiedadUsuarios, setPropiedadUsuarios] = useState<PropiedadUsuario[]>([]);
+  const [huespedes, setHuespedes] = useState<Huesped[]>([]);
+  const [reservaciones, setReservaciones] = useState<Reservacion[]>([]);
+  const [solicitudes, setSolicitudes] = useState<SolicitudAcceso[]>([]);
 
-  const [grupos] = useState<GrupoPropiedad[]>(() => {
-    const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}grupos`);
-    return saved ? JSON.parse(saved) : initialGrupos;
-  });
-
-  const [usuarios, setUsuarios] = useState<Usuario[]>(() => {
-    const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}usuarios`);
-    return saved ? JSON.parse(saved) : initialUsuarios;
-  });
-
-  const [propiedades, setPropiedades] = useState<Propiedad[]>(() => {
-    const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}propiedades`);
-    return saved ? JSON.parse(saved) : initialPropiedades;
-  });
-
-  const [propiedadUsuarios, setPropiedadUsuarios] = useState<PropiedadUsuario[]>(() => {
-    const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}propiedad_usuarios`);
-    return saved ? JSON.parse(saved) : initialPropiedadUsuarios;
-  });
-
-  const [huespedes, setHuespedes] = useState<Huesped[]>(() => {
-    const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}huespedes`);
-    return saved ? JSON.parse(saved) : initialHuespedes;
-  });
-
-  const [reservaciones, setReservaciones] = useState<Reservacion[]>(() => {
-    const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}reservaciones`);
-    return saved ? JSON.parse(saved) : initialReservaciones;
-  });
-
-  const [solicitudes, setSolicitudes] = useState<SolicitudAcceso[]>(() => {
-    const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}solicitudes`);
-    return saved ? JSON.parse(saved) : initialSolicitudes;
-  });
-
-  // Sync to local storage
-  useEffect(() => {
-    localStorage.setItem(`${STORAGE_KEY_PREFIX}edificios`, JSON.stringify(edificios));
-  }, [edificios]);
-
-  useEffect(() => {
-    localStorage.setItem(`${STORAGE_KEY_PREFIX}usuarios`, JSON.stringify(usuarios));
-  }, [usuarios]);
-
-  useEffect(() => {
-    localStorage.setItem(`${STORAGE_KEY_PREFIX}propiedades`, JSON.stringify(propiedades));
-  }, [propiedades]);
-
-  useEffect(() => {
-    localStorage.setItem(`${STORAGE_KEY_PREFIX}propiedad_usuarios`, JSON.stringify(propiedadUsuarios));
-  }, [propiedadUsuarios]);
-
-  useEffect(() => {
-    localStorage.setItem(`${STORAGE_KEY_PREFIX}huespedes`, JSON.stringify(huespedes));
-  }, [huespedes]);
-
-  useEffect(() => {
-    localStorage.setItem(`${STORAGE_KEY_PREFIX}reservaciones`, JSON.stringify(reservaciones));
-  }, [reservaciones]);
-
-  useEffect(() => {
-    localStorage.setItem(`${STORAGE_KEY_PREFIX}solicitudes`, JSON.stringify(solicitudes));
-  }, [solicitudes]);
-
-  // Toast notifier
-  const showToast = (message: string, type: Toast['type'] = 'success') => {
+  // Toast notifications
+  const showToast = useCallback((message: string, type: Toast['type'] = 'success') => {
     const id = Math.random().toString(36).substring(2, 9);
-    setToasts(prev => [...prev, { id, type, message }]);
+    setToasts(prev => [...prev, { id, message, type }]);
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
-    }, 4000);
-  };
+    }, 4500);
+  }, []);
 
-  const removeToast = (id: string) => {
+  const removeToast = useCallback((id: string) => {
     setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  // Fetch all data from Database Service
+  const refreshAllData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const [
+        edificiosData,
+        gruposData,
+        usuariosData,
+        propiedadesData,
+        propiedadUsuariosData,
+        huespedesData,
+        reservacionesData,
+        solicitudesData
+      ] = await Promise.all([
+        api.edificios.getAll(),
+        api.grupos.getAll(),
+        api.usuarios.getAll(),
+        api.propiedades.getAll(),
+        api.propiedadUsuarios.getAll(),
+        api.huespedes.getAll(),
+        api.reservaciones.getAll(),
+        api.solicitudes.getAll()
+      ]);
+
+      setEdificios(edificiosData);
+      setGrupos(gruposData);
+      setUsuarios(usuariosData);
+      setPropiedades(propiedadesData);
+      setPropiedadUsuarios(propiedadUsuariosData);
+      setHuespedes(huespedesData);
+      setReservaciones(reservacionesData);
+      setSolicitudes(solicitudesData);
+    } catch (err: any) {
+      console.error('Error fetching database records:', err);
+      setError(err.message || 'Error al conectar con la base de datos');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshAllData();
+  }, [refreshAllData]);
+
+  // CRUD Actions
+  const addPropiedad = async (propData: Omit<Propiedad, 'id'>, ownerId?: number) => {
+    try {
+      const created = await api.propiedades.create(propData);
+      setPropiedades(prev => [created, ...prev]);
+      
+      if (ownerId) {
+        const assigned = await api.propiedadUsuarios.create({
+          propiedad_id: created.id,
+          usuario_id: ownerId,
+          tipo_relacion: 'Owner',
+          es_principal: true,
+        });
+        setPropiedadUsuarios(prev => [...prev, assigned]);
+      }
+
+      showToast(`Propiedad ${created.nombre} creada exitosamente`, 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Error al crear la propiedad', 'error');
+    }
   };
 
-  // Helper Lookups
-  const getPropiedadById = (id: number) => propiedades.find(p => p.id === id);
-  const getEdificioById = (id: number) => edificios.find(e => e.id === id);
-  const getGrupoById = (id?: number) => (id ? grupos.find(g => g.id === id) : undefined);
-  const getHuespedById = (id: number) => huespedes.find(h => h.id === id);
+  const updatePropiedad = async (id: number, propData: Partial<Propiedad>, ownerId?: number) => {
+    try {
+      const updated = await api.propiedades.update(id, propData);
+      setPropiedades(prev => prev.map(p => (p.id === id ? updated : p)));
 
-  const checkReservationOverlap = (propiedadId: number, checkin: string, checkout: string, excludeResId?: number): Reservacion | undefined => {
-    return reservaciones.find(r => {
-      if (excludeResId && r.id === excludeResId) return false;
-      if (r.propiedad_id !== propiedadId) return false;
-      if (r.estado === 'Cancelada') return false;
-      // Two date ranges [A, B] and [C, D] overlap if A < D and B > C
-      return r.fecha_checkin < checkout && r.fecha_checkout > checkin;
+      if (ownerId !== undefined) {
+        const existing = propiedadUsuarios.find(pu => pu.propiedad_id === id && pu.es_principal);
+        if (existing) {
+          await api.propiedadUsuarios.delete(existing.id);
+        }
+        if (ownerId > 0) {
+          const newAssignment = await api.propiedadUsuarios.create({
+            propiedad_id: id,
+            usuario_id: ownerId,
+            tipo_relacion: 'Owner',
+            es_principal: true,
+          });
+          setPropiedadUsuarios(prev => [...prev.filter(pu => pu.propiedad_id !== id), newAssignment]);
+        }
+      }
+
+      showToast(`Propiedad ${updated.nombre} actualizada`, 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Error al actualizar propiedad', 'error');
+    }
+  };
+
+  const deletePropiedad = async (id: number) => {
+    try {
+      await api.propiedades.delete(id);
+      setPropiedades(prev => prev.filter(p => p.id !== id));
+      setPropiedadUsuarios(prev => prev.filter(pu => pu.propiedad_id !== id));
+      showToast('Propiedad eliminada', 'info');
+    } catch (err: any) {
+      showToast(err.message || 'Error al eliminar propiedad', 'error');
+    }
+  };
+
+  const addEdificio = async (nombre: string) => {
+    try {
+      const created = await api.edificios.create({ nombre: nombre.trim(), activo: true });
+      setEdificios(prev => [...prev, created]);
+      showToast(`Torre ${created.nombre} agregada`, 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Error al crear edificio', 'error');
+    }
+  };
+
+  const deleteEdificio = async (id: number) => {
+    try {
+      await api.edificios.delete(id);
+      setEdificios(prev => prev.filter(e => e.id !== id));
+      showToast('Torre eliminada', 'info');
+    } catch (err: any) {
+      showToast(err.message || 'Error al eliminar torre', 'error');
+    }
+  };
+
+  const addUsuario = async (userData: Omit<Usuario, 'id'>) => {
+    try {
+      const created = await api.usuarios.create(userData);
+      setUsuarios(prev => [created, ...prev]);
+      showToast(`Usuario ${created.nombre} ${created.apellido} registrado`, 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Error al registrar usuario', 'error');
+    }
+  };
+
+  const updateUsuario = async (id: number, userData: Partial<Usuario>) => {
+    try {
+      const updated = await api.usuarios.update(id, userData);
+      setUsuarios(prev => prev.map(u => (u.id === id ? updated : u)));
+      showToast('Usuario actualizado correctamente', 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Error al actualizar usuario', 'error');
+    }
+  };
+
+  const deleteUsuario = async (id: number) => {
+    try {
+      await api.usuarios.delete(id);
+      setUsuarios(prev => prev.filter(u => u.id !== id));
+      setPropiedadUsuarios(prev => prev.filter(pu => pu.usuario_id !== id));
+      showToast('Usuario eliminado', 'info');
+    } catch (err: any) {
+      showToast(err.message || 'Error al eliminar usuario', 'error');
+    }
+  };
+
+  const checkReservationOverlap = (
+    propiedadId: number,
+    checkin: string,
+    checkout: string,
+    excludeResId?: number
+  ): Reservacion | undefined => {
+    return reservaciones.find(res => {
+      if (res.propiedad_id !== propiedadId) return false;
+      if (excludeResId && res.id === excludeResId) return false;
+      if (res.estado === 'Cancelada' || res.estado === 'Checked-out') return false;
+      return checkin < res.fecha_checkout && checkout > res.fecha_checkin;
     });
   };
 
-  const getOwnerByPropiedadId = (propiedadId: number) => {
-    const rel = propiedadUsuarios.find(pu => pu.propiedad_id === propiedadId && pu.es_principal);
-    if (!rel) return undefined;
-    return usuarios.find(u => u.id === rel.usuario_id);
-  };
+  const addReservacion = async (
+    resData: Omit<Reservacion, 'id'>, 
+    huespedData?: Omit<Huesped, 'id'>
+  ) => {
+    try {
+      const overlap = checkReservationOverlap(resData.propiedad_id, resData.fecha_checkin, resData.fecha_checkout);
+      if (overlap) {
+        const prop = propiedades.find(p => p.id === resData.propiedad_id);
+        const overlapGuest = huespedes.find(h => h.id === overlap.huesped_id);
+        const guestName = overlapGuest ? `${overlapGuest.nombres} ${overlapGuest.apellidos}` : 'otro huésped';
+        showToast(`Conflicto de fechas en ${prop?.nombre || 'la propiedad'}: ya reservada por ${guestName} (${overlap.fecha_checkin} al ${overlap.fecha_checkout})`, 'error');
+        throw new Error('Conflicto de superposición de fechas');
+      }
 
-  // CRUD Implementations
-  const addPropiedad = (propiedadData: Omit<Propiedad, 'id'>, ownerId?: number) => {
-    const newId = Math.max(...propiedades.map(p => p.id), 0) + 1;
-    const newProp: Propiedad = {
-      ...propiedadData,
-      id: newId,
-      created_at: new Date().toISOString()
-    };
-    setPropiedades(prev => [newProp, ...prev]);
+      let targetHuespedId = resData.huesped_id;
+      if (huespedData && huespedData.nombres) {
+        const newHuesped = await api.huespedes.create(huespedData);
+        setHuespedes(prev => [newHuesped, ...prev]);
+        targetHuespedId = newHuesped.id;
+      }
 
-    if (ownerId) {
-      const newRelId = Math.max(...propiedadUsuarios.map(r => r.id), 0) + 1;
-      setPropiedadUsuarios(prev => [
-        ...prev,
-        { id: newRelId, propiedad_id: newId, usuario_id: ownerId, tipo_relacion: 'Owner', es_principal: true }
-      ]);
-    }
-    showToast(`Propiedad ${newProp.nombre} agregada correctamente.`);
-  };
-
-  const updatePropiedad = (id: number, propiedadData: Partial<Propiedad>, ownerId?: number) => {
-    setPropiedades(prev => prev.map(p => p.id === id ? { ...p, ...propiedadData, updated_at: new Date().toISOString() } : p));
-    
-    if (ownerId !== undefined) {
-      setPropiedadUsuarios(prev => {
-        const withoutOld = prev.filter(r => !(r.propiedad_id === id && r.es_principal));
-        if (ownerId > 0) {
-          const newRelId = Math.max(...prev.map(r => r.id), 0) + 1;
-          return [...withoutOld, { id: newRelId, propiedad_id: id, usuario_id: ownerId, tipo_relacion: 'Owner', es_principal: true }];
-        }
-        return withoutOld;
+      const generatedCode = `RES-${Math.floor(100000 + Math.random() * 900000)}`;
+      const newRes = await api.reservaciones.create({
+        ...resData,
+        codigo: resData.codigo || generatedCode,
+        huesped_id: targetHuespedId,
+        balance: resData.balance || 0,
+        estado: resData.estado || 'Confirmada'
       });
-    }
-    showToast('Propiedad actualizada con éxito.');
-  };
 
-  const deletePropiedad = (id: number) => {
-    setPropiedades(prev => prev.filter(p => p.id !== id));
-    setPropiedadUsuarios(prev => prev.filter(r => r.propiedad_id !== id));
-    showToast('Propiedad eliminada.', 'info');
-  };
-
-  const addEdificio = (nombre: string) => {
-    if (!nombre.trim()) return;
-    const newId = Math.max(...edificios.map(e => e.id), 0) + 1;
-    setEdificios(prev => [...prev, { id: newId, nombre: nombre.trim(), activo: true }]);
-    showToast(`Edificio ${nombre} registrado.`);
-  };
-
-  const deleteEdificio = (id: number) => {
-    setEdificios(prev => prev.filter(e => e.id !== id));
-    showToast('Edificio removido.', 'info');
-  };
-
-  const addUsuario = (userData: Omit<Usuario, 'id'>) => {
-    const newId = Math.max(...usuarios.map(u => u.id), 0) + 1;
-    const newUser: Usuario = {
-      ...userData,
-      id: newId,
-      created_at: new Date().toISOString()
-    };
-    setUsuarios(prev => [newUser, ...prev]);
-    showToast(`Usuario ${newUser.nombre} ${newUser.apellido} creado.`);
-  };
-
-  const updateUsuario = (id: number, userData: Partial<Usuario>) => {
-    setUsuarios(prev => prev.map(u => u.id === id ? { ...u, ...userData, updated_at: new Date().toISOString() } : u));
-    showToast('Datos de usuario actualizados.');
-  };
-
-  const deleteUsuario = (id: number) => {
-    setUsuarios(prev => prev.filter(u => u.id !== id));
-    setPropiedadUsuarios(prev => prev.filter(r => r.usuario_id !== id));
-    showToast('Usuario eliminado.', 'info');
-  };
-
-  const addReservacion = (resData: Omit<Reservacion, 'id'>, huespedData?: Omit<Huesped, 'id'>) => {
-    const conflict = checkReservationOverlap(resData.propiedad_id, resData.fecha_checkin, resData.fecha_checkout);
-    if (conflict) {
-      const huesped = getHuespedById(conflict.huesped_id);
-      const guestName = huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Huésped';
-      showToast(`Error: Conflicto de fechas con la reservación de ${guestName} (${conflict.fecha_checkin} al ${conflict.fecha_checkout}).`, 'error');
-      return;
-    }
-
-    let finalHuespedId = resData.huesped_id;
-
-    if (huespedData && (!finalHuespedId || finalHuespedId === 0)) {
-      finalHuespedId = Math.max(...huespedes.map(h => h.id), 0) + 1;
-      const newHuesped: Huesped = {
-        ...huespedData,
-        id: finalHuespedId,
-        created_at: new Date().toISOString()
-      };
-      setHuespedes(prev => [newHuesped, ...prev]);
-    }
-
-    const newResId = Math.max(...reservaciones.map(r => r.id), 2500000) + 1;
-    const newRes: Reservacion = {
-      ...resData,
-      id: newResId,
-      codigo: resData.codigo || `${newResId}`,
-      huesped_id: finalHuespedId,
-      created_at: new Date().toISOString().replace('T', ' ').substring(0, 16)
-    };
-
-    setReservaciones(prev => [newRes, ...prev]);
-    showToast(`Reservación #${newRes.codigo} creada.`);
-  };
-
-  const updateReservacion = (id: number, resData: Partial<Reservacion>) => {
-    const current = reservaciones.find(r => r.id === id);
-    if (current) {
-      const targetPropId = resData.propiedad_id || current.propiedad_id;
-      const targetCin = resData.fecha_checkin || current.fecha_checkin;
-      const targetCout = resData.fecha_checkout || current.fecha_checkout;
-
-      const conflict = checkReservationOverlap(targetPropId, targetCin, targetCout, id);
-      if (conflict) {
-        const huesped = getHuespedById(conflict.huesped_id);
-        const guestName = huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Huésped';
-        showToast(`Error: Conflicto de fechas con la reservación de ${guestName} (${conflict.fecha_checkin} al ${conflict.fecha_checkout}).`, 'error');
-        return;
+      setReservaciones(prev => [newRes, ...prev]);
+      showToast(`Reservación #${newRes.codigo || newRes.id} registrada con éxito`, 'success');
+    } catch (err: any) {
+      if (!err.message?.includes('Conflicto')) {
+        showToast(err.message || 'Error al guardar reservación', 'error');
       }
+      throw err;
     }
-
-    setReservaciones(prev => prev.map(r => r.id === id ? { ...r, ...resData, updated_at: new Date().toISOString() } : r));
-    showToast('Reservación actualizada.');
   };
 
-  const checkInReservacion = (id: number, brazaletes?: string, vehiculo?: string) => {
-    setReservaciones(prev => prev.map(r => {
-      if (r.id === id) {
-        return {
-          ...r,
-          estado: 'En Casa (Checked-in)' as EstadoReservacion,
-          brazaletes: brazaletes || r.brazaletes || 'Brazaletes Asignados',
-          vehiculo_info: vehiculo || r.vehiculo_info,
-          updated_at: new Date().toISOString()
-        };
+  const updateReservacion = async (id: number, resData: Partial<Reservacion>) => {
+    try {
+      const current = reservaciones.find(r => r.id === id);
+      if (current) {
+        const propId = resData.propiedad_id !== undefined ? resData.propiedad_id : current.propiedad_id;
+        const checkin = resData.fecha_checkin || current.fecha_checkin;
+        const checkout = resData.fecha_checkout || current.fecha_checkout;
+
+        const overlap = checkReservationOverlap(propId, checkin, checkout, id);
+        if (overlap) {
+          showToast(`Superposición detectada en fechas ${checkin} al ${checkout}`, 'error');
+          throw new Error('Conflicto de superposición de fechas');
+        }
       }
-      return r;
-    }));
-    showToast('Entrada registrada exitosamente (Checked-in).');
-  };
 
-  const checkOutReservacion = (id: number) => {
-    setReservaciones(prev => prev.map(r => {
-      if (r.id === id) {
-        return {
-          ...r,
-          estado: 'Checked-out' as EstadoReservacion,
-          updated_at: new Date().toISOString()
-        };
+      const updated = await api.reservaciones.update(id, resData);
+      setReservaciones(prev => prev.map(r => (r.id === id ? updated : r)));
+      showToast(`Reservación #${updated.codigo || updated.id} actualizada`, 'success');
+    } catch (err: any) {
+      if (!err.message?.includes('Superposición')) {
+        showToast(err.message || 'Error al actualizar reservación', 'error');
       }
-      return r;
-    }));
-    showToast('Salida registrada (Checked-out).', 'info');
+      throw err;
+    }
   };
 
-  const deleteReservacion = (id: number) => {
-    setReservaciones(prev => prev.filter(r => r.id !== id));
-    showToast('Reservación cancelada/eliminada.', 'info');
+  const checkInReservacion = async (id: number, brazaletes?: string, vehiculo?: string) => {
+    try {
+      const updated = await api.reservaciones.update(id, {
+        estado: 'En Casa (Checked-in)',
+        brazaletes: brazaletes || 'Asignado',
+        vehiculo_info: vehiculo || 'Sin vehículo'
+      });
+      setReservaciones(prev => prev.map(r => (r.id === id ? updated : r)));
+      showToast('Check-In completado exitosamente. Huésped En Casa.', 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Error al procesar Check-in', 'error');
+    }
   };
 
-  const addSolicitud = (solData: Omit<SolicitudAcceso, 'id' | 'created_at'>) => {
-    const newId = Math.max(...solicitudes.map(s => s.id), 0) + 1;
-    const now = new Date();
-    const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    
-    const newSol: SolicitudAcceso = {
-      ...solData,
-      id: newId,
-      created_at: formattedDate
-    };
-    setSolicitudes(prev => [newSol, ...prev]);
-    showToast('Pase / Solicitud registrada con éxito.');
+  const checkOutReservacion = async (id: number) => {
+    try {
+      const updated = await api.reservaciones.update(id, { estado: 'Checked-out' });
+      setReservaciones(prev => prev.map(r => (r.id === id ? updated : r)));
+      showToast('Check-Out completado. Unidad liberada.', 'info');
+    } catch (err: any) {
+      showToast(err.message || 'Error al procesar Check-out', 'error');
+    }
   };
 
-  const updateSolicitudStatus = (id: number, estatus: SolicitudAcceso['estatus'], comentario?: string) => {
-    setSolicitudes(prev => prev.map(s => {
-      if (s.id === id) {
-        return {
-          ...s,
-          estatus,
-          comentario: comentario !== undefined ? comentario : s.comentario
-        };
-      }
-      return s;
-    }));
-    showToast(`Solicitud #${id} marcada como ${estatus}.`);
+  const deleteReservacion = async (id: number) => {
+    try {
+      await api.reservaciones.delete(id);
+      setReservaciones(prev => prev.filter(r => r.id !== id));
+      showToast('Reservación eliminada', 'info');
+    } catch (err: any) {
+      showToast(err.message || 'Error al eliminar reservación', 'error');
+    }
   };
 
-  const resetToDefaults = () => {
-    localStorage.clear();
-    setEdificios(initialEdificios);
-    setUsuarios(initialUsuarios);
-    setPropiedades(initialPropiedades);
-    setPropiedadUsuarios(initialPropiedadUsuarios);
-    setHuespedes(initialHuespedes);
-    setReservaciones(initialReservaciones);
-    setSolicitudes(initialSolicitudes);
-    showToast('Datos reiniciados al catálogo demo oficial de Las Palomas HOA.');
+  const addSolicitud = async (solicitudData: Omit<SolicitudAcceso, 'id' | 'created_at'>) => {
+    try {
+      const created = await api.solicitudes.create(solicitudData);
+      setSolicitudes(prev => [created, ...prev]);
+      showToast('Solicitud de acceso enviada', 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Error al registrar solicitud', 'error');
+    }
   };
+
+  const updateSolicitudStatus = async (
+    id: number, 
+    estatus: SolicitudAcceso['estatus'], 
+    comentario?: string
+  ) => {
+    try {
+      const updated = await api.solicitudes.updateStatus(id, estatus, comentario);
+      setSolicitudes(prev => prev.map(s => (s.id === id ? updated : s)));
+      showToast(`Solicitud ${estatus.toLowerCase()}`, 'info');
+    } catch (err: any) {
+      showToast(err.message || 'Error al actualizar estatus', 'error');
+    }
+  };
+
+  const resetToDefaults = async () => {
+    try {
+      localStorage.clear();
+      await refreshAllData();
+      showToast('Sistema reiniciado y sincronizado con base de datos', 'info');
+    } catch (err: any) {
+      showToast('Error al reiniciar datos', 'error');
+    }
+  };
+
+  // Helpers
+  const getPropiedadById = useCallback((id: number) => {
+    return propiedades.find(p => p.id === id);
+  }, [propiedades]);
+
+  const getEdificioById = useCallback((id: number) => {
+    return edificios.find(e => e.id === id);
+  }, [edificios]);
+
+  const getGrupoById = useCallback((id?: number) => {
+    if (!id) return undefined;
+    return grupos.find(g => g.id === id);
+  }, [grupos]);
+
+  const getOwnerByPropiedadId = useCallback((propiedadId: number) => {
+    const relation = propiedadUsuarios.find(pu => pu.propiedad_id === propiedadId && pu.es_principal);
+    if (!relation) return undefined;
+    return usuarios.find(u => u.id === relation.usuario_id);
+  }, [propiedadUsuarios, usuarios]);
+
+  const getHuespedById = useCallback((id: number) => {
+    return huespedes.find(h => h.id === id);
+  }, [huespedes]);
 
   return (
     <AppContext.Provider
@@ -407,6 +441,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setActiveTab,
         searchQuery,
         setSearchQuery,
+        isLoading,
+        error,
+        refreshAllData,
         edificios,
         grupos,
         usuarios,
@@ -439,7 +476,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         toasts,
         showToast,
         removeToast,
-        resetToDefaults
+        resetToDefaults,
       }}
     >
       {children}

@@ -103,13 +103,13 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex bg-slate-50 text-slate-900">
+    <div className="min-h-screen flex bg-slate-50 text-slate-900 print:bg-white print:block print:p-0 print:m-0">
       
       {/* Fixed Left Sidebar Navigation */}
       <Sidebar />
 
       {/* Main Workspace Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 print:block print:w-full print:p-0 print:m-0">
         
         {/* Top Navbar */}
         <Navbar
@@ -119,7 +119,7 @@ export const App: React.FC = () => {
         />
 
         {/* Content Container */}
-        <main className="flex-1 p-6 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-6 max-w-7xl w-full mx-auto print:p-0 print:m-0 print:max-w-none print:w-full print:block">
           
           {/* Hero Banner with Resort Branding */}
           <HeroBanner />

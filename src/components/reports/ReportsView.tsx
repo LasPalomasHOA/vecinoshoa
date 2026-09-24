@@ -456,18 +456,18 @@ export const ReportsView: React.FC = () => {
         <div className="p-6 md:p-8 bg-white font-sans text-slate-900 print:p-0">
           
           {/* Balanced Institutional Report Header Banner */}
-          <div className="mb-6 pb-4 border-b border-slate-200/80">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="mb-6 pb-4 border-b border-slate-200/80 print:mb-3 print:pb-2 print:border-b-2 print:border-slate-900">
+            <div className="flex flex-col md:flex-row print:flex-row items-center justify-between gap-4 print:gap-2">
               
               {/* Left Column: Community Badge */}
-              <div className="hidden md:flex flex-col items-start min-w-[200px]">
-                <div className="text-[11px] font-black uppercase tracking-wider text-slate-800">
+              <div className="hidden md:flex print:flex flex-col items-start min-w-[180px] print:min-w-[150px]">
+                <div className="text-[11px] print:text-[10px] font-black uppercase tracking-wider text-slate-800">
                   Las Palomas Seaside
                 </div>
-                <div className="text-[10px] text-slate-500 font-medium">
+                <div className="text-[10px] print:text-[9px] text-slate-500 font-medium">
                   Golf Community & HOA
                 </div>
-                <div className="mt-1.5 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 text-[10px] font-bold text-slate-700">
+                <div className="mt-1.5 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 text-[10px] print:text-[9px] font-bold text-slate-700">
                   <span className="w-1.5 h-1.5 rounded-full bg-teal-600"></span>
                   <span>{filteredReservations.length} Registros</span>
                   <span>•</span>
@@ -476,29 +476,29 @@ export const ReportsView: React.FC = () => {
               </div>
 
               {/* Center Column: Prominent Title & Dates */}
-              <div className="text-center space-y-1">
-                <h1 className="text-lg md:text-xl font-black text-slate-900 tracking-tight leading-tight">
+              <div className="text-center space-y-1 print:space-y-0.5">
+                <h1 className="text-lg md:text-xl print:text-base font-black text-slate-900 tracking-tight leading-tight">
                   Entradas – Reporte de Reservaciones
                 </h1>
-                <h2 className="text-xs md:text-sm font-bold text-slate-700">
+                <h2 className="text-xs md:text-sm print:text-xs font-bold text-slate-700">
                   Las Palomas Seaside Golf Community
                 </h2>
                 <div className="pt-0.5">
-                  <span className="inline-block px-3 py-0.5 rounded-full bg-slate-100 text-slate-800 text-[11px] font-bold border border-slate-200/60 shadow-2xs">
+                  <span className="inline-block px-3 py-0.5 rounded-full bg-slate-100 text-slate-800 text-[11px] print:text-[9px] font-bold border border-slate-200/60 shadow-2xs">
                     Del {formatReportDate(startDate)} al {formatReportDate(endDate)}
                   </span>
                 </div>
               </div>
 
               {/* Right Column: Metadata & System Status */}
-              <div className="hidden md:flex flex-col items-end min-w-[200px] text-right">
-                <div className="text-[11px] font-bold text-slate-700">
+              <div className="hidden md:flex print:flex flex-col items-end min-w-[180px] print:min-w-[150px] text-right">
+                <div className="text-[11px] print:text-[10px] font-bold text-slate-700">
                   Control de Acceso
                 </div>
-                <div className="text-[10px] text-slate-400 font-medium">
+                <div className="text-[10px] print:text-[9px] text-slate-400 font-medium">
                   Recepción & Front Desk
                 </div>
-                <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-teal-50 text-teal-800 text-[10px] font-bold border border-teal-100">
+                <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-teal-50 text-teal-800 text-[10px] print:text-[9px] font-bold border border-teal-100">
                   <ShieldCheck className="w-3 h-3 text-teal-700" />
                   <span>Reporte Oficial</span>
                 </div>
@@ -508,22 +508,22 @@ export const ReportsView: React.FC = () => {
           </div>
 
           {/* Report Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
+          <div className="overflow-x-auto print:overflow-visible">
+            <table className="w-full text-left text-xs border-collapse print:w-full print:text-[9.5pt]">
               
               {/* Table Header Row */}
               <thead>
-                <tr className="border-t-2 border-b border-slate-900 bg-white text-slate-900 font-bold text-[11px]">
-                  <th className="py-2.5 px-2.5 whitespace-nowrap">ID</th>
-                  <th className="py-2.5 px-2.5 whitespace-nowrap">Propiedad</th>
-                  <th className="py-2.5 px-2.5 whitespace-nowrap">Entrada</th>
-                  <th className="py-2.5 px-2.5 whitespace-nowrap">Salida</th>
-                  <th className="py-2.5 px-2.5 whitespace-nowrap">Huésped</th>
-                  <th className="py-2.5 px-2.5 whitespace-nowrap">Correo de huésped</th>
-                  <th className="py-2.5 px-2.5 whitespace-nowrap">Tipo</th>
-                  <th className="py-2.5 px-2.5 whitespace-nowrap">Estatus</th>
-                  <th className="py-2.5 px-2.5 whitespace-nowrap">Balance</th>
-                  <th className="py-2.5 px-2.5 whitespace-nowrap">Creación</th>
+                <tr className="border-t-2 border-b border-slate-900 bg-white text-slate-900 font-bold text-[11px] print:text-[9.5pt]">
+                  <th className="py-2.5 px-2.5 whitespace-nowrap print:py-1.5 print:px-1.5">ID</th>
+                  <th className="py-2.5 px-2.5 whitespace-nowrap print:py-1.5 print:px-1.5">Propiedad</th>
+                  <th className="py-2.5 px-2.5 whitespace-nowrap print:py-1.5 print:px-1.5">Entrada</th>
+                  <th className="py-2.5 px-2.5 whitespace-nowrap print:py-1.5 print:px-1.5">Salida</th>
+                  <th className="py-2.5 px-2.5 whitespace-nowrap print:py-1.5 print:px-1.5">Huésped</th>
+                  <th className="py-2.5 px-2.5 whitespace-nowrap print:py-1.5 print:px-1.5">Correo de huésped</th>
+                  <th className="py-2.5 px-2.5 whitespace-nowrap print:py-1.5 print:px-1.5">Tipo</th>
+                  <th className="py-2.5 px-2.5 whitespace-nowrap print:py-1.5 print:px-1.5">Estatus</th>
+                  <th className="py-2.5 px-2.5 whitespace-nowrap print:py-1.5 print:px-1.5">Balance</th>
+                  <th className="py-2.5 px-2.5 whitespace-nowrap print:py-1.5 print:px-1.5">Creación</th>
                 </tr>
               </thead>
 
