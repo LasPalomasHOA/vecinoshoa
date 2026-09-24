@@ -8,8 +8,6 @@ import {
   ShieldCheck, 
   ArrowRight, 
   Sparkles, 
-  CheckCircle2, 
-  Building2, 
   HelpCircle, 
   X,
   AlertCircle,
@@ -90,13 +88,13 @@ export const LoginView: React.FC = () => {
         {/* Background Resort Image with Luminous & Warm Overlays */}
         <div className="absolute inset-0 z-0">
           <img 
-            src="/las_palomas_resort.jpg" 
+            src="/resort-bg.jpg" 
             alt="Las Palomas Seaside Golf Community" 
-            className="w-full h-full object-cover object-center scale-100 filter brightness-90 contrast-105 transition-transform duration-1000 ease-out"
+            className="w-full h-full object-cover object-center scale-100 filter brightness-95 contrast-105 transition-transform duration-1000 ease-out"
           />
-          {/* Subtle elegant gradient overlay to keep resort visible while ensuring typography readability */}
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-slate-900/20 backdrop-blur-[0.5px]" />
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/60 via-transparent to-slate-950/30" />
+          {/* Subtle gradient overlay to keep resort visible while ensuring typography readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-slate-900/10" />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/50 via-transparent to-slate-950/20" />
         </div>
 
         {/* Top Header / Resort Badge */}
@@ -122,39 +120,16 @@ export const LoginView: React.FC = () => {
             Portal Administrativo & Front Desk
           </div>
 
-          <h1 className="text-3xl lg:text-5xl font-black text-white tracking-tight leading-tight drop-shadow-sm">
+          <h1 className="text-3xl lg:text-5xl font-black text-white tracking-tight leading-tight drop-shadow-md">
             Gestión Integral de <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-200 via-sky-200 to-amber-100">
               Las Palomas Resort
             </span>
           </h1>
 
-          <p className="mt-4 text-slate-200 text-sm lg:text-base leading-relaxed font-normal text-balance drop-shadow-sm">
+          <p className="mt-4 text-slate-200 text-sm lg:text-base leading-relaxed font-normal text-balance drop-shadow-md">
             Plataforma centralizada para la administración de condominios, control de ocupación timeline tipo Gantt, recepción de huéspedes, brazaletes y autorizaciones de acceso.
           </p>
-
-          {/* Value props bullets / Frosted Cards */}
-          <div className="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-white/15">
-            <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 hover:bg-white/15 transition-all">
-              <div className="w-9 h-9 rounded-xl bg-teal-400/20 border border-teal-300/40 flex items-center justify-center text-teal-200 shrink-0">
-                <CheckCircle2 className="w-5 h-5" />
-              </div>
-              <div className="text-left">
-                <p className="text-xs font-bold text-white">Timeline en Vivo</p>
-                <p className="text-[11px] text-teal-100/80">Ocupación tipo Gantt</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 hover:bg-white/15 transition-all">
-              <div className="w-9 h-9 rounded-xl bg-sky-400/20 border border-sky-300/40 flex items-center justify-center text-sky-200 shrink-0">
-                <Building2 className="w-5 h-5" />
-              </div>
-              <div className="text-left">
-                <p className="text-xs font-bold text-white">Torres & Catálogo</p>
-                <p className="text-[11px] text-sky-100/80">Fase 1 y Fase 2</p>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Bottom Location & Status indicator */}
