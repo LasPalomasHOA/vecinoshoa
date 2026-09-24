@@ -1,7 +1,7 @@
 import { Pool, type QueryResult, type QueryResultRow } from 'pg';
 import dotenv from 'dotenv';
 
-// Cargar variables de entorno locales
+// Cargar variables de entorno locales si existen
 dotenv.config();
 
 let pool: Pool | null = null;
@@ -14,7 +14,7 @@ export function getConnectionString(): string {
     process.env.POSTGRES_PRISMA_URL ||
     process.env.POSTGRES_URL_NON_POOLING ||
     ''
-  );
+  ).trim();
 }
 
 export function getSchemaName(): string {
@@ -33,7 +33,9 @@ export function getDbPool(): Pool {
 
   const rawUrl = getConnectionString();
   if (!rawUrl) {
-    console.warn('[DB] No se encontró URL de conexión en variables de entorno (CUSTOM_DB_URL, DATABASE_URL, POSTGRES_URL).');
+    const msg = 'No se encontró URL de base de datos en las variables de entorno (CUSTOM_DB_URL, DATABASE_URL o POSTGRES_URL en Vercel).';
+    console.error(`[DB Error] ${msg}`);
+    throw new Error(msg);
   }
 
   // Limpiar parámetros para evitar conflictos con el driver pg
