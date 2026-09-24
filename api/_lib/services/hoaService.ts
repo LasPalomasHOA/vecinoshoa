@@ -1,4 +1,4 @@
-import { query, queryOne, testConnection, getQuotedSchema } from '../db.ts';
+import { query, queryOne, testConnection, getQuotedSchema } from '../db';
 import type { 
   Edificio, 
   GrupoPropiedad, 
@@ -8,7 +8,7 @@ import type {
   Huesped, 
   Reservacion, 
   SolicitudAcceso 
-} from '../../../src/types/index.ts';
+} from '../../../src/types';
 
 // Schema-qualified table helpers to guarantee absolute schema isolation without touching search_path
 const T = {

@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { handleApiRequest } from './_lib/router.ts';
+import { handleApiRequest } from './_lib/router';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Pass to unified router
