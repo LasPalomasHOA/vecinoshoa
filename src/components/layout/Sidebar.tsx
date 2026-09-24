@@ -11,6 +11,8 @@ import {
   RotateCcw
 } from 'lucide-react';
 
+import logoImg from '../../assets/logo.png';
+
 export const Sidebar: React.FC = () => {
   const { 
     activeTab, 
@@ -69,21 +71,12 @@ export const Sidebar: React.FC = () => {
     <aside className="w-64 bg-white/95 backdrop-blur-md border-r border-slate-200/90 flex flex-col shrink-0 h-screen sticky top-0 z-40 shadow-xs">
       
       {/* Brand Header */}
-      <div className="p-5 border-b border-slate-100 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-teal-600 to-teal-700 flex items-center justify-center text-white shadow-md shadow-teal-700/25 ring-2 ring-teal-50">
-          <Waves className="w-5 h-5" />
-        </div>
-        <div>
-          <div className="flex items-center gap-1.5">
-            <h1 className="font-extrabold text-sm tracking-tight text-slate-900">
-              LAS PALOMAS
-            </h1>
-            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200">
-              HOA
-            </span>
-          </div>
-          <p className="text-[11px] text-slate-500 font-medium">Seaside Golf Community</p>
-        </div>
+      <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-center">
+        <img 
+          src={logoImg} 
+          alt="Las Palomas HOA Logo" 
+          className="w-full max-h-12 object-contain"
+        />
       </div>
 
       {/* Resort Mini Card with Glass styling */}
