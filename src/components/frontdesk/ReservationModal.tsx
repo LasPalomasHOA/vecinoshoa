@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Reservacion, TipoHuesped, EstadoReservacion } from '../../types';
-import { X, Calendar, User, Building2, Tag, Car } from 'lucide-react';
+import { X, Calendar, User, Building2, Tag, Car, AlertTriangle } from 'lucide-react';
 
 interface ReservationModalProps {
   isOpen: boolean;
@@ -24,7 +24,9 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
     propiedades, 
     huespedes, 
     addReservacion, 
-    updateReservacion 
+    updateReservacion,
+    checkReservationOverlap,
+    getHuespedById
   } = useApp();
 
   const [propiedadId, setPropiedadId] = useState<number>(propiedades[0]?.id || 101);
@@ -94,7 +96,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
     }
   }, [reservationToEdit, isOpen, initialData, propiedades]);
 
-  const nightsCount = React.useMemo(() => {
+  const nightsCount = useMemo(() => {
     if (!fechaCheckin || !fechaCheckout) return 0;
     try {
       const d1 = new Date(fechaCheckin + 'T12:00:00');
@@ -106,10 +108,19 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
     }
   }, [fechaCheckin, fechaCheckout]);
 
+  // Overlap conflict check
+  const conflictReservation = useMemo(() => {
+    if (!propiedadId || !fechaCheckin || !fechaCheckout) return undefined;
+    return checkReservationOverlap(propiedadId, fechaCheckin, fechaCheckout, reservationToEdit?.id);
+  }, [propiedadId, fechaCheckin, fechaCheckout, reservationToEdit, checkReservationOverlap]);
+
+  const conflictGuest = conflictReservation ? getHuespedById(conflictReservation.huesped_id) : undefined;
+
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (conflictReservation) return;
 
     if (reservationToEdit) {
       updateReservacion(reservationToEdit.id, {
@@ -440,6 +451,19 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
             />
           </div>
 
+          {/* Conflict Error Alert if overlap detected */}
+          {conflictReservation && (
+            <div className="p-3.5 rounded-xl bg-rose-50/90 border border-rose-200 text-rose-900 text-xs flex items-start gap-2.5 animate-fadeIn">
+              <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-rose-950 block">Fechas No Disponibles (Superposición de Reservaciones):</span>
+                <span className="text-rose-800 text-[11px] leading-relaxed">
+                  Este condominio ya se encuentra reservado del <strong>{conflictReservation.fecha_checkin}</strong> al <strong>{conflictReservation.fecha_checkout}</strong> por <strong>{conflictGuest ? `${conflictGuest.nombres} ${conflictGuest.apellidos}` : 'otro huésped'}</strong> (Folio #{conflictReservation.codigo || conflictReservation.id}). No se permiten sobreventas.
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Footer */}
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
             <button
@@ -451,9 +475,14 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-6 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-700/20"
+              disabled={!!conflictReservation}
+              className={`px-6 py-2 rounded-xl font-bold text-xs shadow-md transition-all ${
+                conflictReservation
+                  ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'
+                  : 'bg-teal-600 hover:bg-teal-700 text-white shadow-teal-700/20 active:scale-95'
+              }`}
             >
-              {reservationToEdit ? 'Guardar Cambios' : 'Confirmar Reservación'}
+              {conflictReservation ? 'Fechas No Disponibles' : reservationToEdit ? 'Guardar Cambios' : 'Confirmar Reservación'}
             </button>
           </div>
 

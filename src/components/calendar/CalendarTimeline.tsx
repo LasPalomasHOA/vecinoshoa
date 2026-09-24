@@ -39,7 +39,8 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
     reservaciones, 
     edificios, 
     getHuespedById,
-    getEdificioById
+    getEdificioById,
+    checkReservationOverlap
   } = useApp();
 
   const [currentYear, setCurrentYear] = useState(2026);
@@ -244,10 +245,20 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
     
     const d1 = selection.startDate;
     const d2 = selection.hoverDate || selection.startDate;
-    const checkin = d1 <= d2 ? d1 : d2;
-    const checkout = d1 <= d2 ? d2 : d1;
+    let checkin = d1 <= d2 ? d1 : d2;
+    let checkout = d1 <= d2 ? d2 : d1;
 
-    let nights = 0;
+    if (checkin === checkout) {
+      try {
+        const d = new Date(checkin + 'T12:00:00');
+        d.setDate(d.getDate() + 1);
+        checkout = d.toISOString().split('T')[0];
+      } catch {
+        // fallback
+      }
+    }
+
+    let nights = 1;
     try {
       const startObj = new Date(checkin + 'T12:00:00');
       const endObj = new Date(checkout + 'T12:00:00');
@@ -256,15 +267,18 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
       nights = 1;
     }
 
+    const conflict = checkReservationOverlap(selection.propiedadId, checkin, checkout);
+
     return {
       prop,
       ed,
       checkin,
       checkout,
       nights,
+      conflict,
       isSameDay: checkin === checkout
     };
-  }, [selection, propiedades, getEdificioById]);
+  }, [selection, propiedades, getEdificioById, checkReservationOverlap]);
 
   // Format date readable
   const formatReadableDate = (dateStr?: string) => {
@@ -629,12 +643,12 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
                             const outDay = parseInt(checkoutStr.split('-')[2], 10);
                             
                             const startCol = Math.max(inDay, 1);
-                            const endCol = Math.min(outDay, daysInMonth.length);
                             const nights = Math.max(1, outDay - inDay);
 
                             const totalDays = daysInMonth.length;
                             const leftPct = ((startCol - 1) / totalDays) * 100;
-                            const widthPct = ((endCol - startCol + 1) / totalDays) * 100;
+                            const widthPct = (nights / totalDays) * 100;
+                            const hasConflict = !!selectionPreview?.conflict;
 
                             return (
                               <div
@@ -642,17 +656,23 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
                                   left: `calc(${leftPct}% + 1px)`,
                                   width: `calc(${widthPct}% - 2px)`,
                                 }}
-                                className="absolute inset-y-1 z-20 rounded-lg border-2 border-teal-500 border-dashed bg-teal-500/25 backdrop-blur-xs flex items-center justify-center px-2 pointer-events-none animate-pulse-glow shadow-soft-glow"
+                                className={`absolute inset-y-1 z-20 rounded-lg border-2 border-dashed backdrop-blur-xs flex items-center justify-center px-2 pointer-events-none shadow-soft-glow ${
+                                  hasConflict
+                                    ? 'border-rose-500 bg-rose-500/25 text-rose-950 animate-pulse'
+                                    : 'border-teal-500 bg-teal-500/25 text-teal-950 animate-pulse-glow'
+                                }`}
                               >
-                                <span className="text-[10px] font-black text-teal-950 truncate whitespace-nowrap drop-shadow-xs">
-                                  ✨ {nights} {nights === 1 ? 'noche' : 'noches'} ({formatReadableDate(checkinStr)} → {formatReadableDate(checkoutStr)})
+                                <span className="text-[10px] font-black truncate whitespace-nowrap drop-shadow-xs">
+                                  {hasConflict
+                                    ? `⚠️ Fechas ocupadas (${nights} ${nights === 1 ? 'noche' : 'noches'})`
+                                    : `✨ ${nights} ${nights === 1 ? 'noche' : 'noches'} (${formatReadableDate(checkinStr)} → ${formatReadableDate(checkoutStr)})`}
                                 </span>
                               </div>
                             );
                           })()
                         )}
 
-                        {/* Existing Reservation Bars spanning full day range */}
+                        {/* Existing Reservation Bars spanning nights without overlap on turnover day */}
                         {propReservations.map((res) => {
                           const checkinParts = res.fecha_checkin.split('-').map(Number);
                           const checkoutParts = res.fecha_checkout.split('-').map(Number);
@@ -673,17 +693,18 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
                             visibleStartDay = checkinParts[2];
                           }
 
-                          let visibleEndDay = daysInMonth.length;
+                          let visibleEndDay = daysInMonth.length + 1;
                           if (coutDate <= mEnd) {
                             visibleEndDay = checkoutParts[2];
                           }
 
                           const startCol = Math.max(1, Math.min(visibleStartDay, daysInMonth.length));
-                          const endCol = Math.max(startCol, Math.min(visibleEndDay, daysInMonth.length));
+                          const endCol = Math.max(startCol, Math.min(visibleEndDay, daysInMonth.length + 1));
+                          const nightsInMonth = Math.max(1, endCol - startCol);
 
                           const totalDays = daysInMonth.length;
                           const leftPct = ((startCol - 1) / totalDays) * 100;
-                          const widthPct = ((endCol - startCol + 1) / totalDays) * 100;
+                          const widthPct = (nightsInMonth / totalDays) * 100;
 
                           const huesped = getHuespedById(res.huesped_id);
                           const guestName = huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Huésped';
@@ -723,11 +744,15 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
 
       {/* Floating Glass Ribbon when date selection is in progress */}
       {selection && selectionPreview && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 glass-floating rounded-2xl p-4 shadow-2xl flex flex-wrap items-center justify-between gap-4 max-w-2xl w-[92%] animate-slide-up border border-teal-500/40">
+        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 glass-floating rounded-2xl p-4 shadow-2xl flex flex-wrap items-center justify-between gap-4 max-w-2xl w-[92%] animate-slide-up border ${
+          selectionPreview.conflict ? 'border-rose-500/50 bg-rose-50/90' : 'border-teal-500/40'
+        }`}>
           
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-teal-700/30">
-              <CalendarIcon className="w-5 h-5" />
+            <div className={`w-10 h-10 rounded-xl text-white flex items-center justify-center shrink-0 shadow-md ${
+              selectionPreview.conflict ? 'bg-rose-600 shadow-rose-700/30' : 'bg-teal-600 shadow-teal-700/30'
+            }`}>
+              {selectionPreview.conflict ? <AlertCircle className="w-5 h-5" /> : <CalendarIcon className="w-5 h-5" />}
             </div>
             
             <div>
@@ -746,6 +771,11 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
                 <span className="text-[11px] font-extrabold px-1.5 py-0.2 rounded-full bg-teal-100 text-teal-800 border border-teal-200">
                   {selectionPreview.nights} {selectionPreview.nights === 1 ? 'noche' : 'noches'}
                 </span>
+                {selectionPreview.conflict && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200">
+                    ⚠️ Fechas Ocupadas
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -758,17 +788,23 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
               Cancelar (Esc)
             </button>
             <button
+              disabled={!!selectionPreview.conflict}
               onClick={() => {
+                if (selectionPreview.conflict) return;
                 const propId = selection.propiedadId;
                 const cin = selectionPreview.checkin;
                 const cout = selectionPreview.checkout;
                 setSelection(null);
                 onNewReservation(propId, cin, cout);
               }}
-              className="px-4 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-700/25 flex items-center gap-1.5 active:scale-95 transition-all"
+              className={`px-4 py-1.5 rounded-xl font-bold text-xs shadow-md flex items-center gap-1.5 transition-all ${
+                selectionPreview.conflict
+                  ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'
+                  : 'bg-teal-600 hover:bg-teal-700 text-white shadow-teal-700/25 active:scale-95'
+              }`}
             >
               <CheckCircle2 className="w-4 h-4" />
-              <span>Confirmar Rango</span>
+              <span>{selectionPreview.conflict ? 'Fechas No Disponibles' : 'Confirmar Rango'}</span>
             </button>
           </div>
 

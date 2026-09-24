@@ -72,6 +72,7 @@ interface AppContextType {
   getGrupoById: (id?: number) => GrupoPropiedad | undefined;
   getOwnerByPropiedadId: (propiedadId: number) => Usuario | undefined;
   getHuespedById: (id: number) => Huesped | undefined;
+  checkReservationOverlap: (propiedadId: number, checkin: string, checkout: string, excludeResId?: number) => Reservacion | undefined;
   
   // Toasts
   toasts: Toast[];
@@ -178,6 +179,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const getGrupoById = (id?: number) => (id ? grupos.find(g => g.id === id) : undefined);
   const getHuespedById = (id: number) => huespedes.find(h => h.id === id);
 
+  const checkReservationOverlap = (propiedadId: number, checkin: string, checkout: string, excludeResId?: number): Reservacion | undefined => {
+    return reservaciones.find(r => {
+      if (excludeResId && r.id === excludeResId) return false;
+      if (r.propiedad_id !== propiedadId) return false;
+      if (r.estado === 'Cancelada') return false;
+      // Two date ranges [A, B] and [C, D] overlap if A < D and B > C
+      return r.fecha_checkin < checkout && r.fecha_checkout > checkin;
+    });
+  };
+
   const getOwnerByPropiedadId = (propiedadId: number) => {
     const rel = propiedadUsuarios.find(pu => pu.propiedad_id === propiedadId && pu.es_principal);
     if (!rel) return undefined;
@@ -261,6 +272,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addReservacion = (resData: Omit<Reservacion, 'id'>, huespedData?: Omit<Huesped, 'id'>) => {
+    const conflict = checkReservationOverlap(resData.propiedad_id, resData.fecha_checkin, resData.fecha_checkout);
+    if (conflict) {
+      const huesped = getHuespedById(conflict.huesped_id);
+      const guestName = huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Huésped';
+      showToast(`Error: Conflicto de fechas con la reservación de ${guestName} (${conflict.fecha_checkin} al ${conflict.fecha_checkout}).`, 'error');
+      return;
+    }
+
     let finalHuespedId = resData.huesped_id;
 
     if (huespedData && (!finalHuespedId || finalHuespedId === 0)) {
@@ -287,6 +306,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateReservacion = (id: number, resData: Partial<Reservacion>) => {
+    const current = reservaciones.find(r => r.id === id);
+    if (current) {
+      const targetPropId = resData.propiedad_id || current.propiedad_id;
+      const targetCin = resData.fecha_checkin || current.fecha_checkin;
+      const targetCout = resData.fecha_checkout || current.fecha_checkout;
+
+      const conflict = checkReservationOverlap(targetPropId, targetCin, targetCout, id);
+      if (conflict) {
+        const huesped = getHuespedById(conflict.huesped_id);
+        const guestName = huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Huésped';
+        showToast(`Error: Conflicto de fechas con la reservación de ${guestName} (${conflict.fecha_checkin} al ${conflict.fecha_checkout}).`, 'error');
+        return;
+      }
+    }
+
     setReservaciones(prev => prev.map(r => r.id === id ? { ...r, ...resData, updated_at: new Date().toISOString() } : r));
     showToast('Reservación actualizada.');
   };
@@ -401,6 +435,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         getGrupoById,
         getOwnerByPropiedadId,
         getHuespedById,
+        checkReservationOverlap,
         toasts,
         showToast,
         removeToast,
