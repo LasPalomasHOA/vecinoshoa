@@ -12,7 +12,12 @@ import {
   Building2, 
   HelpCircle, 
   X,
-  AlertCircle
+  AlertCircle,
+  Sun,
+  Sunset,
+  Moon,
+  KeyRound,
+  Waves
 } from 'lucide-react';
 import logoImg from '../../assets/logo.png';
 
@@ -26,13 +31,20 @@ export const LoginView: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
-  // Saludo dinámico según la hora del día
-  const getGreeting = () => {
+  // Saludo e icono dinámico según la hora del día
+  const getGreetingData = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return '¡Buenos días!';
-    if (hour < 19) return '¡Buenas tardes!';
-    return '¡Buenas noches!';
+    if (hour >= 5 && hour < 12) {
+      return { text: '¡Buenos días!', icon: Sun, color: 'text-amber-600 bg-amber-50 border-amber-200/60' };
+    }
+    if (hour >= 12 && hour < 19) {
+      return { text: '¡Buenas tardes!', icon: Sunset, color: 'text-teal-700 bg-teal-50 border-teal-200/60' };
+    }
+    return { text: '¡Buenas noches!', icon: Moon, color: 'text-indigo-700 bg-indigo-50 border-indigo-200/60' };
   };
+
+  const greeting = getGreetingData();
+  const GreetingIcon = greeting.icon;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,30 +65,43 @@ export const LoginView: React.FC = () => {
     }
   };
 
+  // Acceso rápido para pruebas de demostración
+  const fillCredentials = (type: 'admin' | 'frontdesk') => {
+    if (type === 'admin') {
+      setEmail('admin@laspalomas.com');
+      setPassword('admin123');
+    } else {
+      setEmail('recepcion@laspalomas.com');
+      setPassword('admin123');
+    }
+    setErrorMessage(null);
+  };
+
   return (
-    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-slate-950 text-slate-100 font-sans selection:bg-teal-500 selection:text-white relative overflow-hidden">
+    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-slate-50 text-slate-800 font-sans selection:bg-teal-500 selection:text-white relative overflow-hidden">
       
-      {/* Background ambient lighting */}
-      <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-teal-600/10 rounded-full blur-3xl pointer-events-none -translate-x-1/2 -translate-y-1/2" />
-      <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-sky-600/10 rounded-full blur-3xl pointer-events-none translate-x-1/3 translate-y-1/3" />
+      {/* Background ambient lighting & soft gradients */}
+      <div className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-gradient-to-br from-teal-200/40 via-sky-200/30 to-transparent rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-32 -right-32 w-[650px] h-[650px] bg-gradient-to-tl from-teal-100/50 via-emerald-100/30 to-transparent rounded-full blur-3xl pointer-events-none" />
 
       {/* LEFT SECTION: Resort Showcase Visual & Brand Identity */}
-      <div className="lg:w-7/12 relative hidden md:flex flex-col justify-between p-8 lg:p-14 overflow-hidden border-r border-slate-800/80">
+      <div className="lg:w-7/12 relative hidden md:flex flex-col justify-between p-8 lg:p-12 xl:p-14 overflow-hidden border-r border-slate-200/80 bg-slate-900">
         
-        {/* Background Resort Image with Gradient Overlays */}
+        {/* Background Resort Image with Luminous & Warm Overlays */}
         <div className="absolute inset-0 z-0">
           <img 
             src="/las_palomas_resort.jpg" 
             alt="Las Palomas Seaside Golf Community" 
-            className="w-full h-full object-cover object-center scale-105 filter brightness-75 contrast-105 transition-transform duration-1000 ease-out"
+            className="w-full h-full object-cover object-center scale-100 filter brightness-90 contrast-105 transition-transform duration-1000 ease-out"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-slate-950/40 backdrop-blur-[1px]" />
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-transparent to-slate-950" />
+          {/* Subtle elegant gradient overlay to keep resort visible while ensuring typography readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-slate-900/20 backdrop-blur-[0.5px]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/60 via-transparent to-slate-950/30" />
         </div>
 
         {/* Top Header / Resort Badge */}
         <div className="relative z-10 flex items-center justify-between">
-          <div className="bg-white/95 backdrop-blur-md px-5 py-2.5 rounded-2xl shadow-xl border border-white/20 flex items-center gap-3">
+          <div className="bg-white/95 backdrop-blur-md px-5 py-2.5 rounded-2xl shadow-xl border border-white/60 flex items-center gap-3 transition-transform hover:scale-[1.02]">
             <img 
               src={logoImg} 
               alt="Las Palomas HOA" 
@@ -84,75 +109,80 @@ export const LoginView: React.FC = () => {
             />
           </div>
 
-          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/80 backdrop-blur-md border border-teal-500/30 text-teal-300 text-xs font-semibold shadow-lg">
-            <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white text-xs font-semibold shadow-lg shadow-black/10">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse ring-4 ring-emerald-400/20" />
             <span>Sistema Operativo 2026</span>
           </div>
         </div>
 
         {/* Middle Feature Highlights */}
-        <div className="relative z-10 max-w-xl my-auto py-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-teal-500/10 border border-teal-500/30 text-teal-400 text-xs font-bold tracking-wide uppercase mb-4">
-            <Sparkles className="w-3.5 h-3.5" />
+        <div className="relative z-10 max-w-xl my-auto py-10">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/25 text-teal-200 text-xs font-bold tracking-wide uppercase mb-4 shadow-sm">
+            <Sparkles className="w-3.5 h-3.5 text-teal-300" />
             Portal Administrativo & Front Desk
           </div>
 
-          <h1 className="text-3xl lg:text-5xl font-extrabold text-white tracking-tight leading-tight">
+          <h1 className="text-3xl lg:text-5xl font-black text-white tracking-tight leading-tight drop-shadow-sm">
             Gestión Integral de <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-300 via-sky-300 to-teal-100">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-200 via-sky-200 to-amber-100">
               Las Palomas Resort
             </span>
           </h1>
 
-          <p className="mt-4 text-slate-300 text-sm lg:text-base leading-relaxed font-normal text-balance">
-            Plataforma centralizada para la administración de condominios, control de ocupación timeline, recepción de huéspedes, brazaletes y autorizaciones de acceso.
+          <p className="mt-4 text-slate-200 text-sm lg:text-base leading-relaxed font-normal text-balance drop-shadow-sm">
+            Plataforma centralizada para la administración de condominios, control de ocupación timeline tipo Gantt, recepción de huéspedes, brazaletes y autorizaciones de acceso.
           </p>
 
-          {/* Value props bullets */}
-          <div className="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-white/10">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-teal-500/20 border border-teal-400/30 flex items-center justify-center text-teal-300 shrink-0">
-                <CheckCircle2 className="w-4 h-4" />
+          {/* Value props bullets / Frosted Cards */}
+          <div className="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-white/15">
+            <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 hover:bg-white/15 transition-all">
+              <div className="w-9 h-9 rounded-xl bg-teal-400/20 border border-teal-300/40 flex items-center justify-center text-teal-200 shrink-0">
+                <CheckCircle2 className="w-5 h-5" />
               </div>
               <div className="text-left">
                 <p className="text-xs font-bold text-white">Timeline en Vivo</p>
-                <p className="text-[11px] text-slate-400">Ocupación tipo Gantt</p>
+                <p className="text-[11px] text-teal-100/80">Ocupación tipo Gantt</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center text-sky-300 shrink-0">
-                <Building2 className="w-4 h-4" />
+            <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 hover:bg-white/15 transition-all">
+              <div className="w-9 h-9 rounded-xl bg-sky-400/20 border border-sky-300/40 flex items-center justify-center text-sky-200 shrink-0">
+                <Building2 className="w-5 h-5" />
               </div>
               <div className="text-left">
                 <p className="text-xs font-bold text-white">Torres & Catálogo</p>
-                <p className="text-[11px] text-slate-400">Fase 1 y Fase 2</p>
+                <p className="text-[11px] text-sky-100/80">Fase 1 y Fase 2</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Bottom Location & Weather indicator */}
-        <div className="relative z-10 flex items-center justify-between text-xs text-slate-400 pt-4 border-t border-slate-800/80">
-          <p className="font-medium">📍 Sandy Beach, Puerto Peñasco, Sonora, México</p>
-          <p className="font-mono text-[11px] text-teal-400">HOA SECURE PORTAL</p>
+        {/* Bottom Location & Status indicator */}
+        <div className="relative z-10 flex items-center justify-between text-xs text-slate-200 pt-4 border-t border-white/15">
+          <div className="flex items-center gap-2">
+            <Waves className="w-4 h-4 text-teal-300" />
+            <p className="font-medium">Sandy Beach • Puerto Peñasco, Sonora, México</p>
+          </div>
+          <span className="px-2.5 py-1 rounded-md bg-white/10 text-[11px] font-semibold tracking-wider text-teal-200 border border-white/10">
+            HOA SECURE
+          </span>
         </div>
 
       </div>
 
-      {/* RIGHT SECTION: Interactive Login Form */}
-      <div className="w-full lg:w-5/12 flex flex-col justify-between p-6 sm:p-10 lg:p-12 relative z-10 bg-slate-900/95 backdrop-blur-xl">
+      {/* RIGHT SECTION: Interactive Login Form (Clean, Modern Light Luxury Theme) */}
+      <div className="w-full lg:w-5/12 flex flex-col justify-between p-6 sm:p-10 lg:p-12 xl:p-14 relative z-10 bg-white/95 backdrop-blur-xl shadow-2xl lg:shadow-none">
         
         {/* Mobile Header Logo */}
-        <div className="md:hidden flex items-center justify-between mb-8 pb-4 border-b border-slate-800">
-          <div className="bg-white p-2 rounded-xl">
+        <div className="md:hidden flex items-center justify-between mb-8 pb-4 border-b border-slate-200">
+          <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-100">
             <img 
               src={logoImg} 
               alt="Las Palomas HOA" 
               className="h-8 w-auto object-contain"
             />
           </div>
-          <span className="text-xs font-bold px-2.5 py-1 rounded-md bg-teal-500/10 text-teal-400 border border-teal-500/20">
+          <span className="text-xs font-bold px-3 py-1 rounded-full bg-teal-50 text-teal-700 border border-teal-200">
             HOA Portal
           </span>
         </div>
@@ -160,26 +190,53 @@ export const LoginView: React.FC = () => {
         {/* Form Container */}
         <div className="max-w-md w-full mx-auto my-auto space-y-6">
           
-          {/* Header Title */}
+          {/* Header Title & Dynamic Greeting */}
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs font-bold text-teal-400 uppercase tracking-wider">{getGreeting()}</span>
+            <div className="flex items-center gap-2 mb-2">
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${greeting.color}`}>
+                <GreetingIcon className="w-3.5 h-3.5" />
+                {greeting.text}
+              </span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
               Iniciar Sesión
             </h2>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1">
-              Ingresa al panel administrativo de Las Palomas HOA.
+            <p className="text-xs sm:text-sm text-slate-500 mt-1.5">
+              Ingresa al panel administrativo y de control de Las Palomas HOA.
             </p>
+          </div>
+
+          {/* Quick Demo Acceso Buttons (Convenient & Clean) */}
+          <div className="p-3 bg-slate-50 border border-slate-200/90 rounded-2xl flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-[11px] text-slate-600 font-semibold">
+              <KeyRound className="w-3.5 h-3.5 text-teal-600" />
+              <span>Cuentas demo:</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => fillCredentials('admin')}
+                className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-teal-700 hover:border-teal-300 hover:bg-teal-50/50 shadow-xs transition-all cursor-pointer"
+              >
+                Admin
+              </button>
+              <button
+                type="button"
+                onClick={() => fillCredentials('frontdesk')}
+                className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-teal-700 hover:border-teal-300 hover:bg-teal-50/50 shadow-xs transition-all cursor-pointer"
+              >
+                Front Desk
+              </button>
+            </div>
           </div>
 
           {/* Error Banner */}
           {errorMessage && (
-            <div className="p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2.5 animate-shake">
-              <AlertCircle className="w-4 h-4 shrink-0 text-rose-400 mt-0.5" />
+            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2.5 animate-shake shadow-sm">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 mt-0.5" />
               <div className="flex-1">
-                <p className="font-semibold text-rose-200">Error de inicio de sesión</p>
-                <p className="text-[11px] text-rose-300/90 mt-0.5">{errorMessage}</p>
+                <p className="font-bold text-rose-900">Error de autenticación</p>
+                <p className="text-[11px] text-rose-700 mt-0.5">{errorMessage}</p>
               </div>
             </div>
           )}
@@ -189,7 +246,7 @@ export const LoginView: React.FC = () => {
             
             {/* Email / Username Field */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-300">
+              <label className="block text-xs font-bold text-slate-700">
                 Correo Electrónico o Usuario
               </label>
               <div className="relative">
@@ -204,7 +261,7 @@ export const LoginView: React.FC = () => {
                     setErrorMessage(null);
                   }}
                   placeholder="admin@laspalomas.com"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-800/90 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50/80 hover:bg-white focus:bg-white border border-slate-200 focus:border-teal-600 rounded-xl text-slate-900 placeholder-slate-400 text-xs sm:text-sm focus:outline-none focus:ring-4 focus:ring-teal-500/15 shadow-xs transition-all"
                   required
                 />
               </div>
@@ -213,13 +270,13 @@ export const LoginView: React.FC = () => {
             {/* Password Field */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="block text-xs font-semibold text-slate-300">
+                <label className="block text-xs font-bold text-slate-700">
                   Contraseña
                 </label>
                 <button
                   type="button"
                   onClick={() => setIsHelpModalOpen(true)}
-                  className="text-[11px] font-medium text-teal-400 hover:text-teal-300 transition-colors cursor-pointer"
+                  className="text-[11px] font-semibold text-teal-600 hover:text-teal-800 hover:underline transition-colors cursor-pointer"
                 >
                   ¿Olvidaste tu contraseña?
                 </button>
@@ -236,13 +293,13 @@ export const LoginView: React.FC = () => {
                     setErrorMessage(null);
                   }}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-10 py-2.5 bg-slate-800/90 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all font-mono"
+                  className="w-full pl-10 pr-10 py-2.5 bg-slate-50/80 hover:bg-white focus:bg-white border border-slate-200 focus:border-teal-600 rounded-xl text-slate-900 placeholder-slate-400 text-xs sm:text-sm focus:outline-none focus:ring-4 focus:ring-teal-500/15 shadow-xs transition-all font-mono"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
                   title={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -257,9 +314,9 @@ export const LoginView: React.FC = () => {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-teal-600 focus:ring-teal-500 focus:ring-offset-slate-900 cursor-pointer accent-teal-600"
+                  className="w-4 h-4 rounded border-slate-300 bg-white text-teal-600 focus:ring-teal-500 focus:ring-offset-white cursor-pointer accent-teal-600"
                 />
-                <span className="text-xs text-slate-400 group-hover:text-slate-300 transition-colors">
+                <span className="text-xs font-medium text-slate-600 group-hover:text-slate-900 transition-colors">
                   Recordar mi sesión en este equipo
                 </span>
               </label>
@@ -269,12 +326,12 @@ export const LoginView: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full mt-2 py-3 px-4 rounded-xl bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white font-bold text-sm shadow-lg shadow-teal-600/25 transition-all flex items-center justify-center gap-2 active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
+              className="w-full mt-2 py-3.5 px-4 rounded-xl bg-gradient-to-r from-teal-600 via-teal-600 to-teal-700 hover:from-teal-500 hover:to-teal-600 text-white font-bold text-sm shadow-lg shadow-teal-600/25 hover:shadow-teal-600/35 transition-all flex items-center justify-center gap-2 active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
             >
               {isLoading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>Iniciando sesión...</span>
+                  <span>Validando credenciales...</span>
                 </>
               ) : (
                 <>
@@ -289,54 +346,56 @@ export const LoginView: React.FC = () => {
         </div>
 
         {/* Footer Security Notice */}
-        <div className="pt-6 mt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-500 text-center sm:text-left">
-          <div className="flex items-center gap-1.5 text-teal-400 font-medium">
-            <ShieldCheck className="w-4 h-4" />
+        <div className="pt-6 mt-6 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-500 text-center sm:text-left">
+          <div className="flex items-center gap-1.5 text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200/80 px-2.5 py-1 rounded-full">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
             <span>Acceso Seguro Encriptado SSL</span>
           </div>
-          <p>© 2026 Las Palomas HOA. Versión 2.6</p>
+          <p className="font-medium text-slate-400">© 2026 Las Palomas HOA • V2.6</p>
         </div>
 
       </div>
 
-      {/* MODAL: Ayuda / Recuperación de Contraseña */}
+      {/* MODAL: Ayuda / Recuperación de Contraseña (Light Luxury Theme) */}
       {isHelpModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl relative text-left">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl relative text-left">
             <button
               onClick={() => setIsHelpModalOpen(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+              className="absolute top-5 right-5 text-slate-400 hover:text-slate-700 p-1.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="w-10 h-10 rounded-xl bg-teal-500/10 border border-teal-500/30 text-teal-400 flex items-center justify-center mb-4">
-              <HelpCircle className="w-5 h-5" />
+            <div className="w-12 h-12 rounded-2xl bg-teal-50 border border-teal-200/80 text-teal-600 flex items-center justify-center mb-4 shadow-sm">
+              <HelpCircle className="w-6 h-6" />
             </div>
 
-            <h3 className="text-lg font-bold text-white">Recuperación de Acceso</h3>
-            <p className="text-xs text-slate-400 mt-1">
-              Por políticas de seguridad de Las Palomas HOA, el restablecimiento de contraseñas se realiza mediante la administración central.
+            <h3 className="text-xl font-black text-slate-900">Recuperación de Acceso</h3>
+            <p className="text-xs sm:text-sm text-slate-600 mt-1.5 leading-relaxed">
+              Por políticas de seguridad y confidencialidad de Las Palomas HOA, la restauración de contraseñas es gestionada por el departamento de administración.
             </p>
 
-            <div className="mt-4 p-3.5 rounded-xl bg-slate-800/70 border border-slate-700/60 space-y-2 text-xs">
-              <p className="font-semibold text-teal-300">Canales de Soporte Oficial:</p>
-              <p className="text-slate-300">
-                📧 <strong>Email:</strong> soporte@laspalomasresort.net
-              </p>
-              <p className="text-slate-300">
-                📞 <strong>Conmutador HOA:</strong> Extensión 104 o 105
-              </p>
-              <p className="text-slate-300">
-                🏢 <strong>Oficinas:</strong> Módulo de Administración HOA Torre Diamante
-              </p>
+            <div className="mt-5 p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5 text-xs text-slate-700">
+              <p className="font-bold text-teal-800 uppercase tracking-wide text-[11px]">Canales de Asistencia Oficial:</p>
+              <div className="space-y-1.5 text-slate-600">
+                <p>
+                  📧 <strong className="text-slate-800">Email:</strong> soporte@laspalomasresort.net
+                </p>
+                <p>
+                  📞 <strong className="text-slate-800">Conmutador HOA:</strong> Extensión 104 o 105
+                </p>
+                <p>
+                  🏢 <strong className="text-slate-800">Oficinas:</strong> Módulo de Administración HOA Torre Diamante
+                </p>
+              </div>
             </div>
 
             <div className="mt-6 flex justify-end">
               <button
                 type="button"
                 onClick={() => setIsHelpModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs transition-colors cursor-pointer"
+                className="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-600/20 transition-all cursor-pointer"
               >
                 Entendido
               </button>
@@ -348,3 +407,4 @@ export const LoginView: React.FC = () => {
     </div>
   );
 };
+
