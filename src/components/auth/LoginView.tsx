@@ -6,13 +6,11 @@ import {
   Eye, 
   EyeOff, 
   ArrowRight, 
-  Sparkles, 
   HelpCircle, 
   X,
   AlertCircle,
   Sun,
-  Sunset,
-  Moon,
+  MoonStar,
   Waves
 } from 'lucide-react';
 import logoImg from '../../assets/logo.png';
@@ -31,12 +29,24 @@ export const LoginView: React.FC = () => {
   const getGreetingData = () => {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 12) {
-      return { text: '¡Buenos días!', icon: Sun, color: 'text-amber-600 bg-amber-50 border-amber-200/60' };
+      return { 
+        text: '¡Buenos días!', 
+        icon: Sun, 
+        color: 'text-amber-700 bg-amber-50/90 border-amber-200' 
+      };
     }
     if (hour >= 12 && hour < 19) {
-      return { text: '¡Buenas tardes!', icon: Sunset, color: 'text-teal-700 bg-teal-50 border-teal-200/60' };
+      return { 
+        text: '¡Buenas tardes!', 
+        icon: Sun, 
+        color: 'text-teal-800 bg-teal-50/90 border-teal-200' 
+      };
     }
-    return { text: '¡Buenas noches!', icon: Moon, color: 'text-indigo-700 bg-indigo-50 border-indigo-200/60' };
+    return { 
+      text: '¡Buenas noches!', 
+      icon: MoonStar, 
+      color: 'text-indigo-800 bg-indigo-50/90 border-indigo-200' 
+    };
   };
 
   const greeting = getGreetingData();
@@ -83,7 +93,7 @@ export const LoginView: React.FC = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-slate-950/50 via-transparent to-slate-950/20" />
         </div>
 
-        {/* Top Header / Resort Badge */}
+        {/* Top Header / Resort Logo */}
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img 
@@ -96,11 +106,6 @@ export const LoginView: React.FC = () => {
 
         {/* Middle Feature Highlights */}
         <div className="relative z-10 max-w-xl my-auto py-10">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/25 text-teal-200 text-xs font-bold tracking-wide uppercase mb-4 shadow-sm">
-            <Sparkles className="w-3.5 h-3.5 text-teal-300" />
-            Portal Administrativo & Front Desk
-          </div>
-
           <h1 className="text-3xl lg:text-5xl font-black text-white tracking-tight leading-tight drop-shadow-md">
             Gestión Integral de <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-200 via-sky-200 to-amber-100">
@@ -143,11 +148,11 @@ export const LoginView: React.FC = () => {
           
           {/* Header Title & Dynamic Greeting */}
           <div>
-            <div className="flex items-center gap-2 text-teal-600 font-bold text-xs uppercase tracking-wider mb-2">
-              <div className="w-6 h-6 rounded-lg bg-teal-50 border border-teal-200/80 flex items-center justify-center text-teal-600">
+            <div className="flex items-center gap-2 mb-2.5">
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border shadow-xs ${greeting.color}`}>
                 <GreetingIcon className="w-3.5 h-3.5" />
-              </div>
-              <span>{greeting.text}</span>
+                <span>{greeting.text}</span>
+              </span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
               Iniciar Sesión
