@@ -105,18 +105,6 @@ export const App: React.FC = () => {
     setIsRequestModalOpen(true);
   };
 
-  if (isAuthLoading) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-white">
-        <div className="w-16 h-16 relative flex items-center justify-center mb-4">
-          <div className="w-16 h-16 rounded-full border-4 border-teal-500/20 border-t-teal-400 animate-spin absolute" />
-          <div className="w-8 h-8 rounded-full bg-teal-500/20 animate-pulse" />
-        </div>
-        <p className="text-sm font-semibold tracking-wide text-slate-300">Cargando Las Palomas HOA...</p>
-      </div>
-    );
-  }
-
   if (!isAuthenticated) {
     return (
       <>

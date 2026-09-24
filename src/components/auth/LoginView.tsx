@@ -5,18 +5,12 @@ import {
   Lock, 
   Eye, 
   EyeOff, 
-  ShieldCheck, 
   ArrowRight, 
-  Sparkles, 
-  CheckCircle2, 
-  Building2, 
   HelpCircle, 
   X,
   AlertCircle,
   Sun,
-  Sunset,
-  Moon,
-  KeyRound,
+  MoonStar,
   Waves
 } from 'lucide-react';
 import logoImg from '../../assets/logo.png';
@@ -35,12 +29,24 @@ export const LoginView: React.FC = () => {
   const getGreetingData = () => {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 12) {
-      return { text: '¡Buenos días!', icon: Sun, color: 'text-amber-600 bg-amber-50 border-amber-200/60' };
+      return { 
+        text: '¡Buenos días!', 
+        icon: Sun, 
+        color: 'text-amber-700 bg-amber-50/90 border-amber-200' 
+      };
     }
     if (hour >= 12 && hour < 19) {
-      return { text: '¡Buenas tardes!', icon: Sunset, color: 'text-teal-700 bg-teal-50 border-teal-200/60' };
+      return { 
+        text: '¡Buenas tardes!', 
+        icon: Sun, 
+        color: 'text-teal-800 bg-teal-50/90 border-teal-200' 
+      };
     }
-    return { text: '¡Buenas noches!', icon: Moon, color: 'text-indigo-700 bg-indigo-50 border-indigo-200/60' };
+    return { 
+      text: '¡Buenas noches!', 
+      icon: MoonStar, 
+      color: 'text-indigo-800 bg-indigo-50/90 border-indigo-200' 
+    };
   };
 
   const greeting = getGreetingData();
@@ -65,18 +71,6 @@ export const LoginView: React.FC = () => {
     }
   };
 
-  // Acceso rápido para pruebas de demostración
-  const fillCredentials = (type: 'admin' | 'frontdesk') => {
-    if (type === 'admin') {
-      setEmail('admin@laspalomas.com');
-      setPassword('admin123');
-    } else {
-      setEmail('recepcion@laspalomas.com');
-      setPassword('admin123');
-    }
-    setErrorMessage(null);
-  };
-
   return (
     <div className="min-h-screen w-full flex flex-col lg:flex-row bg-slate-50 text-slate-800 font-sans selection:bg-teal-500 selection:text-white relative overflow-hidden">
       
@@ -90,82 +84,46 @@ export const LoginView: React.FC = () => {
         {/* Background Resort Image with Luminous & Warm Overlays */}
         <div className="absolute inset-0 z-0">
           <img 
-            src="/las_palomas_resort.jpg" 
+            src="/resort-bg.jpg" 
             alt="Las Palomas Seaside Golf Community" 
-            className="w-full h-full object-cover object-center scale-100 filter brightness-90 contrast-105 transition-transform duration-1000 ease-out"
+            className="w-full h-full object-cover object-center scale-100 filter brightness-95 contrast-105 transition-transform duration-1000 ease-out"
           />
-          {/* Subtle elegant gradient overlay to keep resort visible while ensuring typography readability */}
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-slate-900/20 backdrop-blur-[0.5px]" />
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/60 via-transparent to-slate-950/30" />
+          {/* Subtle gradient overlay to keep resort visible while ensuring typography readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-slate-900/10" />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/50 via-transparent to-slate-950/20" />
         </div>
 
-        {/* Top Header / Resort Badge */}
+        {/* Top Header / Resort Logo */}
         <div className="relative z-10 flex items-center justify-between">
-          <div className="bg-white/95 backdrop-blur-md px-5 py-2.5 rounded-2xl shadow-xl border border-white/60 flex items-center gap-3 transition-transform hover:scale-[1.02]">
+          <div className="flex items-center gap-3">
             <img 
               src={logoImg} 
               alt="Las Palomas HOA" 
-              className="h-9 w-auto object-contain"
+              className="h-12 w-auto object-contain filter drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)] transition-transform hover:scale-105"
             />
-          </div>
-
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white text-xs font-semibold shadow-lg shadow-black/10">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse ring-4 ring-emerald-400/20" />
-            <span>Sistema Operativo 2026</span>
           </div>
         </div>
 
         {/* Middle Feature Highlights */}
         <div className="relative z-10 max-w-xl my-auto py-10">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/25 text-teal-200 text-xs font-bold tracking-wide uppercase mb-4 shadow-sm">
-            <Sparkles className="w-3.5 h-3.5 text-teal-300" />
-            Portal Administrativo & Front Desk
-          </div>
-
-          <h1 className="text-3xl lg:text-5xl font-black text-white tracking-tight leading-tight drop-shadow-sm">
+          <h1 className="text-3xl lg:text-5xl font-black text-white tracking-tight leading-tight drop-shadow-md">
             Gestión Integral de <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-200 via-sky-200 to-amber-100">
               Las Palomas Resort
             </span>
           </h1>
 
-          <p className="mt-4 text-slate-200 text-sm lg:text-base leading-relaxed font-normal text-balance drop-shadow-sm">
+          <p className="mt-4 text-slate-200 text-sm lg:text-base leading-relaxed font-normal text-balance drop-shadow-md">
             Plataforma centralizada para la administración de condominios, control de ocupación timeline tipo Gantt, recepción de huéspedes, brazaletes y autorizaciones de acceso.
           </p>
-
-          {/* Value props bullets / Frosted Cards */}
-          <div className="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-white/15">
-            <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 hover:bg-white/15 transition-all">
-              <div className="w-9 h-9 rounded-xl bg-teal-400/20 border border-teal-300/40 flex items-center justify-center text-teal-200 shrink-0">
-                <CheckCircle2 className="w-5 h-5" />
-              </div>
-              <div className="text-left">
-                <p className="text-xs font-bold text-white">Timeline en Vivo</p>
-                <p className="text-[11px] text-teal-100/80">Ocupación tipo Gantt</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 hover:bg-white/15 transition-all">
-              <div className="w-9 h-9 rounded-xl bg-sky-400/20 border border-sky-300/40 flex items-center justify-center text-sky-200 shrink-0">
-                <Building2 className="w-5 h-5" />
-              </div>
-              <div className="text-left">
-                <p className="text-xs font-bold text-white">Torres & Catálogo</p>
-                <p className="text-[11px] text-sky-100/80">Fase 1 y Fase 2</p>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* Bottom Location & Status indicator */}
-        <div className="relative z-10 flex items-center justify-between text-xs text-slate-200 pt-4 border-t border-white/15">
+        {/* Bottom Location indicator */}
+        <div className="relative z-10 flex items-center text-xs text-slate-200/90 pt-4">
           <div className="flex items-center gap-2">
             <Waves className="w-4 h-4 text-teal-300" />
             <p className="font-medium">Sandy Beach • Puerto Peñasco, Sonora, México</p>
           </div>
-          <span className="px-2.5 py-1 rounded-md bg-white/10 text-[11px] font-semibold tracking-wider text-teal-200 border border-white/10">
-            HOA SECURE
-          </span>
         </div>
 
       </div>
@@ -175,13 +133,11 @@ export const LoginView: React.FC = () => {
         
         {/* Mobile Header Logo */}
         <div className="md:hidden flex items-center justify-between mb-8 pb-4 border-b border-slate-200">
-          <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-100">
-            <img 
-              src={logoImg} 
-              alt="Las Palomas HOA" 
-              className="h-8 w-auto object-contain"
-            />
-          </div>
+          <img 
+            src={logoImg} 
+            alt="Las Palomas HOA" 
+            className="h-8 w-auto object-contain"
+          />
           <span className="text-xs font-bold px-3 py-1 rounded-full bg-teal-50 text-teal-700 border border-teal-200">
             HOA Portal
           </span>
@@ -192,10 +148,10 @@ export const LoginView: React.FC = () => {
           
           {/* Header Title & Dynamic Greeting */}
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${greeting.color}`}>
+            <div className="flex items-center gap-2 mb-2.5">
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border shadow-xs ${greeting.color}`}>
                 <GreetingIcon className="w-3.5 h-3.5" />
-                {greeting.text}
+                <span>{greeting.text}</span>
               </span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
@@ -204,30 +160,6 @@ export const LoginView: React.FC = () => {
             <p className="text-xs sm:text-sm text-slate-500 mt-1.5">
               Ingresa al panel administrativo y de control de Las Palomas HOA.
             </p>
-          </div>
-
-          {/* Quick Demo Acceso Buttons (Convenient & Clean) */}
-          <div className="p-3 bg-slate-50 border border-slate-200/90 rounded-2xl flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 text-[11px] text-slate-600 font-semibold">
-              <KeyRound className="w-3.5 h-3.5 text-teal-600" />
-              <span>Cuentas demo:</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => fillCredentials('admin')}
-                className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-teal-700 hover:border-teal-300 hover:bg-teal-50/50 shadow-xs transition-all cursor-pointer"
-              >
-                Admin
-              </button>
-              <button
-                type="button"
-                onClick={() => fillCredentials('frontdesk')}
-                className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-teal-700 hover:border-teal-300 hover:bg-teal-50/50 shadow-xs transition-all cursor-pointer"
-              >
-                Front Desk
-              </button>
-            </div>
           </div>
 
           {/* Error Banner */}
@@ -345,13 +277,10 @@ export const LoginView: React.FC = () => {
 
         </div>
 
-        {/* Footer Security Notice */}
-        <div className="pt-6 mt-6 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-500 text-center sm:text-left">
-          <div className="flex items-center gap-1.5 text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200/80 px-2.5 py-1 rounded-full">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Acceso Seguro Encriptado SSL</span>
-          </div>
-          <p className="font-medium text-slate-400">© 2026 Las Palomas HOA • V2.6</p>
+        {/* Footer */}
+        <div className="pt-6 mt-6 border-t border-slate-200/80 flex items-center justify-between text-[11px] text-slate-400 font-medium">
+          <p>© 2026 Las Palomas HOA</p>
+          <p>Portal Administrativo v2.6</p>
         </div>
 
       </div>
@@ -407,4 +336,5 @@ export const LoginView: React.FC = () => {
     </div>
   );
 };
+
 

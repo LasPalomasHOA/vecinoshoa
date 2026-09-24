@@ -8,9 +8,9 @@ import type {
   Huesped, 
   Reservacion, 
   SolicitudAcceso 
-} from '../../../src/types';
+} from '../../src/types/index';
 
-// Schema-qualified table helpers to guarantee absolute schema isolation without touching search_path
+// Tablas calificadas explícitamente con el esquema
 const T = {
   edificios: () => `${getQuotedSchema()}.edificios`,
   grupos: () => `${getQuotedSchema()}.grupos_propiedad`,
@@ -378,7 +378,6 @@ export async function updatePropiedad(id: number, data: Partial<Propiedad>, owne
   `, values);
 
   if (ownerId !== undefined) {
-    // Remove previous principal owner
     await query(`DELETE FROM ${T.propiedadUsuarios()} WHERE propiedad_id = $1 AND es_principal = true;`, [id]);
     if (ownerId > 0) {
       await query(`
@@ -549,7 +548,6 @@ export async function createReservacion(
   data: Omit<Reservacion, 'id'>, 
   huespedData?: Omit<Huesped, 'id'>
 ): Promise<Reservacion> {
-  // Check overlap first
   const overlap = await checkReservationOverlap(data.propiedad_id, data.fecha_checkin, data.fecha_checkout);
   if (overlap) {
     throw new Error(`Conflicto de fechas: La unidad ya está reservada del ${overlap.fecha_checkin} al ${overlap.fecha_checkout}`);

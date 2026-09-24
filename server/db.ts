@@ -1,7 +1,7 @@
 import { Pool, type QueryResult, type QueryResultRow } from 'pg';
 import dotenv from 'dotenv';
 
-// Load environment variables for local development
+// Cargar variables de entorno locales
 dotenv.config();
 
 let pool: Pool | null = null;
@@ -33,10 +33,10 @@ export function getDbPool(): Pool {
 
   const rawUrl = getConnectionString();
   if (!rawUrl) {
-    console.warn('[DB] No database connection string found in environment variables (CUSTOM_DB_URL, DATABASE_URL, POSTGRES_URL).');
+    console.warn('[DB] No se encontró URL de conexión en variables de entorno (CUSTOM_DB_URL, DATABASE_URL, POSTGRES_URL).');
   }
 
-  // Clean URL to avoid conflicting SSL / Supabase flags with pg driver
+  // Limpiar parámetros para evitar conflictos con el driver pg
   const cleanUrl = rawUrl
     .replace(/[\?&]sslmode=[^&]+/, '')
     .replace(/[\?&]supa=[^&]+/, '');
@@ -58,7 +58,7 @@ export function getDbPool(): Pool {
   });
 
   pool.on('error', (err) => {
-    console.error('[DB] Unexpected error on idle client:', err);
+    console.error('[DB] Error inesperado en cliente inactivo de PostgreSQL:', err);
   });
 
   return pool;
@@ -78,7 +78,7 @@ export async function query<T extends QueryResultRow = any>(
     }
     return res;
   } catch (err: any) {
-    console.error(`[DB Error] query failed: ${err.message}\nSQL: ${text}\nParams:`, params);
+    console.error(`[DB Error] ${err.message}\nSQL: ${text}\nParams:`, params);
     throw err;
   }
 }

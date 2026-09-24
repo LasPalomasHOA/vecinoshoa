@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { handleApiRequest } from './_lib/router';
+import { handleApiRequest } from '../server/router';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const handled = await handleApiRequest(req, res);
