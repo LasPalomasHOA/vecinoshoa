@@ -351,20 +351,20 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
       </div>
 
       {/* Top Controls Toolbar */}
-      <div className="p-3.5 rounded-xl glass-card flex flex-wrap items-center justify-between gap-3">
+      <div className="p-3 rounded-2xl bg-white border border-slate-200/90 shadow-xs flex flex-wrap items-center justify-between gap-3 min-h-[56px]">
         
         {/* Month Selector */}
         <div className="flex items-center gap-2.5">
-          <div className="flex items-center bg-slate-100/90 rounded-xl p-1 border border-slate-200">
+          <div className="h-9 flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
             <button
               onClick={handlePrevMonth}
               title="Mes anterior"
-              className="p-1 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-white transition-colors"
+              className="h-7.5 w-7.5 flex items-center justify-center rounded-lg text-slate-600 hover:text-slate-900 hover:bg-white transition-colors cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             
-            <div className="px-3 py-0.5 flex items-center gap-2">
+            <div className="px-3 flex items-center gap-2">
               <CalendarIcon className="w-4 h-4 text-teal-700" />
               <span className="font-extrabold text-xs text-slate-900 tracking-wide uppercase">
                 {monthNames[currentMonth]} {currentYear}
@@ -374,7 +374,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
             <button
               onClick={handleNextMonth}
               title="Mes siguiente"
-              className="p-1 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-white transition-colors"
+              className="h-7.5 w-7.5 flex items-center justify-center rounded-lg text-slate-600 hover:text-slate-900 hover:bg-white transition-colors cursor-pointer"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -382,9 +382,9 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
 
           <button
             onClick={handleToday}
-            className={`px-3 py-1.5 rounded-xl font-bold text-xs border transition-all ${
+            className={`h-9 px-3.5 rounded-xl font-bold text-xs border transition-colors duration-150 cursor-pointer ${
               currentMonth === 8 && currentYear === 2026
-                ? 'bg-teal-600 text-white border-teal-600 shadow-sm shadow-teal-700/20'
+                ? 'bg-teal-600 text-white border-teal-600 shadow-xs'
                 : 'bg-teal-50 hover:bg-teal-100 text-teal-800 border-teal-200'
             }`}
           >
@@ -401,12 +401,12 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
               placeholder="Buscar condo (A 101)..."
               value={localSearch}
               onChange={(e) => setLocalSearch(e.target.value)}
-              className="pl-8 pr-3 py-1.5 text-xs rounded-xl form-input w-44"
+              className="h-9 pl-8 pr-3 text-xs rounded-xl form-input w-44"
             />
             {localSearch && (
               <button
                 onClick={() => setLocalSearch('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-700"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-700 cursor-pointer"
               >
                 ✕
               </button>
@@ -418,7 +418,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
             <select
               value={selectedEdificioId}
               onChange={(e) => setSelectedEdificioId(e.target.value)}
-              className="px-3 py-1.5 text-xs rounded-xl form-input font-medium cursor-pointer"
+              className="h-9 px-3 text-xs rounded-xl form-input font-medium cursor-pointer border-slate-200"
             >
               <option value="ALL">Todas las Torres (A - J)</option>
               {edificios.map(ed => (
@@ -431,9 +431,9 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
 
           <button
             onClick={() => onNewReservation()}
-            className="px-3.5 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-sm shadow-teal-700/20 flex items-center gap-1.5 active:scale-95 transition-all"
+            className="h-9 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-colors duration-150 cursor-pointer"
           >
-            <Plus className="w-4 h-4 stroke-[3]" />
+            <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>Reservar</span>
           </button>
         </div>
