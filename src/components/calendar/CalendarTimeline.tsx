@@ -630,17 +630,19 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
                             
                             const startCol = Math.max(inDay, 1);
                             const endCol = Math.min(outDay, daysInMonth.length);
-                            const colSpan = Math.max(endCol - startCol + 1, 1);
-
                             const nights = Math.max(1, outDay - inDay);
+
+                            const totalDays = daysInMonth.length;
+                            const leftPct = ((startCol - 1) / totalDays) * 100;
+                            const widthPct = ((endCol - startCol + 1) / totalDays) * 100;
 
                             return (
                               <div
                                 style={{
-                                  gridColumnStart: startCol,
-                                  gridColumnEnd: `span ${colSpan}`,
+                                  left: `calc(${leftPct}% + 1px)`,
+                                  width: `calc(${widthPct}% - 2px)`,
                                 }}
-                                className="absolute inset-y-1.5 z-20 mx-0.5 rounded-lg border-2 border-teal-500 border-dashed bg-teal-500/25 backdrop-blur-xs flex items-center justify-center px-2 pointer-events-none animate-pulse-glow shadow-soft-glow"
+                                className="absolute inset-y-1 z-20 rounded-lg border-2 border-teal-500 border-dashed bg-teal-500/25 backdrop-blur-xs flex items-center justify-center px-2 pointer-events-none animate-pulse-glow shadow-soft-glow"
                               >
                                 <span className="text-[10px] font-black text-teal-950 truncate whitespace-nowrap drop-shadow-xs">
                                   ✨ {nights} {nights === 1 ? 'noche' : 'noches'} ({formatReadableDate(checkinStr)} → {formatReadableDate(checkoutStr)})
@@ -650,23 +652,38 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
                           })()
                         )}
 
-                        {/* Existing Reservation Bars */}
+                        {/* Existing Reservation Bars spanning full day range */}
                         {propReservations.map((res) => {
-                          const checkinDate = new Date(res.fecha_checkin);
-                          const checkoutDate = new Date(res.fecha_checkout);
-                          
-                          const checkinDay = checkinDate.getMonth() === currentMonth ? checkinDate.getDate() : 1;
-                          const checkoutDay = checkoutDate.getMonth() === currentMonth ? checkoutDate.getDate() : daysInMonth.length;
-                          
-                          const startsInMonth = checkinDate.getFullYear() === currentYear && checkinDate.getMonth() === currentMonth;
-                          const endsInMonth = checkoutDate.getFullYear() === currentYear && checkoutDate.getMonth() === currentMonth;
-                          const spansAcross = checkinDate < new Date(currentYear, currentMonth, 1) && checkoutDate > new Date(currentYear, currentMonth + 1, 0);
+                          const checkinParts = res.fecha_checkin.split('-').map(Number);
+                          const checkoutParts = res.fecha_checkout.split('-').map(Number);
 
-                          if (!startsInMonth && !endsInMonth && !spansAcross) return null;
+                          if (checkinParts.length < 3 || checkoutParts.length < 3) return null;
 
-                          const startCol = Math.max(checkinDay, 1);
-                          const endCol = Math.min(checkoutDay, daysInMonth.length);
-                          const colSpan = Math.max(endCol - startCol, 1);
+                          const cinDate = new Date(checkinParts[0], checkinParts[1] - 1, checkinParts[2]);
+                          const coutDate = new Date(checkoutParts[0], checkoutParts[1] - 1, checkoutParts[2]);
+
+                          const mStart = new Date(currentYear, currentMonth, 1);
+                          const mEnd = new Date(currentYear, currentMonth + 1, 0);
+
+                          if (coutDate < mStart || cinDate > mEnd) return null;
+
+                          // Compute visible day bounds in current month
+                          let visibleStartDay = 1;
+                          if (cinDate >= mStart) {
+                            visibleStartDay = checkinParts[2];
+                          }
+
+                          let visibleEndDay = daysInMonth.length;
+                          if (coutDate <= mEnd) {
+                            visibleEndDay = checkoutParts[2];
+                          }
+
+                          const startCol = Math.max(1, Math.min(visibleStartDay, daysInMonth.length));
+                          const endCol = Math.max(startCol, Math.min(visibleEndDay, daysInMonth.length));
+
+                          const totalDays = daysInMonth.length;
+                          const leftPct = ((startCol - 1) / totalDays) * 100;
+                          const widthPct = ((endCol - startCol + 1) / totalDays) * 100;
 
                           const huesped = getHuespedById(res.huesped_id);
                           const guestName = huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Huésped';
@@ -679,13 +696,13 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
                                 onSelectReservation(res);
                               }}
                               style={{
-                                gridColumnStart: startCol,
-                                gridColumnEnd: `span ${colSpan}`,
+                                left: `calc(${leftPct}% + 1px)`,
+                                width: `calc(${widthPct}% - 2px)`,
                               }}
-                              className={`absolute inset-y-1 z-10 mx-0.5 rounded-lg px-2 flex items-center cursor-pointer transition-all hover:brightness-110 hover:shadow-md hover:scale-[1.01] overflow-hidden ${getReservationColor(res)}`}
+                              className={`absolute inset-y-1 z-10 rounded-lg px-2.5 flex items-center cursor-pointer transition-all hover:brightness-110 hover:shadow-md hover:z-20 overflow-hidden ${getReservationColor(res)}`}
                               title={`${res.tipo_huesped} | ${guestName} (${res.fecha_checkin} al ${res.fecha_checkout}) | Estado: ${res.estado} | Brazaletes: ${res.brazaletes || 'N/A'}`}
                             >
-                              <span className="text-[10px] font-bold truncate whitespace-nowrap drop-shadow-xs">
+                              <span className="text-[10px] font-extrabold truncate whitespace-nowrap drop-shadow-xs">
                                 {guestName} {res.numero_ocupantes > 1 ? `+${res.numero_ocupantes - 1}` : ''}
                               </span>
                             </div>
