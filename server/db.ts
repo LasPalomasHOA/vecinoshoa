@@ -1,10 +1,13 @@
-import { Pool, type QueryResult, type QueryResultRow } from 'pg';
+import pg from 'pg';
 import dotenv from 'dotenv';
 
-// Cargar variables de entorno locales si existen
-dotenv.config();
+// Cargar variables de entorno en modo local
+if (typeof dotenv?.config === 'function') {
+  dotenv.config();
+}
 
-let pool: Pool | null = null;
+const { Pool } = pg;
+let pool: any = null;
 
 export function getConnectionString(): string {
   return (
@@ -26,7 +29,7 @@ export function getQuotedSchema(): string {
   return schema.includes(' ') ? `"${schema.replace(/"/g, '""')}"` : schema;
 }
 
-export function getDbPool(): Pool {
+export function getDbPool(): any {
   if (pool) {
     return pool;
   }
@@ -59,21 +62,21 @@ export function getDbPool(): Pool {
     connectionTimeoutMillis: 10000,
   });
 
-  pool.on('error', (err) => {
+  pool.on('error', (err: any) => {
     console.error('[DB] Error inesperado en cliente inactivo de PostgreSQL:', err);
   });
 
   return pool;
 }
 
-export async function query<T extends QueryResultRow = any>(
+export async function query<T = any>(
   text: string,
   params: any[] = []
-): Promise<QueryResult<T>> {
+): Promise<{ rows: T[]; rowCount: number | null }> {
   const p = getDbPool();
   const start = Date.now();
   try {
-    const res = await p.query<T>(text, params);
+    const res = await p.query(text, params);
     const duration = Date.now() - start;
     if (process.env.NODE_ENV === 'development' && duration > 500) {
       console.log(`[DB Slow Query] ${duration}ms: ${text.substring(0, 80)}...`);
@@ -85,12 +88,12 @@ export async function query<T extends QueryResultRow = any>(
   }
 }
 
-export async function queryOne<T extends QueryResultRow = any>(
+export async function queryOne<T = any>(
   text: string,
   params: any[] = []
 ): Promise<T | null> {
   const res = await query<T>(text, params);
-  return res.rows.length > 0 ? res.rows[0] : null;
+  return res.rows && res.rows.length > 0 ? res.rows[0] : null;
 }
 
 export async function testConnection(): Promise<{ ok: boolean; message: string; version?: string; schema?: string }> {
