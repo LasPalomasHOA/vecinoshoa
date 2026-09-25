@@ -13,7 +13,8 @@ import {
   Filter, 
   Edit3, 
   Trash2,
-  Phone
+  Phone,
+  Plus
 } from 'lucide-react';
 
 interface FrontDeskViewProps {
@@ -212,7 +213,8 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
           onClick={() => onOpenNewReservation()}
           className="h-9 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-colors duration-150 cursor-pointer"
         >
-          <span>+ Registrar Reservación</span>
+          <Plus className="w-4 h-4 stroke-[2.5]" />
+          <span>Registrar Reservación</span>
         </button>
 
       </div>
