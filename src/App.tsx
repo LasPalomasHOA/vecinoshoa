@@ -19,6 +19,7 @@ import { ReportsView } from './components/reports/ReportsView';
 import { ReservationModal } from './components/frontdesk/ReservationModal';
 import { CheckInModal } from './components/frontdesk/CheckInModal';
 import { ReservationDetailModal } from './components/frontdesk/ReservationDetailModal';
+import { GuestQrModal } from './components/frontdesk/GuestQrModal';
 import { PropertyFormModal } from './components/properties/PropertyFormModal';
 import { BuildingsManagerModal } from './components/properties/BuildingsManagerModal';
 import { UserFormModal } from './components/users/UserFormModal';
@@ -45,6 +46,9 @@ export const App: React.FC = () => {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [detailRes, setDetailRes] = useState<Reservacion | null>(null);
 
+  const [isQrPassModalOpen, setIsQrPassModalOpen] = useState(false);
+  const [qrPassRes, setQrPassRes] = useState<Reservacion | null>(null);
+
   const [isPropModalOpen, setIsPropModalOpen] = useState(false);
   const [propToEdit, setPropToEdit] = useState<Propiedad | null>(null);
 
@@ -56,6 +60,10 @@ export const App: React.FC = () => {
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
 
   // Handlers
+  const handleOpenQrPass = (res: Reservacion) => {
+    setQrPassRes(res);
+    setIsQrPassModalOpen(true);
+  };
   const handleOpenNewReservation = (propiedadId?: number, fechaCheckin?: string, fechaCheckout?: string) => {
     setResToEdit(null);
     const validPropId = typeof propiedadId === 'number' ? propiedadId : undefined;
@@ -143,6 +151,7 @@ export const App: React.FC = () => {
               onEditReservation={handleEditReservation}
               onViewReservationDetail={handleViewReservationDetail}
               onCheckIn={handleCheckIn}
+              onOpenQrPass={handleOpenQrPass}
             />
           )}
 
@@ -197,6 +206,7 @@ export const App: React.FC = () => {
         isOpen={isCheckInModalOpen}
         onClose={() => setIsCheckInModalOpen(false)}
         reservation={checkInRes}
+        onOpenQrPass={handleOpenQrPass}
       />
 
       <ReservationDetailModal
@@ -204,6 +214,17 @@ export const App: React.FC = () => {
         onClose={() => setIsDetailModalOpen(false)}
         reservation={detailRes}
         onEdit={handleEditReservation}
+        onCheckIn={handleCheckIn}
+        onOpenQrPass={handleOpenQrPass}
+      />
+
+      <GuestQrModal
+        isOpen={isQrPassModalOpen}
+        onClose={() => {
+          setIsQrPassModalOpen(false);
+          setQrPassRes(null);
+        }}
+        reservation={qrPassRes}
         onCheckIn={handleCheckIn}
       />
 

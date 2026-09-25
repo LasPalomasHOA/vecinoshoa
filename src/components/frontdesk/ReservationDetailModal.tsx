@@ -14,7 +14,8 @@ import {
   Users,
   Check,
   Clock,
-  Edit3
+  Edit3,
+  QrCode
 } from 'lucide-react';
 
 interface ReservationDetailModalProps {
@@ -23,6 +24,7 @@ interface ReservationDetailModalProps {
   reservation: Reservacion | null;
   onEdit: (res: Reservacion) => void;
   onCheckIn: (res: Reservacion) => void;
+  onOpenQrPass: (res: Reservacion) => void;
 }
 
 export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
@@ -30,7 +32,8 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
   onClose,
   reservation,
   onEdit,
-  onCheckIn
+  onCheckIn,
+  onOpenQrPass
 }) => {
   const { 
     reservaciones,
@@ -429,16 +432,29 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
 
         {/* Footer */}
         <div className="flex items-center justify-between p-4 border-t border-slate-100 bg-slate-50/80">
-          <button
-            onClick={() => {
-              onClose();
-              onEdit(currentReservation);
-            }}
-            className="px-4 py-2 rounded-xl bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-bold cursor-pointer flex items-center gap-1.5"
-          >
-            <Edit3 className="w-3.5 h-3.5" />
-            <span>Editar Datos</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                onClose();
+                onOpenQrPass(currentReservation);
+              }}
+              className="px-3.5 py-2 rounded-xl bg-teal-50 border border-teal-200 text-teal-800 hover:bg-teal-100 text-xs font-bold cursor-pointer flex items-center gap-1.5 shadow-2xs transition-colors"
+            >
+              <QrCode className="w-4 h-4 text-teal-700" />
+              <span>Pase QR de Acceso</span>
+            </button>
+
+            <button
+              onClick={() => {
+                onClose();
+                onEdit(currentReservation);
+              }}
+              className="px-3.5 py-2 rounded-xl bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-bold cursor-pointer flex items-center gap-1.5 transition-colors"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>Editar Datos</span>
+            </button>
+          </div>
 
           <div className="flex items-center gap-2">
             {!isCheckedIn && currentReservation.estado !== 'Checked-out' ? (

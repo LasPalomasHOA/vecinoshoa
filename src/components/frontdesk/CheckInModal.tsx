@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Reservacion, Acompanante } from '../../types';
-import { CheckCircle2, X, Tag, Car, Key, Users, Check, Clock } from 'lucide-react';
+import { CheckCircle2, X, Tag, Car, Key, Users, Check, Clock, QrCode } from 'lucide-react';
 
 interface CheckInModalProps {
   isOpen: boolean;
   onClose: () => void;
   reservation: Reservacion | null;
+  onOpenQrPass?: (res: Reservacion) => void;
 }
 
 export const CheckInModal: React.FC<CheckInModalProps> = ({
   isOpen,
   onClose,
-  reservation
+  reservation,
+  onOpenQrPass
 }) => {
   const { reservaciones, checkInReservacion, getPropiedadById, getHuespedById } = useApp();
 
@@ -22,6 +24,7 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({
   const [vehiculoInfo, setVehiculoInfo] = useState('');
   const [titularEntregado, setTitularEntregado] = useState(true);
   const [acompanantesList, setAcompanantesList] = useState<Acompanante[]>([]);
+  const [openQrAfterCheckIn, setOpenQrAfterCheckIn] = useState(true);
 
   useEffect(() => {
     if (currentReservation) {
@@ -97,6 +100,19 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({
       titularEntregado
     );
     onClose();
+
+    if (openQrAfterCheckIn && onOpenQrPass) {
+      setTimeout(() => {
+        onOpenQrPass({
+          ...currentReservation,
+          estado: 'En Casa (Checked-in)',
+          brazaletes: finalBrazaleteNote,
+          vehiculo_info: vehiculoInfo,
+          acompanantes: finalAcompList,
+          titular_brazalete_entregado: titularEntregado
+        });
+      }, 100);
+    }
   };
 
   return (
@@ -284,6 +300,28 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({
               placeholder="ej. Corbatin 38516 Ford F150 Blue AJM5429"
               className="w-full px-3.5 py-2 rounded-lg form-input text-xs"
             />
+          </div>
+
+          {/* Generar Pase QR Checkbox */}
+          <div className="p-3 rounded-xl bg-teal-50/70 border border-teal-200/80 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-teal-600 text-white flex items-center justify-center">
+                <QrCode className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-xs font-bold text-teal-950">Generar Pase de Acceso QR</div>
+                <div className="text-[10px] text-teal-700 font-medium">Abrir pase para imprimir, compartir por WhatsApp o descargar</div>
+              </div>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={openQrAfterCheckIn} 
+                onChange={(e) => setOpenQrAfterCheckIn(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-teal-600"></div>
+            </label>
           </div>
 
           {/* Footer */}

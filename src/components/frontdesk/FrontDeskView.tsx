@@ -12,10 +12,11 @@ import {
   Eye, 
   Filter, 
   Edit3, 
-  Trash2,
-  Phone,
-  Plus,
-  Users
+  Trash2, 
+  Phone, 
+  Plus, 
+  Users,
+  QrCode
 } from 'lucide-react';
 
 interface FrontDeskViewProps {
@@ -23,13 +24,15 @@ interface FrontDeskViewProps {
   onEditReservation: (res: Reservacion) => void;
   onViewReservationDetail: (res: Reservacion) => void;
   onCheckIn: (res: Reservacion) => void;
+  onOpenQrPass: (res: Reservacion) => void;
 }
 
 export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
   onOpenNewReservation,
   onEditReservation,
   onViewReservationDetail,
-  onCheckIn
+  onCheckIn,
+  onOpenQrPass
 }) => {
   const { 
     reservaciones, 
@@ -483,6 +486,15 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
                               <span>Salida</span>
                             </button>
                           ) : null}
+
+                          <button
+                            onClick={() => onOpenQrPass(res)}
+                            className="h-7 px-2 rounded-md bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200/90 font-bold text-[11px] flex items-center gap-1 whitespace-nowrap cursor-pointer transition-colors shrink-0"
+                            title="Generar / Ver Pase QR (Entrada y Salida)"
+                          >
+                            <QrCode className="w-3.5 h-3.5 text-teal-700" />
+                            <span>Pase QR</span>
+                          </button>
 
                           <button
                             onClick={() => onViewReservationDetail(res)}
