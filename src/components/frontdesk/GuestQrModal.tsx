@@ -262,12 +262,100 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
   };
 
   // Print ONLY the pass card without background table contamination
-  const handlePrint = () => {
-    document.body.classList.add('printing-qr-pass');
-    window.print();
-    setTimeout(() => {
-      document.body.classList.remove('printing-qr-pass');
-    }, 1000);
+  const handlePrint = async () => {
+    try {
+      setIsCapturing(true);
+      const canvas = await generatePassCanvas();
+      if (!canvas) {
+        showToast('No se pudo generar el pase para imprimir', 'error');
+        return;
+      }
+
+      const imgData = canvas.toDataURL('image/png');
+
+      // Create an isolated hidden iframe
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      iframe.style.visibility = 'hidden';
+      document.body.appendChild(iframe);
+
+      const doc = iframe.contentWindow?.document;
+      if (!doc) {
+        document.body.removeChild(iframe);
+        window.print();
+        return;
+      }
+
+      doc.open();
+      doc.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Pase de Acceso - Las Palomas Resort</title>
+            <style>
+              @page {
+                size: auto;
+                margin: 6mm;
+              }
+              * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+              }
+              body {
+                background: #ffffff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                padding: 0;
+                font-family: sans-serif;
+              }
+              .pass-container {
+                width: 100%;
+                max-width: 180mm;
+                margin: 0 auto;
+                text-align: center;
+              }
+              .pass-image {
+                width: 100%;
+                height: auto;
+                display: block;
+                border-radius: 8px;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="pass-container">
+              <img class="pass-image" src="${imgData}" alt="Pase Digital de Acceso" />
+            </div>
+          </body>
+        </html>
+      `);
+      doc.close();
+
+      // Give browser time to paint image, then execute print dialog in isolated frame
+      setTimeout(() => {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+        setTimeout(() => {
+          if (document.body.contains(iframe)) {
+            document.body.removeChild(iframe);
+          }
+        }, 2000);
+      }, 350);
+
+    } catch (err) {
+      console.error('Error al imprimir:', err);
+      showToast('Error al imprimir el pase', 'error');
+    } finally {
+      setIsCapturing(false);
+    }
   };
 
   return (

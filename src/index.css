@@ -204,11 +204,11 @@
   border-left: 3px solid #166534;
 }
 
-/* Print Styles */
+/* Print Styles for Reports */
 @media print {
   @page {
-    size: auto;
-    margin: 8mm 8mm;
+    size: landscape;
+    margin: 8mm 6mm;
   }
 
   *, *::before, *::after {
@@ -220,6 +220,7 @@
     background: #ffffff !important;
     background-image: none !important;
     color: #000000 !important;
+    font-size: 8.5pt !important;
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
@@ -234,33 +235,6 @@
     height: 0 !important;
     position: absolute !important;
     left: -9999px !important;
-  }
-
-  /* When printing a QR Pass modal, completely hide background main, workspace & table */
-  body.printing-qr-pass #root > div > div,
-  body.printing-qr-pass main,
-  body.printing-qr-pass table,
-  body.printing-qr-pass .toast-container,
-  body:has(.qr-modal-active) #root > div > div,
-  body:has(.qr-modal-active) main,
-  body:has(.qr-modal-active) table,
-  body:has(.qr-modal-active) .toast-container {
-    display: none !important;
-    visibility: hidden !important;
-    height: 0 !important;
-    overflow: hidden !important;
-  }
-
-  body.printing-qr-pass #qr-printable-pass,
-  body:has(.qr-modal-active) #qr-printable-pass {
-    display: block !important;
-    visibility: visible !important;
-    position: static !important;
-    width: 100% !important;
-    max-width: 190mm !important;
-    margin: 0 auto !important;
-    padding: 0 !important;
-    page-break-inside: avoid !important;
   }
 
   #root, .min-h-screen, .flex-1, main {
