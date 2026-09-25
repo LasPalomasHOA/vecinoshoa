@@ -60,6 +60,11 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
   let rawUrl = req.url || '/';
   const vercelReq = req as any;
 
+  const forwardedUri = (req.headers['x-forwarded-uri'] || req.headers['x-vercel-matched-path'] || req.headers['x-matched-path']) as string | undefined;
+  if (forwardedUri && forwardedUri.startsWith('/api') && !forwardedUri.includes('index.js')) {
+    rawUrl = forwardedUri;
+  }
+
   if (vercelReq.query && vercelReq.query.route) {
     const routeVal = Array.isArray(vercelReq.query.route) 
       ? vercelReq.query.route.join('/') 

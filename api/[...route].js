@@ -861,6 +861,10 @@ async function handleApiRequest(req, res) {
   }
   let rawUrl = req.url || "/";
   const vercelReq = req;
+  const forwardedUri = req.headers["x-forwarded-uri"] || req.headers["x-vercel-matched-path"] || req.headers["x-matched-path"];
+  if (forwardedUri && forwardedUri.startsWith("/api") && !forwardedUri.includes("index.js")) {
+    rawUrl = forwardedUri;
+  }
   if (vercelReq.query && vercelReq.query.route) {
     const routeVal = Array.isArray(vercelReq.query.route) ? vercelReq.query.route.join("/") : vercelReq.query.route;
     rawUrl = `/api/${routeVal}`;
