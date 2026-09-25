@@ -164,7 +164,7 @@ export const LoginView: React.FC = () => {
 
           {/* Error Banner */}
           {errorMessage && (
-            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2.5 animate-shake shadow-sm">
+            <div className="p-3.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2.5 animate-shake shadow-sm">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 mt-0.5" />
               <div className="flex-1">
                 <p className="font-bold text-rose-900">Error de autenticación</p>
@@ -193,7 +193,7 @@ export const LoginView: React.FC = () => {
                     setErrorMessage(null);
                   }}
                   placeholder="admin@laspalomas.com"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50/80 hover:bg-white focus:bg-white border border-slate-200 focus:border-teal-600 rounded-xl text-slate-900 placeholder-slate-400 text-xs sm:text-sm focus:outline-none focus:ring-4 focus:ring-teal-500/15 shadow-xs transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50/80 hover:bg-white focus:bg-white border border-slate-200 focus:border-teal-600 rounded-lg text-slate-900 placeholder-slate-400 text-xs sm:text-sm focus:outline-none focus:ring-4 focus:ring-teal-500/15 shadow-xs transition-all"
                   required
                 />
               </div>
@@ -225,7 +225,7 @@ export const LoginView: React.FC = () => {
                     setErrorMessage(null);
                   }}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-10 py-2.5 bg-slate-50/80 hover:bg-white focus:bg-white border border-slate-200 focus:border-teal-600 rounded-xl text-slate-900 placeholder-slate-400 text-xs sm:text-sm focus:outline-none focus:ring-4 focus:ring-teal-500/15 shadow-xs transition-all font-mono"
+                  className="w-full pl-10 pr-10 py-2.5 bg-slate-50/80 hover:bg-white focus:bg-white border border-slate-200 focus:border-teal-600 rounded-lg text-slate-900 placeholder-slate-400 text-xs sm:text-sm focus:outline-none focus:ring-4 focus:ring-teal-500/15 shadow-xs transition-all font-mono"
                   required
                 />
                 <button
@@ -258,7 +258,7 @@ export const LoginView: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full mt-2 py-3.5 px-4 rounded-xl bg-gradient-to-r from-teal-600 via-teal-600 to-teal-700 hover:from-teal-500 hover:to-teal-600 text-white font-bold text-sm shadow-lg shadow-teal-600/25 hover:shadow-teal-600/35 transition-all flex items-center justify-center gap-2 active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
+              className="w-full mt-2 py-3.5 px-4 rounded-lg bg-gradient-to-r from-teal-600 via-teal-600 to-teal-700 hover:from-teal-500 hover:to-teal-600 text-white font-bold text-sm shadow-lg shadow-teal-600/25 hover:shadow-teal-600/35 transition-all flex items-center justify-center gap-2 active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
             >
               {isLoading ? (
                 <>
@@ -288,24 +288,24 @@ export const LoginView: React.FC = () => {
       {/* MODAL: Ayuda / Recuperación de Contraseña (Light Luxury Theme) */}
       {isHelpModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl relative text-left">
+          <div className="bg-white border border-slate-200 rounded-xl max-w-md w-full p-6 sm:p-7 shadow-2xl relative text-left">
             <button
               onClick={() => setIsHelpModalOpen(false)}
-              className="absolute top-5 right-5 text-slate-400 hover:text-slate-700 p-1.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+              className="absolute top-5 right-5 text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="w-12 h-12 rounded-2xl bg-teal-50 border border-teal-200/80 text-teal-600 flex items-center justify-center mb-4 shadow-sm">
-              <HelpCircle className="w-6 h-6" />
+            <div className="w-10 h-10 rounded-lg bg-teal-50 border border-teal-200/80 text-teal-600 flex items-center justify-center mb-4 shadow-2xs">
+              <HelpCircle className="w-5 h-5" />
             </div>
 
-            <h3 className="text-xl font-black text-slate-900">Recuperación de Acceso</h3>
+            <h3 className="text-lg font-black text-slate-900">Recuperación de Acceso</h3>
             <p className="text-xs sm:text-sm text-slate-600 mt-1.5 leading-relaxed">
               Por políticas de seguridad y confidencialidad de Las Palomas HOA, la restauración de contraseñas es gestionada por el departamento de administración.
             </p>
 
-            <div className="mt-5 p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5 text-xs text-slate-700">
+            <div className="mt-5 p-4 rounded-lg bg-slate-50 border border-slate-200/80 space-y-2.5 text-xs text-slate-700">
               <p className="font-bold text-teal-800 uppercase tracking-wide text-[11px]">Canales de Asistencia Oficial:</p>
               <div className="space-y-1.5 text-slate-600">
                 <p>
@@ -324,7 +324,7 @@ export const LoginView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsHelpModalOpen(false)}
-                className="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-600/20 transition-all cursor-pointer"
+                className="px-5 py-2.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-600/20 transition-all cursor-pointer"
               >
                 Entendido
               </button>

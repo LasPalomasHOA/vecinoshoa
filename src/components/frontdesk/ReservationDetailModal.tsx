@@ -42,7 +42,7 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-      <div className="relative w-full max-w-2xl bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-2xl bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden">
         
         {/* Header */}
         <div className="p-6 bg-gradient-to-r from-teal-700 to-teal-800 text-white flex items-start justify-between">
@@ -76,7 +76,7 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
             {/* Guest Box */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+            <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2.5">
               <div className="flex items-center gap-1.5 text-xs font-bold text-teal-800">
                 <User className="w-4 h-4 text-teal-700" /> Huésped / Titular
               </div>
@@ -102,7 +102,7 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
             </div>
 
             {/* Dates Box */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+            <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2.5">
               <div className="flex items-center gap-1.5 text-xs font-bold text-sky-800">
                 <Calendar className="w-4 h-4 text-sky-700" /> Periodo de Estadía
               </div>
@@ -125,7 +125,7 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
           </div>
 
           {/* Brazaletes & Vehículo Highlight Strip */}
-          <div className="p-4 rounded-xl bg-teal-50 border border-teal-200 space-y-1.5">
+          <div className="p-4 rounded-lg bg-teal-50 border border-teal-200 space-y-1.5">
             <div className="flex justify-between items-center text-xs">
               <span className="font-bold text-teal-900 flex items-center gap-1.5">
                 <Tag className="w-4 h-4 text-teal-700" /> Control de Acceso & Brazaletes
@@ -147,7 +147,7 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
 
           {/* Owner details */}
           {owner && (
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
+            <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
                 <Shield className="w-4 h-4 text-amber-600" />
                 <div>
@@ -163,7 +163,7 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
 
           {/* Notes */}
           {reservation.notas && (
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1">
+            <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-1">
               <span className="font-bold text-slate-600">Notas:</span>
               <p className="text-slate-800">{reservation.notas}</p>
             </div>
@@ -178,7 +178,7 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
               onClose();
               onEdit(reservation);
             }}
-            className="px-4 py-2 rounded-xl bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-bold"
+            className="px-4 py-2 rounded-lg bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-bold"
           >
             Editar Datos
           </button>
@@ -190,7 +190,7 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
                   onClose();
                   onCheckIn(reservation);
                 }}
-                className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-700/20 flex items-center gap-1.5"
+                className="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-700/20 flex items-center gap-1.5"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 <span>Registrar Entrada (Check-In)</span>
@@ -201,7 +201,7 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
                   checkOutReservacion(reservation.id);
                   onClose();
                 }}
-                className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs"
+                className="px-5 py-2 rounded-lg bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs"
               >
                 Registrar Salida (Check-Out)
               </button>
@@ -209,7 +209,7 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
 
             <button
               onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-semibold"
+              className="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-semibold"
             >
               Cerrar
             </button>

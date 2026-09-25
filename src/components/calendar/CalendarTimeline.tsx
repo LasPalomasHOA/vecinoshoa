@@ -351,15 +351,15 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
       </div>
 
       {/* Top Controls Toolbar */}
-      <div className="p-3 rounded-2xl bg-white border border-slate-200/90 shadow-xs flex flex-wrap items-center justify-between gap-3 min-h-[56px]">
+      <div className="p-3 rounded-xl bg-white border border-slate-200/90 shadow-xs flex flex-wrap items-center justify-between gap-3 min-h-[56px]">
         
         {/* Month Selector */}
         <div className="flex items-center gap-2.5">
-          <div className="h-9 flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+          <div className="h-9 flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
             <button
               onClick={handlePrevMonth}
               title="Mes anterior"
-              className="h-7.5 w-7.5 flex items-center justify-center rounded-lg text-slate-600 hover:text-slate-900 hover:bg-white transition-colors cursor-pointer"
+              className="h-7.5 w-7.5 flex items-center justify-center rounded-md text-slate-600 hover:text-slate-900 hover:bg-white transition-colors cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -374,7 +374,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
             <button
               onClick={handleNextMonth}
               title="Mes siguiente"
-              className="h-7.5 w-7.5 flex items-center justify-center rounded-lg text-slate-600 hover:text-slate-900 hover:bg-white transition-colors cursor-pointer"
+              className="h-7.5 w-7.5 flex items-center justify-center rounded-md text-slate-600 hover:text-slate-900 hover:bg-white transition-colors cursor-pointer"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -382,7 +382,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
 
           <button
             onClick={handleToday}
-            className={`h-9 px-3.5 rounded-xl font-bold text-xs border transition-colors duration-150 cursor-pointer ${
+            className={`h-9 px-3.5 rounded-lg font-bold text-xs border transition-colors duration-150 cursor-pointer ${
               currentMonth === 8 && currentYear === 2026
                 ? 'bg-teal-600 text-white border-teal-600 shadow-xs'
                 : 'bg-teal-50 hover:bg-teal-100 text-teal-800 border-teal-200'
@@ -401,7 +401,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
               placeholder="Buscar condo (A 101)..."
               value={localSearch}
               onChange={(e) => setLocalSearch(e.target.value)}
-              className="h-9 pl-8 pr-3 text-xs rounded-xl form-input w-44"
+              className="h-9 pl-8 pr-3 text-xs rounded-lg form-input w-44"
             />
             {localSearch && (
               <button
@@ -418,7 +418,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
             <select
               value={selectedEdificioId}
               onChange={(e) => setSelectedEdificioId(e.target.value)}
-              className="h-9 px-3 text-xs rounded-xl form-input font-medium cursor-pointer border-slate-200"
+              className="h-9 px-3 text-xs rounded-lg form-input font-medium cursor-pointer border-slate-200"
             >
               <option value="ALL">Todas las Torres (A - J)</option>
               {edificios.map(ed => (
@@ -431,7 +431,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
 
           <button
             onClick={() => onNewReservation()}
-            className="h-9 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-colors duration-150 cursor-pointer"
+            className="h-9 px-4 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-colors duration-150 cursor-pointer"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>Reservar</span>
@@ -445,7 +445,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
 
       {/* Selection Help Banner when active */}
       {selection && (
-        <div className="px-4 py-2 rounded-xl bg-teal-500/10 border border-teal-500/30 flex items-center justify-between text-xs text-teal-950 animate-fadeIn">
+        <div className="px-4 py-2 rounded-lg bg-teal-500/10 border border-teal-500/30 flex items-center justify-between text-xs text-teal-950 animate-fadeIn">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-teal-600 animate-ping" />
             <span className="font-bold">
@@ -466,7 +466,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
 
       {/* Timeline Gantt Grid */}
       <div 
-        className="rounded-2xl glass-panel overflow-hidden border border-slate-200/90 shadow-sm"
+        className="rounded-xl glass-panel overflow-hidden border border-slate-200/90 shadow-sm"
         onMouseLeave={() => {
           setHoveredDay(null);
           setHoveredPropId(null);
@@ -744,12 +744,12 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
 
       {/* Floating Glass Ribbon when date selection is in progress */}
       {selection && selectionPreview && (
-        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 glass-floating rounded-2xl p-4 shadow-2xl flex flex-wrap items-center justify-between gap-4 max-w-2xl w-[92%] animate-slide-up border ${
+        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 glass-floating rounded-xl p-4 shadow-2xl flex flex-wrap items-center justify-between gap-4 max-w-2xl w-[92%] animate-slide-up border ${
           selectionPreview.conflict ? 'border-rose-500/50 bg-rose-50/90' : 'border-teal-500/40'
         }`}>
           
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl text-white flex items-center justify-center shrink-0 shadow-md ${
+            <div className={`w-10 h-10 rounded-lg text-white flex items-center justify-center shrink-0 shadow-md ${
               selectionPreview.conflict ? 'bg-rose-600 shadow-rose-700/30' : 'bg-teal-600 shadow-teal-700/30'
             }`}>
               {selectionPreview.conflict ? <AlertCircle className="w-5 h-5" /> : <CalendarIcon className="w-5 h-5" />}
@@ -783,7 +783,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSelection(null)}
-              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors"
             >
               Cancelar (Esc)
             </button>
@@ -797,7 +797,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
                 setSelection(null);
                 onNewReservation(propId, cin, cout);
               }}
-              className={`px-4 py-1.5 rounded-xl font-bold text-xs shadow-md flex items-center gap-1.5 transition-all ${
+              className={`px-4 py-1.5 rounded-lg font-bold text-xs shadow-md flex items-center gap-1.5 transition-all ${
                 selectionPreview.conflict
                   ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'
                   : 'bg-teal-600 hover:bg-teal-700 text-white shadow-teal-700/25 active:scale-95'

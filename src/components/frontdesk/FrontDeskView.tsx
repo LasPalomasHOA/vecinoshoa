@@ -86,7 +86,7 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
       {/* 4 KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
-        <div className="p-4 rounded-2xl glass-card flex items-center justify-between">
+        <div className="p-4 rounded-xl glass-card flex items-center justify-between">
           <div>
             <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">En Casa (In-House)</p>
             <div className="mt-1 flex items-baseline gap-2">
@@ -94,12 +94,12 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
               <span className="text-xs text-teal-700 font-semibold">unidades activas</span>
             </div>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-700 shadow-xs">
+          <div className="w-10 h-10 rounded-lg bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-700 shadow-xs">
             <KeyRound className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl glass-card flex items-center justify-between">
+        <div className="p-4 rounded-xl glass-card flex items-center justify-between">
           <div>
             <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Llegadas Pendientes</p>
             <div className="mt-1 flex items-baseline gap-2">
@@ -107,12 +107,12 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
               <span className="text-xs text-amber-600 font-semibold">check-ins próximos</span>
             </div>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shadow-xs">
+          <div className="w-10 h-10 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shadow-xs">
             <Clock className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl glass-card flex items-center justify-between">
+        <div className="p-4 rounded-xl glass-card flex items-center justify-between">
           <div>
             <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Checked-out</p>
             <div className="mt-1 flex items-baseline gap-2">
@@ -120,12 +120,12 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
               <span className="text-xs text-slate-500 font-medium">salidas registradas</span>
             </div>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 shadow-xs">
+          <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 shadow-xs">
             <LogOut className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl glass-card flex items-center justify-between">
+        <div className="p-4 rounded-xl glass-card flex items-center justify-between">
           <div>
             <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Condominios</p>
             <div className="mt-1 flex items-baseline gap-2">
@@ -133,7 +133,7 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
               <span className="text-xs text-teal-700 font-semibold">Torres A - J</span>
             </div>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-700 shadow-xs">
+          <div className="w-10 h-10 rounded-lg bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-700 shadow-xs">
             <Building2 className="w-5 h-5" />
           </div>
         </div>
@@ -141,14 +141,14 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
       </div>
 
       {/* Filter Toolbar */}
-      <div className="p-3 rounded-2xl bg-white border border-slate-200/90 shadow-xs flex flex-wrap items-center justify-between gap-3 min-h-[56px]">
+      <div className="p-3 rounded-xl bg-white border border-slate-200/90 shadow-xs flex flex-wrap items-center justify-between gap-3 min-h-[56px]">
         
         <div className="flex flex-wrap items-center gap-2.5">
           {/* Segmented status buttons */}
-          <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 text-xs font-semibold h-9">
+          <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs font-semibold h-9">
             <button
               onClick={() => setStatusFilter('ALL')}
-              className={`h-7.5 px-3 rounded-lg transition-colors duration-150 cursor-pointer ${
+              className={`h-7.5 px-3 rounded-md transition-colors duration-150 cursor-pointer ${
                 statusFilter === 'ALL' ? 'bg-white text-teal-900 font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -156,7 +156,7 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
             </button>
             <button
               onClick={() => setStatusFilter('IN_HOUSE')}
-              className={`h-7.5 px-3 rounded-lg transition-colors duration-150 cursor-pointer ${
+              className={`h-7.5 px-3 rounded-md transition-colors duration-150 cursor-pointer ${
                 statusFilter === 'IN_HOUSE' ? 'bg-teal-600 text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -164,7 +164,7 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
             </button>
             <button
               onClick={() => setStatusFilter('PENDING')}
-              className={`h-7.5 px-3 rounded-lg transition-colors duration-150 cursor-pointer ${
+              className={`h-7.5 px-3 rounded-md transition-colors duration-150 cursor-pointer ${
                 statusFilter === 'PENDING' ? 'bg-amber-600 text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -172,7 +172,7 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
             </button>
             <button
               onClick={() => setStatusFilter('CHECKED_OUT')}
-              className={`h-7.5 px-3 rounded-lg transition-colors duration-150 cursor-pointer ${
+              className={`h-7.5 px-3 rounded-md transition-colors duration-150 cursor-pointer ${
                 statusFilter === 'CHECKED_OUT' ? 'bg-slate-700 text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -184,7 +184,7 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
           <select
             value={tipoFilter}
             onChange={(e) => setTipoFilter(e.target.value)}
-            className="h-9 px-3 text-xs rounded-xl form-input font-medium cursor-pointer border-slate-200"
+            className="h-9 px-3 text-xs rounded-lg form-input font-medium cursor-pointer border-slate-200"
           >
             <option value="ALL">Todos los tipos de huéspedes</option>
             <option value="Bloqueo de Dueño">Bloqueo de Dueño</option>
@@ -198,7 +198,7 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
           <select
             value={edificioFilter}
             onChange={(e) => setEdificioFilter(e.target.value)}
-            className="h-9 px-3 text-xs rounded-xl form-input font-medium cursor-pointer border-slate-200"
+            className="h-9 px-3 text-xs rounded-lg form-input font-medium cursor-pointer border-slate-200"
           >
             <option value="ALL">Todas las Torres (A - J)</option>
             {edificios.map(ed => (
@@ -211,7 +211,7 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
 
         <button
           onClick={() => onOpenNewReservation()}
-          className="h-9 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-colors duration-150 cursor-pointer"
+          className="h-9 px-4 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-colors duration-150 cursor-pointer"
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />
           <span>Registrar Reservación</span>
@@ -220,7 +220,7 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
       </div>
 
       {/* Main Table */}
-      <div className="rounded-2xl glass-panel border border-slate-200/90 shadow-sm overflow-hidden">
+      <div className="rounded-xl glass-panel border border-slate-200/90 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>

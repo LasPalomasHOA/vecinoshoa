@@ -60,7 +60,7 @@ export const RequestsView: React.FC<RequestsViewProps> = ({ onOpenNewRequest }) 
     <div className="space-y-5">
       
       {/* Filters Toolbar */}
-      <div className="p-3 rounded-2xl bg-white border border-slate-200/90 shadow-xs flex flex-wrap items-center justify-between gap-3 min-h-[56px]">
+      <div className="p-3 rounded-xl bg-white border border-slate-200/90 shadow-xs flex flex-wrap items-center justify-between gap-3 min-h-[56px]">
         
         <div className="flex flex-wrap items-center gap-2.5">
           <div className="flex items-center gap-2">
@@ -68,7 +68,7 @@ export const RequestsView: React.FC<RequestsViewProps> = ({ onOpenNewRequest }) 
             <select
               value={estatusFilter}
               onChange={(e) => setEstatusFilter(e.target.value)}
-              className="h-9 px-3 text-xs rounded-xl form-input font-medium cursor-pointer border-slate-200"
+              className="h-9 px-3 text-xs rounded-lg form-input font-medium cursor-pointer border-slate-200"
             >
               <option value="ALL">Todos los Estatus ({solicitudes.length})</option>
               <option value="Pendiente">Pendientes</option>
@@ -84,7 +84,7 @@ export const RequestsView: React.FC<RequestsViewProps> = ({ onOpenNewRequest }) 
             <select
               value={propiedadFilter}
               onChange={(e) => setPropiedadFilter(e.target.value)}
-              className="h-9 px-3 text-xs rounded-xl form-input font-medium cursor-pointer border-slate-200"
+              className="h-9 px-3 text-xs rounded-lg form-input font-medium cursor-pointer border-slate-200"
             >
               <option value="ALL">Todas las Propiedades</option>
               {propiedades.map(p => (
@@ -98,7 +98,7 @@ export const RequestsView: React.FC<RequestsViewProps> = ({ onOpenNewRequest }) 
 
         <button
           onClick={onOpenNewRequest}
-          className="h-9 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-colors duration-150 cursor-pointer"
+          className="h-9 px-4 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-colors duration-150 cursor-pointer"
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />
           <span>Nuevo Pase de Trabajo</span>

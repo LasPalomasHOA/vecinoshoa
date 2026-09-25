@@ -73,7 +73,7 @@ export const UsersView: React.FC<UsersViewProps> = ({
     <div className="space-y-5">
       
       {/* Top Filter Controls */}
-      <div className="p-3 rounded-2xl bg-white border border-slate-200/90 shadow-xs flex flex-wrap items-center justify-between gap-3 min-h-[56px]">
+      <div className="p-3 rounded-xl bg-white border border-slate-200/90 shadow-xs flex flex-wrap items-center justify-between gap-3 min-h-[56px]">
         
         <div className="flex flex-wrap items-center gap-2.5">
           <div className="flex items-center gap-2">
@@ -81,7 +81,7 @@ export const UsersView: React.FC<UsersViewProps> = ({
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="h-9 px-3 text-xs rounded-xl form-input font-medium cursor-pointer border-slate-200"
+              className="h-9 px-3 text-xs rounded-lg form-input font-medium cursor-pointer border-slate-200"
             >
               <option value="ALL">Todos los Roles ({usuarios.length})</option>
               {rolesList.map(role => (
@@ -97,7 +97,7 @@ export const UsersView: React.FC<UsersViewProps> = ({
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-9 px-3 text-xs rounded-xl form-input font-medium cursor-pointer border-slate-200"
+              className="h-9 px-3 text-xs rounded-lg form-input font-medium cursor-pointer border-slate-200"
             >
               <option value="ALL">Todos los Estatus</option>
               <option value="Active">Solo Activos</option>
@@ -109,7 +109,7 @@ export const UsersView: React.FC<UsersViewProps> = ({
 
         <button
           onClick={onOpenNewUser}
-          className="h-9 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-colors duration-150 cursor-pointer"
+          className="h-9 px-4 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-colors duration-150 cursor-pointer"
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />
           <span>Registrar Usuario / Dueño</span>
