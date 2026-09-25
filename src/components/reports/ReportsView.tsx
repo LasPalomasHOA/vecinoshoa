@@ -99,7 +99,11 @@ export const ReportsView: React.FC = () => {
 
   // Statistics for KPIs
   const totalOccupants = useMemo(() => {
-    return filteredReservations.reduce((acc, res) => acc + (res.numero_ocupantes || 1), 0);
+    return filteredReservations.reduce((acc, res) => {
+      const rawComps = Array.isArray(res.acompanantes) ? res.acompanantes.filter(a => a.id !== 'titular') : [];
+      const occCount = rawComps.length > 0 ? (1 + rawComps.length) : (res.numero_ocupantes || 1);
+      return acc + occCount;
+    }, 0);
   }, [filteredReservations]);
 
   const nonPayingCount = useMemo(() => {
@@ -123,7 +127,9 @@ export const ReportsView: React.FC = () => {
       const guestName = huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Huésped';
       const cellClass = index % 2 === 0 ? 'td-odd' : 'td-even';
       
-      let guestText = `${guestName}${res.numero_ocupantes > 1 ? ` +${res.numero_ocupantes - 1}` : ''}`;
+      const rawComps = Array.isArray(res.acompanantes) ? res.acompanantes.filter(a => a.id !== 'titular') : [];
+      const numExtra = rawComps.length > 0 ? rawComps.length : (res.numero_ocupantes > 1 ? res.numero_ocupantes - 1 : 0);
+      let guestText = `${guestName}${numExtra > 0 ? ` +${numExtra}` : ''}`;
       if (res.codigo === '2551222' || res.notas?.includes('Breneida Camacho')) {
         guestText = 'Breneida Camacho +6<br/>BRAZALETES ONLY';
       } else if (res.codigo === '2551271' || res.notas?.includes('Karely Hernandez')) {
@@ -546,7 +552,9 @@ export const ReportsView: React.FC = () => {
                     const rowBg = isEvenRow ? 'bg-white' : 'bg-[#eaf2fb]';
 
                     // Huésped multiline formatting
-                    let guestContent: React.ReactNode = `${guestName}${res.numero_ocupantes > 1 ? ` +${res.numero_ocupantes - 1}` : ''}`;
+                    const rawComps = Array.isArray(res.acompanantes) ? res.acompanantes.filter(a => a.id !== 'titular') : [];
+                    const numExtra = rawComps.length > 0 ? rawComps.length : (res.numero_ocupantes > 1 ? res.numero_ocupantes - 1 : 0);
+                    let guestContent: React.ReactNode = `${guestName}${numExtra > 0 ? ` +${numExtra}` : ''}`;
                     if (res.codigo === '2551222' || res.notas?.includes('Breneida Camacho')) {
                       guestContent = (
                         <div>
