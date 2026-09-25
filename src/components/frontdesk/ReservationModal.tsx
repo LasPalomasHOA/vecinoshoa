@@ -584,7 +584,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
               </span>
               {nightsCount > 0 && (
                 <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-teal-100/80 text-teal-800 border border-teal-200">
-                  ✨ {nightsCount} {nightsCount === 1 ? 'noche' : 'noches'}
+                  {nightsCount} {nightsCount === 1 ? 'noche' : 'noches'}
                 </span>
               )}
             </div>

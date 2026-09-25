@@ -577,10 +577,8 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
                               onClick={() => handleCellClick(prop.id, day.dateStr)}
                               onMouseEnter={() => handleCellMouseEnter(prop.id, day.dateStr, day.dayNumber)}
                               className={`h-full border-r border-slate-100/90 cursor-pointer transition-all relative select-none flex items-center justify-center ${
-                                isStartDay
-                                  ? 'bg-teal-500/30 ring-2 ring-teal-500 z-10'
-                                  : isInRange
-                                  ? 'bg-teal-400/20'
+                                isInRange
+                                  ? 'bg-teal-50/50'
                                   : day.isToday
                                   ? 'bg-teal-50/60'
                                   : day.isWeekend
@@ -596,12 +594,6 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
                               {/* Dot indicator on hover if empty */}
                               {isHoveredRow && isHoveredCol && !isSelectedProp && (
                                 <span className="w-1.5 h-1.5 rounded-full bg-teal-500/50 pointer-events-none" />
-                              )}
-
-                              {isStartDay && (
-                                <span className="absolute -top-1 px-1 py-0.2 rounded bg-teal-700 text-white font-black text-[8px] uppercase tracking-tight z-30 shadow-xs pointer-events-none">
-                                  Entrada
-                                </span>
                               )}
                             </div>
                           );
@@ -640,16 +632,16 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
                                   left: `calc(${leftPct}% + 1px)`,
                                   width: `calc(${widthPct}% - 2px)`,
                                 }}
-                                className={`absolute inset-y-1 z-20 rounded-lg border-2 border-dashed backdrop-blur-xs flex items-center justify-center px-2 pointer-events-none shadow-soft-glow ${
+                                className={`absolute inset-y-1 z-20 rounded-lg border-2 border-dashed flex items-center justify-center px-2 pointer-events-none transition-all ${
                                   hasConflict
-                                    ? 'border-rose-500 bg-rose-500/25 text-rose-950 animate-pulse'
-                                    : 'border-teal-500 bg-teal-500/25 text-teal-950 animate-pulse-glow'
+                                    ? 'border-rose-500 bg-rose-500/20 text-rose-900'
+                                    : 'border-teal-700/70 bg-teal-800/15 text-teal-950 font-bold'
                                 }`}
                               >
-                                <span className="text-[10px] font-black truncate whitespace-nowrap drop-shadow-xs">
+                                <span className="text-[10px] font-black truncate whitespace-nowrap">
                                   {hasConflict
-                                    ? `⚠️ Ocupado (${selectionPreview?.nights}n)`
-                                    : `✨ ${selectionPreview?.nights} ${selectionPreview?.nights === 1 ? 'noche' : 'noches'} (${formatReadableDate(checkinStr)} → ${formatReadableDate(checkoutStr)})`}
+                                    ? `Ocupado (${selectionPreview?.nights}n)`
+                                    : `${selectionPreview?.nights} ${selectionPreview?.nights === 1 ? 'noche' : 'noches'} (${formatReadableDate(checkinStr)} → ${formatReadableDate(checkoutStr)})`}
                                 </span>
                               </div>
                             );
