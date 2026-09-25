@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Propiedad } from '../../types';
-import { 
-  Building2, 
-  Plus, 
-  Zap, 
-  Droplet, 
+import {
+  Building2,
+  Plus,
+  Zap,
+  Droplet,
   SlidersHorizontal,
   Edit,
   Trash2,
@@ -25,15 +25,15 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
   onEditProperty,
   onOpenBuildingsManager
 }) => {
-  const { 
-    propiedades, 
-    edificios, 
-    grupos, 
-    searchQuery, 
-    getEdificioById, 
-    getGrupoById, 
+  const {
+    propiedades,
+    edificios,
+    grupos,
+    searchQuery,
+    getEdificioById,
+    getGrupoById,
     getOwnerByPropiedadId,
-    deletePropiedad 
+    deletePropiedad
   } = useApp();
 
   const [selectedEdificio, setSelectedEdificio] = useState<string>('ALL');
@@ -94,10 +94,10 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
 
   return (
     <div className="space-y-5">
-      
+
       {/* Filters Toolbar */}
       <div className="p-3 rounded-xl bg-white border border-slate-200/90 shadow-xs flex flex-wrap items-center justify-between gap-3 min-h-[56px]">
-        
+
         <div className="flex flex-wrap items-center gap-2.5">
           <div className="flex items-center gap-2">
             <Building2 className="w-4 h-4 text-teal-700" />
@@ -109,7 +109,7 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
               <option value="ALL">Todas las Torres ({edificios.length})</option>
               {edificios.map(ed => (
                 <option key={ed.id} value={ed.id}>
-                  Torre {ed.nombre}
+                  {ed.nombre.startsWith('Torre') ? ed.nombre : `Torre ${ed.nombre}`}
                 </option>
               ))}
             </select>
@@ -202,14 +202,14 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
 
                     return (
                       <tr key={prop.id} className="hover:bg-teal-50/40 transition-colors group">
-                        
+
                         {/* Name & Torre */}
                         <td className="py-3 px-3.5 align-middle whitespace-nowrap">
                           <span className="font-extrabold text-sm text-teal-800">
                             {prop.nombre}
                           </span>
                           <span className="block text-[10px] text-slate-500 mt-0.5">
-                            {ed?.nombre ? `Torre ${ed.nombre}` : `Torre ${prop.edificio_id}`} • Piso {prop.piso}
+                            {ed?.nombre ? (ed.nombre.startsWith('Torre') ? ed.nombre : `Torre ${ed.nombre}`) : `Torre ${prop.edificio_id}`} • Piso {prop.piso}
                           </span>
                         </td>
 
@@ -236,13 +236,21 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
                         </td>
 
                         {/* Cuota HOA */}
-                        <td className="py-3 px-3.5 align-middle whitespace-nowrap font-mono font-bold text-teal-700">
-                          ${prop.cuota_hoa || 420} {prop.moneda}
+                        <td className="py-3 px-3.5 align-middle whitespace-nowrap">
+                          {prop.cuota_hoa && prop.cuota_hoa > 0 ? (
+                            <span className="font-mono font-bold text-teal-700">
+                              ${prop.cuota_hoa} {prop.moneda || 'USD'}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 font-medium italic text-[11px]">
+                              N/A
+                            </span>
+                          )}
                         </td>
 
                         {/* Grupo */}
                         <td className="py-3 px-3.5 align-middle whitespace-nowrap">
-                          <span 
+                          <span
                             className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] whitespace-nowrap shadow-2xs ${grupoBadge.className}`}
                             title={grupo?.nombre}
                           >
@@ -319,7 +327,7 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
                     <div className="flex items-center gap-2">
                       <span className="text-xl font-black text-slate-900">{prop.nombre}</span>
                       <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-teal-50 border border-teal-200 text-teal-800">
-                        {ed?.nombre}
+                        {ed?.nombre ? (ed.nombre.startsWith('Torre') ? ed.nombre : `Torre ${ed.nombre}`) : `Torre ${prop.edificio_id}`}
                       </span>
                     </div>
                     <p className="text-xs text-slate-500 mt-0.5">Piso {prop.piso} • Capacidad: {prop.capacidad_personas} personas</p>
@@ -336,7 +344,11 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
                   </div>
                   <div className="p-2 rounded-lg bg-slate-50">
                     <span className="text-[10px] text-slate-400 block">Cuota HOA</span>
-                    <span className="font-mono font-bold text-teal-800">${prop.cuota_hoa || 420} USD</span>
+                    {prop.cuota_hoa && prop.cuota_hoa > 0 ? (
+                      <span className="font-mono font-bold text-teal-800">${prop.cuota_hoa} {prop.moneda || 'USD'}</span>
+                    ) : (
+                      <span className="text-slate-400 font-medium italic text-xs">N/A</span>
+                    )}
                   </div>
                 </div>
 

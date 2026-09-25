@@ -60,7 +60,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
       setMedidorElectricidad(propertyToEdit.medidor_electricidad || '');
       setEmpresaManejadora(propertyToEdit.empresa_manejadora || '');
       setMoneda(propertyToEdit.moneda);
-      setCuotaHoa(propertyToEdit.cuota_hoa || 420);
+      setCuotaHoa(propertyToEdit.cuota_hoa !== undefined && propertyToEdit.cuota_hoa !== null ? propertyToEdit.cuota_hoa : 0);
       setEstado(propertyToEdit.estado);
       setNotas(propertyToEdit.notas || '');
 
