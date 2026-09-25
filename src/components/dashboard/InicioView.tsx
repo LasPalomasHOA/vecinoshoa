@@ -22,6 +22,7 @@ import {
   Percent,
   CalendarDays,
   FileCheck,
+  ChevronLeft,
   ChevronRight,
   Activity,
   Layers
@@ -244,72 +245,172 @@ export const InicioView: React.FC<InicioViewProps> = ({
         </div>
       </div>
 
-      {/* 2. Period Filter Selector Bar */}
-      <div className="p-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-teal-700" />
-          <span className="text-xs font-bold text-slate-800">Filtrar Resumen por Período:</span>
+      {/* 2. Sleek Unified Period & Date Navigator */}
+      <div className="p-3 rounded-2xl bg-white border border-slate-200/90 shadow-2xs flex flex-wrap items-center justify-between gap-3">
+        
+        {/* Left: Period Mode Switch */}
+        <div className="flex items-center gap-1 bg-slate-100/90 p-1 rounded-xl border border-slate-200/80">
+          <button
+            type="button"
+            onClick={() => setSelectedPeriod('current_month')}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              selectedPeriod === 'current_month'
+                ? 'bg-white text-teal-900 shadow-xs border border-slate-200/60'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Calendar className="w-3.5 h-3.5 text-teal-700" />
+            <span>Por Mes</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setSelectedPeriod('current_year')}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              selectedPeriod === 'current_year'
+                ? 'bg-white text-teal-900 shadow-xs border border-slate-200/60'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <TrendingUp className="w-3.5 h-3.5 text-teal-700" />
+            <span>Por Año</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setSelectedPeriod('all')}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              selectedPeriod === 'all'
+                ? 'bg-white text-teal-900 shadow-xs border border-slate-200/60'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Activity className="w-3.5 h-3.5 text-teal-700" />
+            <span>Histórico Total</span>
+          </button>
         </div>
 
+        {/* Right: Date Navigator Controls */}
         <div className="flex items-center flex-wrap gap-2">
-          {/* Segmented Period Tabs */}
-          <div className="inline-flex p-1 rounded-xl bg-slate-100 border border-slate-200 text-xs font-semibold">
-            <button
-              onClick={() => setSelectedPeriod('current_month')}
-              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                selectedPeriod === 'current_month'
-                  ? 'bg-teal-700 text-white font-bold shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              📅 Este Mes ({monthNames[selectedMonth]})
-            </button>
-            <button
-              onClick={() => setSelectedPeriod('current_year')}
-              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                selectedPeriod === 'current_year'
-                  ? 'bg-teal-700 text-white font-bold shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              📈 Todo el Año ({selectedYear})
-            </button>
-            <button
-              onClick={() => setSelectedPeriod('all')}
-              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                selectedPeriod === 'all'
-                  ? 'bg-teal-700 text-white font-bold shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              🌐 Todo el Histórico
-            </button>
-          </div>
-
-          {/* Month Selector if month mode */}
           {selectedPeriod === 'current_month' && (
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(Number(e.target.value))}
-              className="h-9 px-3 text-xs rounded-lg form-input font-bold border-slate-200 cursor-pointer text-teal-900"
-            >
-              {monthNames.map((m, idx) => (
-                <option key={idx} value={idx}>{m} {selectedYear}</option>
-              ))}
-            </select>
+            <div className="flex items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200">
+              <button
+                type="button"
+                onClick={() => {
+                  if (selectedMonth === 0) {
+                    setSelectedMonth(11);
+                    setSelectedYear(y => y - 1);
+                  } else {
+                    setSelectedMonth(m => m - 1);
+                  }
+                }}
+                className="h-8 w-8 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
+                title="Mes anterior"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              <div className="relative">
+                <select
+                  value={`${selectedYear}-${selectedMonth}`}
+                  onChange={(e) => {
+                    const [y, m] = e.target.value.split('-').map(Number);
+                    setSelectedYear(y);
+                    setSelectedMonth(m);
+                  }}
+                  className="h-8 pl-3 pr-8 rounded-lg bg-white border border-slate-200 text-xs font-bold text-teal-950 cursor-pointer shadow-2xs focus:ring-2 focus:ring-teal-500 outline-none"
+                >
+                  {[2025, 2026, 2027].flatMap(y =>
+                    monthNames.map((name, mIdx) => (
+                      <option key={`${y}-${mIdx}`} value={`${y}-${mIdx}`}>
+                        {name} {y}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (selectedMonth === 11) {
+                    setSelectedMonth(0);
+                    setSelectedYear(y => y + 1);
+                  } else {
+                    setSelectedMonth(m => m + 1);
+                  }
+                }}
+                className="h-8 w-8 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
+                title="Mes siguiente"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+
+              {(selectedMonth !== currentMonthIdx || selectedYear !== currentYear) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedYear(currentYear);
+                    setSelectedMonth(currentMonthIdx);
+                  }}
+                  className="h-8 px-2.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 text-[11px] font-bold transition-colors cursor-pointer ml-1"
+                >
+                  Mes Actual
+                </button>
+              )}
+            </div>
           )}
 
-          {/* Year Selector */}
-          <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className="h-9 px-3 text-xs rounded-lg form-input font-bold border-slate-200 cursor-pointer text-slate-800"
-          >
-            {[2025, 2026, 2027, 2028].map(y => (
-              <option key={y} value={y}>Año {y}</option>
-            ))}
-          </select>
+          {selectedPeriod === 'current_year' && (
+            <div className="flex items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200">
+              <button
+                type="button"
+                onClick={() => setSelectedYear(y => y - 1)}
+                className="h-8 w-8 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
+                title="Año anterior"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(Number(e.target.value))}
+                className="h-8 px-3 rounded-lg bg-white border border-slate-200 text-xs font-bold text-teal-950 cursor-pointer shadow-2xs focus:ring-2 focus:ring-teal-500 outline-none"
+              >
+                {[2024, 2025, 2026, 2027, 2028].map(y => (
+                  <option key={y} value={y}>Año {y}</option>
+                ))}
+              </select>
+
+              <button
+                type="button"
+                onClick={() => setSelectedYear(y => y + 1)}
+                className="h-8 w-8 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
+                title="Año siguiente"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+
+              {selectedYear !== currentYear && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedYear(currentYear)}
+                  className="h-8 px-2.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 text-[11px] font-bold transition-colors cursor-pointer ml-1"
+                >
+                  Año Actual
+                </button>
+              )}
+            </div>
+          )}
+
+          {selectedPeriod === 'all' && (
+            <div className="h-9 px-3.5 rounded-xl bg-teal-50 border border-teal-200/80 text-teal-900 text-xs font-bold flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-teal-600" />
+              <span>Mostrando historial completo ({reservaciones.length} reservaciones)</span>
+            </div>
+          )}
         </div>
+
       </div>
 
       {/* 3. Executive KPI Cards Grid */}
