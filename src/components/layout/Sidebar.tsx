@@ -11,7 +11,9 @@ import {
   RotateCcw,
   LogOut,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  LayoutDashboard,
+  KeyRound
 } from 'lucide-react';
 
 import logoImg from '../../assets/logoDashboard.png';
@@ -36,9 +38,14 @@ export const Sidebar: React.FC = () => {
 
   const navItems = [
     {
+      id: 'inicio' as const,
+      label: 'Inicio',
+      icon: LayoutDashboard,
+    },
+    {
       id: 'frontdesk' as const,
       label: 'Front Desk & In-House',
-      icon: Home,
+      icon: KeyRound,
       badge: inHouseCount > 0 ? `${inHouseCount} en casa` : undefined,
       badgeCount: inHouseCount > 0 ? inHouseCount : undefined,
       badgeColor: 'bg-teal-100 text-teal-800'

@@ -3,11 +3,11 @@ import { useApp } from './context/AppContext';
 import { useAuth } from './context/AuthContext';
 import { Sidebar } from './components/layout/Sidebar';
 import { Navbar } from './components/layout/Navbar';
-import { HeroBanner } from './components/common/HeroBanner';
 import { ToastContainer } from './components/common/ToastContainer';
 import { LoginView } from './components/auth/LoginView';
 
 // Views
+import { InicioView } from './components/dashboard/InicioView';
 import { FrontDeskView } from './components/frontdesk/FrontDeskView';
 import { CalendarTimeline } from './components/calendar/CalendarTimeline';
 import { PropertiesView } from './components/properties/PropertiesView';
@@ -28,7 +28,7 @@ import { RequestModal } from './components/requests/RequestModal';
 import { Reservacion, Propiedad, Usuario } from './types';
 
 export const App: React.FC = () => {
-  const { activeTab } = useApp();
+  const { activeTab, setActiveTab } = useApp();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
   // Modal states
@@ -141,10 +141,16 @@ export const App: React.FC = () => {
         {/* Content Container */}
         <main className="flex-1 p-6 max-w-7xl w-full mx-auto print:p-0 print:m-0 print:max-w-none print:w-full print:block">
           
-          {/* Hero Banner with Resort Branding (Only on Front Desk) */}
-          {activeTab === 'frontdesk' && <HeroBanner />}
-
           {/* Module Views */}
+          {activeTab === 'inicio' && (
+            <InicioView
+              onOpenNewReservation={handleOpenNewReservation}
+              onViewReservationDetail={handleViewReservationDetail}
+              onOpenQrPass={handleOpenQrPass}
+              onNavigateTab={setActiveTab}
+            />
+          )}
+
           {activeTab === 'frontdesk' && (
             <FrontDeskView
               onOpenNewReservation={handleOpenNewReservation}

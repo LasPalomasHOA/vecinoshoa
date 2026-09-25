@@ -22,6 +22,7 @@ export const Navbar: React.FC = () => {
 
   const getBreadcrumbTitle = () => {
     switch (activeTab) {
+      case 'inicio': return 'Inicio & Resumen';
       case 'frontdesk': return 'Front Desk & In-House';
       case 'calendar': return 'Calendario Timeline';
       case 'properties': return 'Propiedades & Torres';
