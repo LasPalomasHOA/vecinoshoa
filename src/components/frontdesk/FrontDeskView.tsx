@@ -14,7 +14,8 @@ import {
   Edit3, 
   Trash2,
   Phone,
-  Plus
+  Plus,
+  Users
 } from 'lucide-react';
 
 interface FrontDeskViewProps {
@@ -54,9 +55,12 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
       const matchCode = res.codigo?.toLowerCase().includes(q) || `${res.id}`.includes(q);
       const matchProp = prop?.nombre.toLowerCase().includes(q);
       const matchHuesped = huesped ? `${huesped.nombres} ${huesped.apellidos}`.toLowerCase().includes(q) : false;
+      const matchAcompanantes = Array.isArray(res.acompanantes) 
+        ? res.acompanantes.some(a => a.nombre_completo.toLowerCase().includes(q))
+        : false;
       const matchBrazaletes = res.brazaletes?.toLowerCase().includes(q);
       const matchVehiculo = res.vehiculo_info?.toLowerCase().includes(q);
-      if (!matchCode && !matchProp && !matchHuesped && !matchBrazaletes && !matchVehiculo) {
+      if (!matchCode && !matchProp && !matchHuesped && !matchAcompanantes && !matchBrazaletes && !matchVehiculo) {
         return false;
       }
     }
@@ -288,8 +292,20 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
                         <div className="font-bold text-slate-900">
                           {huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Sin nombre'}
                         </div>
+                        
+                        {/* Acompañantes Badge with Tooltip */}
+                        {Array.isArray(res.acompanantes) && res.acompanantes.length > 0 && (
+                          <div 
+                            className="inline-flex items-center gap-1 text-[10px] text-teal-800 bg-teal-50 border border-teal-200 px-1.5 py-0.5 rounded-md font-semibold mt-0.5 cursor-help"
+                            title={`Acompañantes: ${res.acompanantes.map(a => `${a.nombre_completo} (${a.tipo})`).join(', ')}`}
+                          >
+                            <Users className="w-2.5 h-2.5 text-teal-600" />
+                            <span>+{res.acompanantes.length} {res.acompanantes.length === 1 ? 'acompañante' : 'acompañantes'}</span>
+                          </div>
+                        )}
+
                         {huesped?.telefono && (
-                          <div className="text-[10px] text-slate-500 flex items-center gap-1">
+                          <div className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
                             <Phone className="w-2.5 h-2.5" />
                             <span>{huesped.telefono}</span>
                           </div>
@@ -332,16 +348,38 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
 
                       {/* Brazaletes */}
                       <td className="py-3 px-4 max-w-xs">
-                        {res.brazaletes ? (
-                          <div className="flex items-center gap-1 text-teal-800 font-semibold text-[11px]">
-                            <Tag className="w-3 h-3 text-teal-600 shrink-0" />
-                            <span className="truncate">{res.brazaletes}</span>
-                          </div>
-                        ) : (
-                          <span className="text-slate-400 italic text-[10px]">Sin asignar</span>
-                        )}
+                        {(() => {
+                          const acompList = Array.isArray(res.acompanantes) ? res.acompanantes : [];
+                          const totalOccupants = 1 + acompList.length;
+                          const deliveredCount = (res.titular_brazalete_entregado ? 1 : (res.estado === 'En Casa (Checked-in)' ? 1 : 0)) + 
+                            acompList.filter(a => a.brazalete_entregado).length;
+                          const allDelivered = deliveredCount === totalOccupants;
+                          const someDelivered = deliveredCount > 0;
+
+                          return (
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold ${
+                                  allDelivered 
+                                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' 
+                                    : someDelivered 
+                                    ? 'bg-amber-50 text-amber-800 border border-amber-200' 
+                                    : 'bg-slate-100 text-slate-600 border border-slate-200'
+                                }`}>
+                                  <Tag className="w-2.5 h-2.5" />
+                                  <span>{deliveredCount}/{totalOccupants} Brazaletes</span>
+                                </span>
+                              </div>
+                              {res.brazaletes && !res.brazaletes.includes('entregados') && (
+                                <div className="text-[10px] text-slate-500 mt-0.5 truncate">
+                                  {res.brazaletes}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                         {res.vehiculo_info && (
-                          <div className="flex items-center gap-1 text-slate-500 text-[10px] mt-0.5 truncate">
+                          <div className="flex items-center gap-1 text-slate-500 text-[10px] mt-1 truncate">
                             <Car className="w-3 h-3 shrink-0" />
                             <span className="truncate">{res.vehiculo_info}</span>
                           </div>

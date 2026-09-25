@@ -109,6 +109,7 @@ CREATE TABLE IF NOT EXISTS gestion_residencial.reservaciones (
     vehiculo_info VARCHAR(150),
     balance NUMERIC(10, 2) DEFAULT 0.00,
     estado VARCHAR(30) DEFAULT 'Confirmada', -- Confirmada, En Casa (Checked-in), Checked-out, Pendiente, Cancelada
+    acompanantes JSONB DEFAULT '[]'::jsonb, -- Lista estructurada de acompañantes y estatus de entrega de brazalete
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

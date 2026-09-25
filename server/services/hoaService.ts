@@ -524,7 +524,9 @@ export async function getAllReservaciones(): Promise<Reservacion[]> {
       TO_CHAR(fecha_checkin, 'YYYY-MM-DD') AS fecha_checkin, 
       TO_CHAR(fecha_checkout, 'YYYY-MM-DD') AS fecha_checkout, 
       numero_ocupantes, numero_autos, notas, brazaletes, vehiculo_info, 
-      CAST(balance AS FLOAT) as balance, estado, created_at, updated_at
+      CAST(balance AS FLOAT) as balance, estado, 
+      COALESCE(acompanantes, '[]'::jsonb) AS acompanantes,
+      created_at, updated_at
     FROM ${T.reservaciones()}
     ORDER BY fecha_checkin DESC, id DESC;
   `);
@@ -538,7 +540,9 @@ export async function getReservacionById(id: number): Promise<Reservacion | null
       TO_CHAR(fecha_checkin, 'YYYY-MM-DD') AS fecha_checkin, 
       TO_CHAR(fecha_checkout, 'YYYY-MM-DD') AS fecha_checkout, 
       numero_ocupantes, numero_autos, notas, brazaletes, vehiculo_info, 
-      CAST(balance AS FLOAT) as balance, estado, created_at, updated_at
+      CAST(balance AS FLOAT) as balance, estado, 
+      COALESCE(acompanantes, '[]'::jsonb) AS acompanantes,
+      created_at, updated_at
     FROM ${T.reservaciones()}
     WHERE id = $1;
   `, [id]);
@@ -560,20 +564,23 @@ export async function createReservacion(
   }
 
   const generatedCode = data.codigo || `RES-${Math.floor(100000 + Math.random() * 900000)}`;
+  const acompanantesJson = JSON.stringify(data.acompanantes || []);
 
   const res = await query<Reservacion>(`
     INSERT INTO ${T.reservaciones()} (
       codigo, propiedad_id, huesped_id, tipo_huesped, 
       fecha_checkin, fecha_checkout, numero_ocupantes, numero_autos, 
-      notas, brazaletes, vehiculo_info, balance, estado
+      notas, brazaletes, vehiculo_info, balance, estado, acompanantes
     )
-    VALUES ($1, $2, $3, $4, $5::date, $6::date, $7, $8, $9, $10, $11, $12, $13)
+    VALUES ($1, $2, $3, $4, $5::date, $6::date, $7, $8, $9, $10, $11, $12, $13, $14::jsonb)
     RETURNING 
       id, codigo, propiedad_id, huesped_id, tipo_huesped, 
       TO_CHAR(fecha_checkin, 'YYYY-MM-DD') AS fecha_checkin, 
       TO_CHAR(fecha_checkout, 'YYYY-MM-DD') AS fecha_checkout, 
       numero_ocupantes, numero_autos, notas, brazaletes, vehiculo_info, 
-      CAST(balance AS FLOAT) as balance, estado, created_at, updated_at;
+      CAST(balance AS FLOAT) as balance, estado, 
+      COALESCE(acompanantes, '[]'::jsonb) AS acompanantes,
+      created_at, updated_at;
   `, [
     generatedCode,
     data.propiedad_id,
@@ -587,7 +594,8 @@ export async function createReservacion(
     data.brazaletes || null,
     data.vehiculo_info || null,
     data.balance || 0,
-    data.estado || 'Confirmada'
+    data.estado || 'Confirmada',
+    acompanantesJson
   ]);
 
   return res.rows[0];
@@ -625,6 +633,10 @@ export async function updateReservacion(id: number, data: Partial<Reservacion>):
   if (data.vehiculo_info !== undefined) { fields.push(`vehiculo_info = $${idx++}`); values.push(data.vehiculo_info); }
   if (data.balance !== undefined) { fields.push(`balance = $${idx++}`); values.push(data.balance); }
   if (data.estado !== undefined) { fields.push(`estado = $${idx++}`); values.push(data.estado); }
+  if (data.acompanantes !== undefined) {
+    fields.push(`acompanantes = $${idx++}::jsonb`);
+    values.push(JSON.stringify(data.acompanantes || []));
+  }
 
   values.push(id);
   const res = await query<Reservacion>(`
@@ -636,7 +648,9 @@ export async function updateReservacion(id: number, data: Partial<Reservacion>):
       TO_CHAR(fecha_checkin, 'YYYY-MM-DD') AS fecha_checkin, 
       TO_CHAR(fecha_checkout, 'YYYY-MM-DD') AS fecha_checkout, 
       numero_ocupantes, numero_autos, notas, brazaletes, vehiculo_info, 
-      CAST(balance AS FLOAT) as balance, estado, created_at, updated_at;
+      CAST(balance AS FLOAT) as balance, estado, 
+      COALESCE(acompanantes, '[]'::jsonb) AS acompanantes,
+      created_at, updated_at;
   `, values);
 
   return res.rows[0] || null;

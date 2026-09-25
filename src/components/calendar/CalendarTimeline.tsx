@@ -708,6 +708,8 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
 
                           const huesped = getHuespedById(res.huesped_id);
                           const guestName = huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Huésped';
+                          const acompList = Array.isArray(res.acompanantes) ? res.acompanantes : [];
+                          const acompNames = acompList.length > 0 ? ` | Acompañantes: ${acompList.map(a => a.nombre_completo).join(', ')}` : '';
 
                           return (
                             <div
@@ -721,10 +723,10 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
                                 width: `calc(${widthPct}% - 2px)`,
                               }}
                               className={`absolute inset-y-1 z-10 rounded-lg px-2.5 flex items-center cursor-pointer transition-all hover:brightness-110 hover:shadow-md hover:z-20 overflow-hidden ${getReservationColor(res)}`}
-                              title={`${res.tipo_huesped} | ${guestName} (${res.fecha_checkin} al ${res.fecha_checkout}) | Estado: ${res.estado} | Brazaletes: ${res.brazaletes || 'N/A'}`}
+                              title={`${res.tipo_huesped} | Titular: ${guestName}${acompNames} | (${res.fecha_checkin} al ${res.fecha_checkout}) | Estado: ${res.estado} | Brazaletes: ${res.brazaletes || 'N/A'}`}
                             >
                               <span className="text-[10px] font-extrabold truncate whitespace-nowrap drop-shadow-xs">
-                                {guestName} {res.numero_ocupantes > 1 ? `+${res.numero_ocupantes - 1}` : ''}
+                                {guestName} {acompList.length > 0 ? `(+${acompList.length})` : res.numero_ocupantes > 1 ? `(+${res.numero_ocupantes - 1})` : ''}
                               </span>
                             </div>
                           );

@@ -7,7 +7,8 @@ import {
   PropiedadUsuario, 
   Huesped, 
   Reservacion, 
-  SolicitudAcceso
+  SolicitudAcceso,
+  Acompanante
 } from '../types';
 import { api } from '../services/api';
 
@@ -52,7 +53,13 @@ interface AppContextType {
   
   addReservacion: (reservacion: Omit<Reservacion, 'id'>, huespedData?: Omit<Huesped, 'id'>) => Promise<void>;
   updateReservacion: (id: number, reservacion: Partial<Reservacion>) => Promise<void>;
-  checkInReservacion: (id: number, brazaletes?: string, vehiculo?: string) => Promise<void>;
+  checkInReservacion: (
+    id: number, 
+    brazaletes?: string, 
+    vehiculo?: string, 
+    acompanantes?: Acompanante[], 
+    titularBrazaleteEntregado?: boolean
+  ) => Promise<void>;
   checkOutReservacion: (id: number) => Promise<void>;
   deleteReservacion: (id: number) => Promise<void>;
   
@@ -327,13 +334,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const checkInReservacion = async (id: number, brazaletes?: string, vehiculo?: string) => {
+  const checkInReservacion = async (
+    id: number, 
+    brazaletes?: string, 
+    vehiculo?: string,
+    acompanantes?: Acompanante[],
+    titularBrazaleteEntregado?: boolean
+  ) => {
     try {
-      const updated = await api.reservaciones.update(id, {
+      const payload: Partial<Reservacion> = {
         estado: 'En Casa (Checked-in)',
         brazaletes: brazaletes || 'Asignado',
         vehiculo_info: vehiculo || 'Sin vehículo'
-      });
+      };
+      if (acompanantes !== undefined) {
+        payload.acompanantes = acompanantes;
+      }
+      if (titularBrazaleteEntregado !== undefined) {
+        payload.titular_brazalete_entregado = titularBrazaleteEntregado;
+      }
+
+      const updated = await api.reservaciones.update(id, payload);
       setReservaciones(prev => prev.map(r => (r.id === id ? updated : r)));
       showToast('Check-In completado exitosamente. Huésped En Casa.', 'success');
     } catch (err: any) {

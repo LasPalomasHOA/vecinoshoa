@@ -107,6 +107,16 @@ export type EstadoReservacion =
   | 'Pendiente'
   | 'Cancelada';
 
+export interface Acompanante {
+  id: string;
+  nombre_completo: string;
+  tipo: 'Adulto' | 'Menor' | 'Invitado' | 'Visita';
+  telefono?: string;
+  brazalete_entregado: boolean;
+  fecha_entrega?: string;
+  entregado_por?: string;
+}
+
 export interface Reservacion {
   id: number;
   codigo?: string; // ej. "2569009" o "SL:973438"
@@ -118,11 +128,14 @@ export interface Reservacion {
   numero_ocupantes: number;
   numero_autos: number;
   notas?: string;
-  brazaletes?: string; // ej. "Azul Marino 9367-9368"
+  brazaletes?: string; // ej. "4 entregados" o resumen
   vehiculo_info?: string; // ej. "Corbatin 38516 Ford F150 Blue AJM5429"
   pago_tipo?: 'Con pago' | 'Sin pago' | 'Uso de amenidades' | 'Cortesia';
   balance?: number;
   estado: EstadoReservacion;
+  acompanantes?: Acompanante[];
+  titular_brazalete_entregado?: boolean;
+  titular_fecha_entrega?: string;
   created_at?: string;
   updated_at?: string;
 }
