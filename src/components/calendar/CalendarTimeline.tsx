@@ -96,7 +96,6 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
     } else {
       setCurrentMonth(prev => prev - 1);
     }
-    setSelection(null);
   };
 
   const handleNextMonth = () => {
@@ -106,13 +105,11 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
     } else {
       setCurrentMonth(prev => prev + 1);
     }
-    setSelection(null);
   };
 
   const handleToday = () => {
     setCurrentYear(2026);
     setCurrentMonth(8);
-    setSelection(null);
   };
 
   const filteredProperties = useMemo(() => {
@@ -443,27 +440,6 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
       {/* Legend with interactive counters */}
       <CalendarLegend counts={monthStats.counts} />
 
-      {/* Selection Help Banner when active */}
-      {selection && (
-        <div className="px-4 py-2 rounded-lg bg-teal-500/10 border border-teal-500/30 flex items-center justify-between text-xs text-teal-950 animate-fadeIn">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-teal-600 animate-ping" />
-            <span className="font-bold">
-              Modo Selección: Seleccionando para {selectionPreview?.prop?.nombre}
-            </span>
-            <span className="text-teal-800 hidden sm:inline">
-              • Fecha de Check-in: <strong className="underline">{formatReadableDate(selection.startDate)}</strong>. Haz click en el día de salida (Check-out).
-            </span>
-          </div>
-          <button
-            onClick={() => setSelection(null)}
-            className="text-teal-800 hover:text-teal-950 font-bold underline text-[11px] flex items-center gap-1"
-          >
-            <X className="w-3.5 h-3.5" /> Cancelar selección (Esc)
-          </button>
-        </div>
-      )}
-
       {/* Timeline Gantt Grid */}
       <div 
         className="rounded-xl glass-panel overflow-hidden border border-slate-200/90 shadow-sm"
@@ -639,15 +615,23 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
                             const checkinStr = d1 <= d2 ? d1 : d2;
                             const checkoutStr = d1 <= d2 ? d2 : d1;
                             
-                            const inDay = parseInt(checkinStr.split('-')[2], 10);
-                            const outDay = parseInt(checkoutStr.split('-')[2], 10);
-                            
-                            const startCol = Math.max(inDay, 1);
-                            const nights = Math.max(1, outDay - inDay);
-
                             const totalDays = daysInMonth.length;
-                            const leftPct = ((startCol - 1) / totalDays) * 100;
-                            const widthPct = (nights / totalDays) * 100;
+                            const firstDate = daysInMonth[0].dateStr;
+                            const lastDate = daysInMonth[totalDays - 1].dateStr;
+
+                            if (checkoutStr < firstDate || checkinStr > lastDate) {
+                              return null;
+                            }
+
+                            let startIdx = daysInMonth.findIndex(d => d.dateStr === checkinStr);
+                            if (startIdx === -1) startIdx = 0;
+
+                            let endIdx = daysInMonth.findIndex(d => d.dateStr === checkoutStr);
+                            if (endIdx === -1) endIdx = totalDays;
+
+                            const nightsInView = Math.max(1, endIdx - startIdx);
+                            const leftPct = (startIdx / totalDays) * 100;
+                            const widthPct = (nightsInView / totalDays) * 100;
                             const hasConflict = !!selectionPreview?.conflict;
 
                             return (
@@ -664,8 +648,8 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
                               >
                                 <span className="text-[10px] font-black truncate whitespace-nowrap drop-shadow-xs">
                                   {hasConflict
-                                    ? `⚠️ Fechas ocupadas (${nights} ${nights === 1 ? 'noche' : 'noches'})`
-                                    : `✨ ${nights} ${nights === 1 ? 'noche' : 'noches'} (${formatReadableDate(checkinStr)} → ${formatReadableDate(checkoutStr)})`}
+                                    ? `⚠️ Ocupado (${selectionPreview?.nights}n)`
+                                    : `✨ ${selectionPreview?.nights} ${selectionPreview?.nights === 1 ? 'noche' : 'noches'} (${formatReadableDate(checkinStr)} → ${formatReadableDate(checkoutStr)})`}
                                 </span>
                               </div>
                             );
