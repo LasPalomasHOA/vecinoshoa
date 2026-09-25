@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import QRCode from 'qrcode';
+import html2canvas from 'html2canvas';
 import { useApp } from '../../context/AppContext';
 import { Reservacion } from '../../types';
 import { 
@@ -18,10 +19,11 @@ import {
   ShieldCheck, 
   Copy, 
   Check, 
-  ExternalLink,
   QrCode as QrIcon,
   LogOut,
-  Sparkles
+  Sparkles,
+  Loader2,
+  AlertTriangle
 } from 'lucide-react';
 
 interface GuestQrModalProps {
@@ -51,7 +53,8 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
   const [passType, setPassType] = useState<'ALL' | 'ENTRY' | 'EXIT'>(initialPassType);
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [copied, setCopied] = useState(false);
-  const printableRef = useRef<HTMLDivElement>(null);
+  const [isCapturing, setIsCapturing] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const currentReservation = reservaciones.find(r => r.id === reservation?.id) || reservation;
 
@@ -60,6 +63,20 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
       setPassType(initialPassType);
     }
   }, [initialPassType, isOpen]);
+
+  // Manage body classes to isolate printing and modal state
+  useEffect(() => {
+    if (isOpen) {
+      document.body.classList.add('qr-modal-active');
+    } else {
+      document.body.classList.remove('qr-modal-active');
+      document.body.classList.remove('printing-qr-pass');
+    }
+    return () => {
+      document.body.classList.remove('qr-modal-active');
+      document.body.classList.remove('printing-qr-pass');
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     if (!currentReservation) return;
@@ -84,7 +101,7 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
     }, null, 0);
 
     QRCode.toDataURL(qrPayload, {
-      width: 400,
+      width: 450,
       margin: 2,
       color: {
         dark: '#0f766e', // Teal 700
@@ -111,16 +128,27 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
     : [];
   const totalOccupants = 1 + acompList.length;
 
+  // Helper to generate a Canvas Blob from the full Pass Card
+  const generatePassCanvas = async (): Promise<HTMLCanvasElement | null> => {
+    if (!cardRef.current) return null;
+    return await html2canvas(cardRef.current, {
+      scale: 3, // High DPI for crisp rendering
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false
+    });
+  };
+
   const handleCopyLink = () => {
     const text = `🌴 *PASE DE ACCESO - LAS PALOMAS RESORT*\n` +
       `📌 *Folio:* ${currentReservation.codigo || currentReservation.id}\n` +
-      `🏢 *Condominio:* ${prop?.nombre || currentReservation.propiedad_id} (Torre ${edificio?.nombre || 'Principal'})\n` +
+      `🏢 *Condominio:* ${prop?.nombre || currentReservation.propiedad_id} (${edificio?.nombre ? `Torre ${edificio.nombre}` : ''})\n` +
       `👤 *Huésped Titular:* ${huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Huésped'}\n` +
       `📅 *Estadía:* ${currentReservation.fecha_checkin} al ${currentReservation.fecha_checkout}\n` +
       `🎟️ *Tipo de Pase:* ${passType === 'ALL' ? 'Entrada y Salida (Estadía Completa)' : passType === 'ENTRY' ? 'Pase de Entrada' : 'Pase de Salida'}\n` +
       `👥 *Ocupantes:* ${totalOccupants} personas\n` +
       `🚗 *Vehículo:* ${currentReservation.vehiculo_info || 'Sin vehículo'}\n` +
-      `ℹ️ Presente este código QR en caseta o recepción al ingresar o salir.`;
+      `ℹ️ Presente este pase en caseta o recepción al ingresar o salir.`;
 
     navigator.clipboard.writeText(text);
     setCopied(true);
@@ -128,40 +156,122 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
     setTimeout(() => setCopied(false), 2500);
   };
 
-  const handleShareWhatsApp = () => {
-    const phone = huesped?.telefono?.replace(/[^0-9]/g, '') || '';
-    const message = encodeURIComponent(
-      `🌴 *PASE DE ACCESO DIGITAL - LAS PALOMAS RESORT*\n\n` +
-      `Hola ${huesped?.nombres || ''}, te compartimos tu Pase de Acceso QR para tu estadía:\n\n` +
-      `• *Folio:* ${currentReservation.codigo || currentReservation.id}\n` +
-      `• *Condominio:* ${prop?.nombre || currentReservation.propiedad_id} (${edificio?.nombre ? `Torre ${edificio.nombre}` : ''})\n` +
-      `• *Fechas:* Del ${currentReservation.fecha_checkin} al ${currentReservation.fecha_checkout}\n` +
-      `• *Tipo:* ${passType === 'ALL' ? 'Entrada y Salida' : passType === 'ENTRY' ? 'Pase de Entrada' : 'Pase de Salida'}\n` +
-      `• *Ocupantes:* ${totalOccupants} personas\n\n` +
-      `Muestra tu código QR en el portón de seguridad o Front Desk para agilizar tu acceso.`
-    );
+  // Download the FULL PASS CARD as an image (like image 2)
+  const handleDownloadFullPass = async () => {
+    try {
+      setIsCapturing(true);
+      const canvas = await generatePassCanvas();
+      if (!canvas) {
+        showToast('No se pudo generar la imagen del pase', 'error');
+        return;
+      }
 
-    const url = phone ? `https://wa.me/${phone}?text=${message}` : `https://wa.me/?text=${message}`;
-    window.open(url, '_blank');
+      const imgData = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = imgData;
+      link.download = `Pase_Acceso_${prop?.nombre || 'Condo'}_${currentReservation.codigo || currentReservation.id}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('¡Imagen completa del pase descargada exitosamente!', 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Error al exportar la imagen del pase', 'error');
+    } finally {
+      setIsCapturing(false);
+    }
   };
 
-  const handleDownloadQr = () => {
-    if (!qrDataUrl) return;
-    const link = document.createElement('a');
-    link.href = qrDataUrl;
-    link.download = `Pase_QR_${prop?.nombre || 'Condo'}_${currentReservation.codigo || currentReservation.id}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    showToast('Código QR descargado exitosamente', 'success');
+  // Share FULL PASS CARD via WhatsApp as an IMAGE
+  const handleShareWhatsAppImage = async () => {
+    try {
+      setIsCapturing(true);
+      const canvas = await generatePassCanvas();
+      if (!canvas) {
+        showToast('No se pudo generar la imagen del pase', 'error');
+        return;
+      }
+
+      const phone = huesped?.telefono?.replace(/[^0-9]/g, '') || '';
+      const message = encodeURIComponent(
+        `🌴 *PASE DE ACCESO DIGITAL - LAS PALOMAS RESORT*\n\n` +
+        `Hola ${huesped?.nombres || ''}, te enviamos tu Pase de Acceso para el Condominio ${prop?.nombre || ''}.\n` +
+        `Folio: #${currentReservation.codigo || currentReservation.id}\n` +
+        `Estadía: ${currentReservation.fecha_checkin} al ${currentReservation.fecha_checkout}`
+      );
+      const waUrl = phone ? `https://wa.me/${phone}?text=${message}` : `https://wa.me/?text=${message}`;
+
+      // Convert canvas to Blob
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          window.open(waUrl, '_blank');
+          return;
+        }
+
+        const file = new File([blob], `Pase_Acceso_${prop?.nombre || 'Condo'}.png`, { type: 'image/png' });
+
+        // 1. Check if native Web Share API supports file sharing (Mobile devices, tablets, modern browsers)
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: `Pase de Acceso - Condominio ${prop?.nombre || ''}`,
+              text: `Pase de Acceso para ${huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Huésped'}`
+            });
+            showToast('Pase compartido exitosamente', 'success');
+            return;
+          } catch (shareErr) {
+            // User cancelled share or fallback
+          }
+        }
+
+        // 2. Desktop fallback: Copy image directly to Clipboard + trigger auto-download + open WhatsApp
+        try {
+          if (navigator.clipboard && window.ClipboardItem) {
+            await navigator.clipboard.write([
+              new ClipboardItem({
+                'image/png': blob
+              })
+            ]);
+            showToast('📸 ¡Imagen del pase copiada al portapapeles! Pégala con Ctrl+V en WhatsApp', 'success');
+          } else {
+            showToast('📸 Imagen descargada. Adjúntala en el chat de WhatsApp.', 'info');
+          }
+        } catch (clipErr) {
+          console.warn('Clipboard write failed, falling back to download:', clipErr);
+        }
+
+        // Also trigger image download for easy drag/drop
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL('image/png');
+        link.download = `Pase_Acceso_${prop?.nombre || 'Condo'}_${currentReservation.codigo || currentReservation.id}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Open WhatsApp Web chat
+        window.open(waUrl, '_blank');
+      }, 'image/png');
+
+    } catch (err) {
+      console.error(err);
+      showToast('Error al procesar el pase para WhatsApp', 'error');
+    } finally {
+      setIsCapturing(false);
+    }
   };
 
+  // Print ONLY the pass card without background table contamination
   const handlePrint = () => {
+    document.body.classList.add('printing-qr-pass');
     window.print();
+    setTimeout(() => {
+      document.body.classList.remove('printing-qr-pass');
+    }, 1000);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/65 backdrop-blur-xs overflow-y-auto print:p-0 print:bg-white print:static">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/65 backdrop-blur-xs overflow-y-auto print:p-0 print:bg-white print:static qr-modal-active">
       <div className="relative w-full max-w-2xl bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden my-6 animate-scale-up print:border-none print:shadow-none print:my-0 print:max-w-none">
         
         {/* Header Modal (Hidden in Print) */}
@@ -177,7 +287,7 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
                   Front Desk
                 </span>
               </div>
-              <p className="text-xs text-teal-200/80">Control de Entradas y Salidas de Huéspedes</p>
+              <p className="text-xs text-teal-200/80">Pase Digital de Entradas y Salidas de Huéspedes</p>
             </div>
           </div>
           <button
@@ -230,15 +340,19 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
           </div>
         </div>
 
-        {/* Main Pass Printable Area */}
-        <div ref={printableRef} className="p-6 bg-white space-y-6 print:p-4">
+        {/* Main Pass Printable & Exportable Area */}
+        <div id="qr-printable-pass" className="p-6 bg-white space-y-6 print:p-0 print:m-0">
           
-          {/* Visual Digital Access Pass Card */}
-          <div className="rounded-2xl border-2 border-teal-600/30 bg-gradient-to-b from-teal-50/40 via-white to-slate-50/50 p-5 sm:p-6 shadow-sm relative overflow-hidden print:border-slate-800 print:shadow-none print:p-4">
+          {/* Visual Digital Access Pass Card (Exact image design) */}
+          <div 
+            ref={cardRef} 
+            className="rounded-2xl border-2 border-teal-600/30 bg-white p-6 shadow-sm relative overflow-hidden print:border-slate-800 print:shadow-none print:p-5"
+            style={{ backgroundColor: '#ffffff' }}
+          >
             
-            {/* Watermark Logo / Badge */}
-            <div className="absolute -right-6 -bottom-6 opacity-5 pointer-events-none">
-              <QrIcon className="w-64 h-64 text-teal-900" />
+            {/* Watermark Pattern / Icon */}
+            <div className="absolute -right-8 -bottom-8 opacity-[0.03] pointer-events-none">
+              <QrIcon className="w-72 h-72 text-teal-900" />
             </div>
 
             {/* Pass Top Branding */}
@@ -260,7 +374,7 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
 
               <div className="text-right">
                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Folio Oficial</div>
-                <div className="font-mono font-black text-base text-teal-700 bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-200 inline-block mt-0.5">
+                <div className="font-mono font-black text-base text-teal-700 bg-teal-50 px-3 py-1 rounded-lg border border-teal-200 inline-block mt-0.5">
                   {currentReservation.codigo || `RES-${currentReservation.id}`}
                 </div>
               </div>
@@ -270,17 +384,18 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-5 items-center">
               
               {/* QR Code Frame */}
-              <div className="sm:col-span-5 flex flex-col items-center justify-center p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+              <div className="sm:col-span-5 flex flex-col items-center justify-center p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
                 {qrDataUrl ? (
-                  <div className="relative group">
+                  <div className="relative flex flex-col items-center">
                     <img 
                       src={qrDataUrl} 
                       alt="Código QR de Acceso" 
                       className="w-48 h-48 sm:w-44 sm:h-44 object-contain rounded-lg"
+                      crossOrigin="anonymous"
                     />
                     <div className="mt-2 text-center">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-100 text-teal-800 border border-teal-200">
-                        <ShieldCheck className="w-3 h-3 text-teal-700" />
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200">
+                        <ShieldCheck className="w-3 h-3 text-teal-600" />
                         Código QR Verificado
                       </span>
                     </div>
@@ -299,13 +414,15 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
               <div className="sm:col-span-7 space-y-3">
                 
                 {/* Condo & Tower */}
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
+                <div className="bg-slate-50/90 p-3 rounded-xl border border-slate-200/80">
                   <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Unidad Asignada</div>
-                  <div className="text-base font-black text-slate-900 flex items-center gap-2">
-                    <Building2 className="w-4 h-4 text-teal-600 shrink-0" />
-                    <span>Condominio {prop?.nombre || currentReservation.propiedad_id}</span>
+                  <div className="text-base font-black text-slate-900 flex items-center justify-between gap-2 mt-0.5">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="w-4 h-4 text-teal-600 shrink-0" />
+                      <span>Condominio {prop?.nombre || currentReservation.propiedad_id}</span>
+                    </div>
                     {edificio?.nombre && (
-                      <span className="text-xs font-bold text-teal-700 bg-teal-100/70 px-2 py-0.5 rounded-md">
+                      <span className="text-xs font-bold text-teal-800 bg-teal-100/80 border border-teal-200/80 px-2 py-0.5 rounded-md shrink-0">
                         Torre {edificio.nombre}
                       </span>
                     )}
@@ -313,14 +430,14 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
                 </div>
 
                 {/* Guest Name */}
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
+                <div className="bg-slate-50/90 p-3 rounded-xl border border-slate-200/80">
                   <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Huésped Titular</div>
-                  <div className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <div className="text-sm font-bold text-slate-900 flex items-center gap-2 mt-0.5">
                     <User className="w-4 h-4 text-slate-600 shrink-0" />
                     <span>{huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'No especificado'}</span>
                   </div>
                   {huesped?.telefono && (
-                    <div className="text-xs text-slate-500 mt-0.5">
+                    <div className="text-xs text-slate-500 mt-0.5 ml-6">
                       Tel: {huesped.telefono}
                     </div>
                   )}
@@ -396,7 +513,10 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
 
             {/* Footer Rules & Instructions */}
             <div className="mt-4 pt-3 border-t border-slate-200/80 flex items-center justify-between text-[10px] text-slate-500">
-              <span>⚠️ Uso obligatorio de brazalete en áreas comunes y albercas.</span>
+              <span className="flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />
+                Uso obligatorio de brazalete en áreas comunes y albercas.
+              </span>
               <span className="font-semibold text-teal-800">Vecinos HOA • Las Palomas</span>
             </div>
 
@@ -404,41 +524,43 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
 
         </div>
 
-        {/* Quick Action Footer Toolbar (Hidden in Print) */}
+        {/* Action Footer Toolbar (Hidden in Print) */}
         <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 no-print">
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center flex-wrap gap-2">
             <button
               onClick={handlePrint}
               className="h-9 px-3.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold text-xs shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
-              title="Imprimir ticket o pase de acceso"
+              title="Imprimir solo el pase de acceso sin la tabla de fondo"
             >
               <Printer className="w-4 h-4 text-slate-600" />
               <span>Imprimir Pase</span>
             </button>
 
             <button
-              onClick={handleDownloadQr}
-              className="h-9 px-3.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold text-xs shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
-              title="Descargar imagen PNG del QR"
+              onClick={handleDownloadFullPass}
+              disabled={isCapturing}
+              className="h-9 px-3.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-60"
+              title="Descargar imagen completa del pase con detalles y QR"
             >
-              <Download className="w-4 h-4 text-teal-700" />
-              <span>Descargar QR</span>
+              {isCapturing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              <span>Descargar Pase (PNG)</span>
             </button>
 
             <button
-              onClick={handleShareWhatsApp}
-              className="h-9 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
-              title="Compartir por WhatsApp al huésped"
+              onClick={handleShareWhatsAppImage}
+              disabled={isCapturing}
+              className="h-9 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-60"
+              title="Enviar imagen del pase por WhatsApp"
             >
-              <Share2 className="w-4 h-4" />
+              {isCapturing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
               <span>Enviar por WhatsApp</span>
             </button>
 
             <button
               onClick={handleCopyLink}
               className="h-9 px-3 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-medium text-xs shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
-              title="Copiar texto resumen"
+              title="Copiar texto resumen al portapapeles"
             >
               {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-slate-500" />}
               <span>{copied ? 'Copiado' : 'Copiar'}</span>
@@ -452,7 +574,7 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
                   onClose();
                   onCheckIn(currentReservation);
                 }}
-                className="h-9 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="h-9 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 <CheckCircle className="w-4 h-4" />
                 <span>Registrar Check-In</span>
