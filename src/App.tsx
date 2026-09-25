@@ -58,9 +58,13 @@ export const App: React.FC = () => {
   // Handlers
   const handleOpenNewReservation = (propiedadId?: number, fechaCheckin?: string, fechaCheckout?: string) => {
     setResToEdit(null);
+    const validPropId = typeof propiedadId === 'number' ? propiedadId : undefined;
+    const validCheckin = typeof fechaCheckin === 'string' ? fechaCheckin : undefined;
+    const validCheckout = typeof fechaCheckout === 'string' ? fechaCheckout : undefined;
+
     setNewResInitialData(
-      propiedadId || fechaCheckin || fechaCheckout
-        ? { propiedadId, fechaCheckin, fechaCheckout }
+      validPropId || validCheckin || validCheckout
+        ? { propiedadId: validPropId, fechaCheckin: validCheckin, fechaCheckout: validCheckout }
         : null
     );
     setIsResModalOpen(true);

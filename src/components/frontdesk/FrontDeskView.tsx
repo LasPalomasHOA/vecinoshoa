@@ -210,7 +210,7 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
         </div>
 
         <button
-          onClick={onOpenNewReservation}
+          onClick={() => onOpenNewReservation()}
           className="h-9 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-colors duration-150 cursor-pointer"
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />

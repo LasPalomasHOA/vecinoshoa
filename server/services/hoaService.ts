@@ -1,4 +1,4 @@
-import { query, queryOne, testConnection, getQuotedSchema } from '../db';
+import { query, queryOne, testConnection, getQuotedSchema } from '../db.ts';
 import type { 
   Edificio, 
   GrupoPropiedad, 
@@ -8,7 +8,7 @@ import type {
   Huesped, 
   Reservacion, 
   SolicitudAcceso 
-} from '../../src/types/index';
+} from '../../src/types/index.ts';
 
 // Tablas calificadas explícitamente con el esquema
 const T = {
