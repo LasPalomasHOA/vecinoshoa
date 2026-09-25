@@ -45,10 +45,6 @@ async function query(text, params = []) {
   const start = Date.now();
   try {
     const res = await p.query(text, params);
-    const duration = Date.now() - start;
-    if (process.env.NODE_ENV === "development" && duration > 500) {
-      console.log(`[DB Slow Query] ${duration}ms: ${text.substring(0, 80)}...`);
-    }
     return res;
   } catch (err) {
     console.error(`[DB Error] ${err.message}

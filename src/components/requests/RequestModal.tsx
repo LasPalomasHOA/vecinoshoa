@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { SolicitudAcceso } from '../../types';
 import { X, FileCheck } from 'lucide-react';
@@ -11,26 +11,43 @@ interface RequestModalProps {
 export const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose }) => {
   const { propiedades, addSolicitud } = useApp();
 
-  const [propiedadId, setPropiedadId] = useState<number>(propiedades[0]?.id || 101);
+  const [propiedadId, setPropiedadId] = useState<number>(propiedades[0]?.id || 0);
   const [creadorNombre, setCreadorNombre] = useState('');
   const [solicitud, setSolicitud] = useState('');
-  const [fechaEsperada, setFechaEsperada] = useState('2026-09-23');
+  const [fechaEsperada, setFechaEsperada] = useState('2026-09-24');
   const [comentario, setComentario] = useState('');
   const [estatus] = useState<SolicitudAcceso['estatus']>('Pendiente');
+
+  useEffect(() => {
+    if (isOpen && propiedades.length > 0) {
+      const exists = propiedades.some(p => p.id === propiedadId);
+      if (!exists || propiedadId === 0) {
+        setPropiedadId(propiedades[0].id);
+      }
+      const today = new Date().toISOString().split('T')[0];
+      setFechaEsperada(today);
+    }
+  }, [isOpen, propiedades, propiedadId]);
 
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const finalPropId = Number(propiedadId) || propiedades[0]?.id;
+    if (!finalPropId) return;
+
     addSolicitud({
-      propiedad_id: propiedadId,
-      creador_nombre: creadorNombre || 'Propietario',
-      solicitud,
+      propiedad_id: finalPropId,
+      creador_nombre: creadorNombre.trim() || 'Propietario',
+      solicitud: solicitud.trim(),
       fecha_esperada: fechaEsperada,
-      comentario,
+      comentario: comentario.trim() || undefined,
       estatus,
       procesador_nombre: 'Recepción HOA'
     });
+    setCreadorNombre('');
+    setSolicitud('');
+    setComentario('');
     onClose();
   };
 
