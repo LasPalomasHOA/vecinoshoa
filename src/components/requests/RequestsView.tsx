@@ -112,14 +112,14 @@ export const RequestsView: React.FC<RequestsViewProps> = ({ onOpenNewRequest }) 
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
-                <th className="py-3 px-4">Creación</th>
-                <th className="py-3 px-4">Propiedad</th>
-                <th className="py-3 px-4">Creador / Residente</th>
-                <th className="py-3 px-4 max-w-sm">Solicitud / Contratista</th>
-                <th className="py-3 px-4">Fecha Esperada</th>
-                <th className="py-3 px-4">Procesador</th>
-                <th className="py-3 px-4">Comentarios HOA</th>
-                <th className="py-3 px-4 text-right">Estatus / Acción</th>
+                <th className="py-3 px-3.5 whitespace-nowrap w-24">Fecha</th>
+                <th className="py-3 px-3.5 whitespace-nowrap w-28">Propiedad</th>
+                <th className="py-3 px-3.5 whitespace-nowrap min-w-[130px]">Creador / Residente</th>
+                <th className="py-3 px-3.5 max-w-xs">Solicitud / Contratista</th>
+                <th className="py-3 px-3.5 whitespace-nowrap w-28">Fecha Esperada</th>
+                <th className="py-3 px-3.5 whitespace-nowrap w-28">Procesador</th>
+                <th className="py-3 px-3.5 max-w-[180px]">Comentarios HOA</th>
+                <th className="py-3 px-3.5 text-right whitespace-nowrap w-32">Estatus / Acción</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -132,52 +132,57 @@ export const RequestsView: React.FC<RequestsViewProps> = ({ onOpenNewRequest }) 
               ) : (
                 filteredSolicitudes.map(sol => {
                   const prop = getPropiedadById(sol.propiedad_id);
+                  const fechaCreacion = sol.created_at ? sol.created_at.split('T')[0] : '—';
 
                   return (
                     <tr key={sol.id} className="hover:bg-teal-50/40 transition-colors">
                       {/* Creacion */}
-                      <td className="py-3 px-4 font-mono text-slate-500 text-[11px] whitespace-nowrap">
-                        {sol.created_at}
+                      <td className="py-3 px-3.5 font-mono text-slate-500 text-[11px] whitespace-nowrap align-middle">
+                        {fechaCreacion}
                       </td>
 
                       {/* Propiedad */}
-                      <td className="py-3 px-4">
-                        <span className="font-extrabold text-slate-900 px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200">
+                      <td className="py-3 px-3.5 align-middle whitespace-nowrap">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md font-bold text-xs bg-slate-100 text-slate-800 border border-slate-200/80 shadow-2xs whitespace-nowrap">
                           {prop?.nombre || `ID ${sol.propiedad_id}`}
                         </span>
                       </td>
 
                       {/* Creador */}
-                      <td className="py-3 px-4 font-bold text-slate-900">
+                      <td className="py-3 px-3.5 font-bold text-slate-900 align-middle whitespace-nowrap">
                         {sol.creador_nombre}
                       </td>
 
                       {/* Description */}
-                      <td className="py-3 px-4 text-slate-800 font-medium leading-relaxed max-w-sm">
-                        {sol.solicitud}
+                      <td className="py-3 px-3.5 text-slate-800 font-medium align-middle max-w-xs" title={sol.solicitud}>
+                        <div className="truncate text-xs">
+                          {sol.solicitud}
+                        </div>
                       </td>
 
                       {/* Fecha Esperada */}
-                      <td className="py-3 px-4 font-mono text-teal-800 font-bold whitespace-nowrap">
+                      <td className="py-3 px-3.5 font-mono text-teal-800 font-bold whitespace-nowrap align-middle">
                         {sol.fecha_esperada}
                       </td>
 
                       {/* Procesador */}
-                      <td className="py-3 px-4 text-slate-600 text-[11px]">
+                      <td className="py-3 px-3.5 text-slate-600 text-[11px] whitespace-nowrap align-middle">
                         {sol.procesador_nombre || 'Pendiente'}
                       </td>
 
                       {/* Comentario */}
-                      <td className="py-3 px-4 text-slate-600 text-[11px] italic">
-                        {sol.comentario || 'Sin comentarios'}
+                      <td className="py-3 px-3.5 text-slate-500 text-[11px] italic align-middle max-w-[180px]" title={sol.comentario || ''}>
+                        <div className="truncate">
+                          {sol.comentario || 'Sin comentarios'}
+                        </div>
                       </td>
 
                       {/* Estatus selector */}
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3 px-3.5 text-right align-middle whitespace-nowrap">
                         <select
                           value={sol.estatus}
                           onChange={(e) => updateSolicitudStatus(sol.id, e.target.value as SolicitudAcceso['estatus'])}
-                          className={`px-2.5 py-1 text-[11px] rounded-lg border cursor-pointer ${getStatusBadge(sol.estatus)}`}
+                          className={`px-2.5 py-1 text-[11px] font-semibold rounded-md border shadow-2xs cursor-pointer transition-colors ${getStatusBadge(sol.estatus)}`}
                         >
                           <option value="Pendiente">Pendiente</option>
                           <option value="En Proceso">En Proceso</option>

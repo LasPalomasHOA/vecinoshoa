@@ -11,7 +11,7 @@ export const HeroBanner: React.FC = () => {
 
   return (
     <div className="relative mb-6 rounded-xl overflow-hidden border border-white/80 bg-gradient-to-r from-white/90 via-white/75 to-teal-50/50 backdrop-blur-2xl shadow-[0_10px_30px_rgba(0,0,0,0.03)] no-print print:hidden">
-      
+
       {/* Background Soft Resort Refraction with Light Ambience */}
       <img
         src="/las_palomas_resort.jpg"
@@ -28,7 +28,7 @@ export const HeroBanner: React.FC = () => {
 
       {/* Main Glass Workspace */}
       <div className="relative z-10 p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-        
+
         {/* Left: Branding & Resort Header */}
         <div className="space-y-1.5 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -52,7 +52,7 @@ export const HeroBanner: React.FC = () => {
 
         {/* Right: Integrated Glassmorphic Operational Capsule */}
         <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-          
+
           {/* Glass Card: En Casa */}
           <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/85 backdrop-blur-md border border-white/90 shadow-2xs hover:bg-white transition-all hover:border-emerald-300">
             <div className="w-9 h-9 rounded-md bg-emerald-50 border border-emerald-200/80 flex items-center justify-center text-emerald-600 shrink-0">
