@@ -9,10 +9,15 @@ import {
   FileSpreadsheet,
   FileCheck,
   RotateCcw,
-  LogOut
+  LogOut,
+  ChevronLeft,
+  ChevronRight,
+  PanelLeftClose,
+  PanelLeftOpen
 } from 'lucide-react';
 
 import logoImg from '../../assets/logoDashboard.png';
+import logoIcon from '../../assets/logo.png';
 
 export const Sidebar: React.FC = () => {
   const {
@@ -21,7 +26,9 @@ export const Sidebar: React.FC = () => {
     reservaciones,
     solicitudes,
     propiedades,
-    resetToDefaults
+    resetToDefaults,
+    isSidebarCollapsed,
+    toggleSidebar
   } = useApp();
 
   const { currentUser, logout } = useAuth();
@@ -35,6 +42,7 @@ export const Sidebar: React.FC = () => {
       label: 'Front Desk & In-House',
       icon: Home,
       badge: inHouseCount > 0 ? `${inHouseCount} en casa` : undefined,
+      badgeCount: inHouseCount > 0 ? inHouseCount : undefined,
       badgeColor: 'bg-teal-100 text-teal-800'
     },
     {
@@ -47,6 +55,7 @@ export const Sidebar: React.FC = () => {
       label: 'Propiedades & Torres',
       icon: Building2,
       badge: `${propiedades.length}`,
+      badgeCount: propiedades.length,
       badgeColor: 'bg-slate-100 text-slate-700'
     },
     {
@@ -59,6 +68,7 @@ export const Sidebar: React.FC = () => {
       label: 'Solicitudes de Acceso',
       icon: FileCheck,
       badge: pendingRequestsCount > 0 ? `${pendingRequestsCount}` : undefined,
+      badgeCount: pendingRequestsCount > 0 ? pendingRequestsCount : undefined,
       badgeColor: 'bg-amber-100 text-amber-800 font-bold'
     },
     {
@@ -69,41 +79,119 @@ export const Sidebar: React.FC = () => {
   ];
 
   return (
-    <aside className="w-64 bg-white/95 backdrop-blur-md border-r border-slate-200/90 flex flex-col shrink-0 h-screen sticky top-0 z-40 shadow-xs no-print print:hidden">
-
+    <aside
+      className={`${
+        isSidebarCollapsed ? 'w-20' : 'w-64'
+      } transition-all duration-300 ease-in-out bg-white/95 backdrop-blur-md border-r border-slate-200/90 flex flex-col shrink-0 h-screen sticky top-0 z-40 shadow-xs no-print print:hidden select-none`}
+    >
       {/* Brand Header */}
-      <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-center">
-        <img
-          src={logoImg}
-          alt="Las Palomas HOA Logo"
-          className="w-full max-h-12 object-contain"
-        />
-      </div>
-
-      {/* Resort Mini Card with Glass styling */}
-      <div className="mx-4 my-3 p-3 rounded-xl bg-gradient-to-r from-teal-50/90 to-sky-50/70 border border-teal-100/90 flex items-center gap-3 relative overflow-hidden shadow-xs">
-        <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 border border-teal-200/80 shadow-xs">
+      {!isSidebarCollapsed ? (
+        <div className="px-4 py-3.5 border-b border-slate-100 flex items-center justify-between gap-2">
+          <div className="flex-1 flex items-center justify-center overflow-hidden">
+            <img
+              src={logoImg}
+              alt="Las Palomas HOA Logo"
+              className="w-full max-h-11 object-contain"
+            />
+          </div>
+          <button
+            onClick={toggleSidebar}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-teal-700 hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
+            title="Minimizar menú lateral"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+        </div>
+      ) : (
+        <div className="py-3 px-2 flex flex-col items-center gap-2 border-b border-slate-100">
           <img
-            src="/las_palomas_resort.jpg"
-            alt="Las Palomas"
-            className="w-full h-full object-cover"
+            src={logoIcon}
+            alt="Las Palomas HOA Logo"
+            className="w-9 h-9 object-contain"
           />
+          <button
+            onClick={toggleSidebar}
+            className="p-1 rounded-lg text-slate-400 hover:text-teal-700 hover:bg-teal-50 transition-colors cursor-pointer"
+            title="Expandir menú lateral"
+          >
+            <ChevronRight className="w-4 h-4 text-teal-700" />
+          </button>
         </div>
-        <div className="min-w-0">
-          <p className="text-xs font-bold text-teal-950 truncate">Puerto Peñasco, SON</p>
-          <p className="text-[10px] text-teal-700 font-semibold">Temporada Activa 2026</p>
+      )}
+
+      {/* Resort Mini Card */}
+      {!isSidebarCollapsed ? (
+        <div className="mx-3.5 my-3 p-2.5 rounded-xl bg-gradient-to-r from-teal-50/90 to-sky-50/70 border border-teal-100/90 flex items-center gap-3 relative overflow-hidden shadow-xs">
+          <div className="w-11 h-11 rounded-lg overflow-hidden shrink-0 border border-teal-200/80 shadow-xs">
+            <img
+              src="/las_palomas_resort.jpg"
+              alt="Las Palomas"
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-bold text-teal-950 truncate">Puerto Peñasco, SON</p>
+            <p className="text-[10px] text-teal-700 font-semibold">Temporada Activa 2026</p>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="mx-auto my-2.5 flex justify-center">
+          <div
+            className="w-10 h-10 rounded-lg overflow-hidden border border-teal-200/80 shadow-xs cursor-help"
+            title="Las Palomas Resort - Puerto Peñasco, SON (Temporada 2026)"
+          >
+            <img
+              src="/las_palomas_resort.jpg"
+              alt="Las Palomas"
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Navigation Links */}
-      <div className="px-3 py-2 flex-1 overflow-y-auto space-y-1">
-        <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
-          Menú de Gestión
-        </p>
+      <div className={`py-2 flex-1 overflow-y-auto space-y-1 ${isSidebarCollapsed ? 'px-2' : 'px-3'}`}>
+        {!isSidebarCollapsed && (
+          <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+            Menú de Gestión
+          </p>
+        )}
 
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
+
+          if (isSidebarCollapsed) {
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                title={item.badge ? `${item.label} (${item.badge})` : item.label}
+                className={`w-full h-11 flex items-center justify-center rounded-xl transition-all duration-150 relative group cursor-pointer ${
+                  isActive
+                    ? 'bg-teal-600 text-white shadow-xs font-bold'
+                    : 'text-slate-600 hover:text-teal-700 hover:bg-slate-100/90'
+                }`}
+              >
+                <Icon
+                  className={`w-5 h-5 transition-colors ${
+                    isActive ? 'text-white' : 'text-slate-500 group-hover:text-teal-600'
+                  }`}
+                />
+
+                {/* Badge indicator in collapsed mode */}
+                {item.badge && (
+                  <span
+                    className={`absolute top-1.5 right-2 px-1 min-w-[15px] h-3.5 rounded-full text-[9px] font-bold flex items-center justify-center ring-2 ring-white ${
+                      isActive ? 'bg-amber-400 text-slate-950' : 'bg-teal-600 text-white'
+                    }`}
+                  >
+                    {item.badgeCount && item.badgeCount > 9 ? '9+' : item.badgeCount || '•'}
+                  </span>
+                )}
+              </button>
+            );
+          }
 
           return (
             <button
@@ -116,16 +204,20 @@ export const Sidebar: React.FC = () => {
               }`}
             >
               <div className="flex items-center gap-3 min-w-0">
-                <Icon className={`w-4 h-4 shrink-0 transition-colors ${
-                  isActive ? 'text-white' : 'text-slate-400 group-hover:text-teal-600'
-                }`} />
+                <Icon
+                  className={`w-4 h-4 shrink-0 transition-colors ${
+                    isActive ? 'text-white' : 'text-slate-400 group-hover:text-teal-600'
+                  }`}
+                />
                 <span className="truncate">{item.label}</span>
               </div>
 
               {item.badge && (
-                <span className={`text-[10px] px-2 py-0.5 rounded-md font-semibold shrink-0 transition-colors ${
-                  isActive ? 'bg-white/20 text-white' : item.badgeColor
-                }`}>
+                <span
+                  className={`text-[10px] px-2 py-0.5 rounded-md font-semibold shrink-0 transition-colors ${
+                    isActive ? 'bg-white/20 text-white' : item.badgeColor
+                  }`}
+                >
                   {item.badge}
                 </span>
               )}
@@ -135,40 +227,59 @@ export const Sidebar: React.FC = () => {
       </div>
 
       {/* Footer Profile & Logout / Reset */}
-      <div className="p-3.5 border-t border-slate-100 bg-slate-50/80">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-teal-600 text-white font-bold text-xs flex items-center justify-center ring-2 ring-white shadow-xs shrink-0">
+      <div className={`border-t border-slate-100 bg-slate-50/80 ${isSidebarCollapsed ? 'p-2.5' : 'p-3.5'}`}>
+        {!isSidebarCollapsed ? (
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-full bg-teal-600 text-white font-bold text-xs flex items-center justify-center ring-2 ring-white shadow-xs shrink-0">
+                {currentUser?.nombre?.[0] || 'U'}{currentUser?.apellido?.[0] || 'A'}
+              </div>
+              <div className="text-left min-w-0">
+                <p className="text-xs font-bold text-slate-800 leading-tight truncate">
+                  {currentUser?.nombre} {currentUser?.apellido}
+                </p>
+                <p className="text-[10px] text-teal-700 font-semibold truncate">
+                  {currentUser?.rol || 'Personal HOA'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <button
+                onClick={resetToDefaults}
+                title="Restablecer catálogo demo oficial"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-teal-700 hover:bg-teal-50 transition-colors cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={logout}
+                title="Cerrar sesión"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-2">
+            <div
+              className="w-9 h-9 rounded-full bg-teal-600 text-white font-bold text-xs flex items-center justify-center ring-2 ring-white shadow-xs cursor-pointer"
+              title={`${currentUser?.nombre} ${currentUser?.apellido} (${currentUser?.rol || 'Personal HOA'})`}
+            >
               {currentUser?.nombre?.[0] || 'U'}{currentUser?.apellido?.[0] || 'A'}
             </div>
-            <div className="text-left min-w-0">
-              <p className="text-xs font-bold text-slate-800 leading-tight truncate">
-                {currentUser?.nombre} {currentUser?.apellido}
-              </p>
-              <p className="text-[10px] text-teal-700 font-semibold truncate">
-                {currentUser?.rol || 'Personal HOA'}
-              </p>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={logout}
+                title="Cerrar sesión"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
             </div>
           </div>
-          <div className="flex items-center gap-1 shrink-0">
-            <button
-              onClick={resetToDefaults}
-              title="Restablecer catálogo demo oficial"
-              className="p-1.5 rounded-lg text-slate-400 hover:text-teal-700 hover:bg-teal-50 transition-colors cursor-pointer"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={logout}
-              title="Cerrar sesión"
-              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
+        )}
       </div>
-
     </aside>
   );
 };

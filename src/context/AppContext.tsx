@@ -74,6 +74,11 @@ interface AppContextType {
   getHuespedById: (id: number) => Huesped | undefined;
   checkReservationOverlap: (propiedadId: number, checkin: string, checkout: string, excludeResId?: number) => Reservacion | undefined;
   
+  // Layout & Sidebar
+  isSidebarCollapsed: boolean;
+  setIsSidebarCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
+  toggleSidebar: () => void;
+
   // Toasts
   toasts: Toast[];
   showToast: (message: string, type?: Toast['type']) => void;
@@ -86,6 +91,24 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('frontdesk');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('hoa_sidebar_collapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleSidebar = useCallback(() => {
+    setIsSidebarCollapsed(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('hoa_sidebar_collapsed', String(next));
+      } catch {}
+      return next;
+    });
+  }, []);
+
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -447,6 +470,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setActiveTab,
         searchQuery,
         setSearchQuery,
+        isSidebarCollapsed,
+        setIsSidebarCollapsed,
+        toggleSidebar,
         isLoading,
         error,
         refreshAllData,
