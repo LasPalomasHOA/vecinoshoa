@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
-import { Reservacion, TipoHuesped } from '../../types';
+import { Reservacion } from '../../types';
 import {
   TrendingUp,
   Users,
@@ -12,20 +12,17 @@ import {
   LogOut,
   CheckCircle2,
   Sparkles,
-  ArrowUpRight,
-  ArrowDownRight,
-  Filter,
   Plus,
   QrCode,
   Eye,
-  ShieldCheck,
   Percent,
   CalendarDays,
   FileCheck,
   ChevronLeft,
   ChevronRight,
   Activity,
-  Layers
+  Layers,
+  MapPin
 } from 'lucide-react';
 
 interface InicioViewProps {
@@ -47,8 +44,7 @@ export const InicioView: React.FC<InicioViewProps> = ({
     edificios,
     solicitudes,
     getPropiedadById,
-    getHuespedById,
-    getEdificioById
+    getHuespedById
   } = useApp();
 
   const { currentUser } = useAuth();
@@ -65,13 +61,6 @@ export const InicioView: React.FC<InicioViewProps> = ({
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
   ];
-
-  // Helper date parsing
-  const parseDate = (dateStr: string) => {
-    if (!dateStr) return new Date();
-    const [y, m, d] = dateStr.split('-').map(Number);
-    return new Date(y, (m || 1) - 1, d || 1);
-  };
 
   // 1. Calculations for CURRENT IN-HOUSE & TODAY
   const inHouseReservations = useMemo(() => 
@@ -203,49 +192,130 @@ export const InicioView: React.FC<InicioViewProps> = ({
   return (
     <div className="space-y-6 animate-fade-in pb-12">
       
-      {/* 1. Header / Welcome Banner */}
-      <div className="rounded-2xl bg-gradient-to-r from-teal-900 via-teal-800 to-slate-900 text-white p-6 sm:p-7 shadow-sm border border-teal-800/60 relative overflow-hidden">
-        {/* Background decorative glow */}
-        <div className="absolute -right-10 -top-10 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute right-40 -bottom-20 w-64 h-64 bg-sky-500/10 rounded-full blur-2xl pointer-events-none" />
+      {/* 1. Header / Luxury Resort Banner */}
+      <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-white/50 backdrop-blur-sm shadow-sm no-print print:hidden">
+        
+        {/* Background Real Resort Beach Photo with High Visibility */}
+        <img
+          src="/las_palomas_resort.jpg"
+          alt="Las Palomas Seaside"
+          className="absolute inset-0 w-full h-full object-cover object-center opacity-85 pointer-events-none"
+        />
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
-          <div>
-            <div className="flex items-center gap-2 text-teal-300 text-xs font-bold uppercase tracking-wider mb-1">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Panel Ejecutivo de Gestión HOA</span>
-              <span className="text-teal-400/60">•</span>
-              <span className="capitalize">{todayFormatted}</span>
+        {/* Directional Soft Glass Overlay: clear readability on text left, vivid photo on right */}
+        <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/70 to-white/20 pointer-events-none" />
+
+        <div className="relative z-10 p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+          
+          {/* Left: Resort Branding & Title */}
+          <div className="space-y-2 min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 text-xs font-black px-2.5 py-0.5 rounded-md bg-white text-teal-900 border border-teal-300 shadow-2xs">
+                <MapPin className="w-3.5 h-3.5 text-teal-700" /> Puerto Peñasco, Sonora
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-xs font-black px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-950 border border-emerald-300 shadow-2xs">
+                <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+                Operaciones HOA 2026
+              </span>
+              <span className="text-xs text-slate-700 font-bold capitalize hidden sm:inline">• {todayFormatted}</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              Bienvenido, {currentUser ? `${currentUser.nombre} ${currentUser.apellido}` : 'Administrador'}
+
+            <h1 className="text-2xl sm:text-[28px] font-black tracking-tight text-slate-950 leading-tight">
+              Las Palomas Seaside Golf Community
+              {currentUser && (
+                <span className="text-base sm:text-lg font-bold text-teal-800 block sm:inline sm:ml-2">
+                  — Bienvenido, {currentUser.nombre} {currentUser.apellido}
+                </span>
+              )}
             </h1>
-            <p className="text-teal-100/80 text-xs sm:text-sm mt-1 max-w-2xl font-medium">
-              Resumen ejecutivo de ocupación en tiempo real, estadísticas mensuales, proyección anual y control de flujos de huéspedes en Las Palomas Resort.
+
+            <p className="text-xs sm:text-sm text-slate-800 font-semibold leading-relaxed max-w-xl">
+              Portal administrativo y de recepción. Control de condominios, propietarios, estadísticas de ocupación y autorizaciones de acceso.
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
-            <button
-              onClick={() => onNavigateTab('frontdesk')}
-              className="h-10 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-xs shadow-xs flex items-center gap-2 transition-colors cursor-pointer backdrop-blur-xs"
-            >
-              <KeyRound className="w-4 h-4 text-teal-300" />
-              <span>Ir a Front Desk</span>
-            </button>
+          {/* Right: Integrated Action Buttons & Operational Capsules */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+            
+            {/* 3 Glass Live Stat Cards */}
+            <div className="flex items-center gap-2">
+              
+              {/* En Casa Card */}
+              <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 shadow-sm hover:border-emerald-500 transition-all">
+                <div className="w-9 h-9 rounded-lg bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-800 shrink-0">
+                  <KeyRound className="w-4 h-4 stroke-[2.5]" />
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-black tracking-wider text-slate-600 block leading-tight">
+                    En Casa
+                  </span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-xl font-black text-slate-950">{inHouseReservations.length}</span>
+                    <span className="text-xs text-emerald-800 font-black">activas</span>
+                  </div>
+                </div>
+              </div>
 
-            <button
-              onClick={onOpenNewReservation}
-              className="h-10 px-4 rounded-xl bg-teal-500 hover:bg-teal-400 text-teal-950 font-black text-xs shadow-md shadow-teal-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
-            >
-              <Plus className="w-4 h-4 stroke-[3]" />
-              <span>Nueva Reservación</span>
-            </button>
+              {/* Llegadas Card */}
+              <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 shadow-sm hover:border-amber-500 transition-all">
+                <div className="w-9 h-9 rounded-lg bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-800 shrink-0">
+                  <Clock className="w-4 h-4 stroke-[2.5]" />
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-black tracking-wider text-slate-600 block leading-tight">
+                    Llegadas
+                  </span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-xl font-black text-amber-900">{pendingReservations.length}</span>
+                    <span className="text-xs text-amber-800 font-black">pendientes</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Condos Card */}
+              <div className="hidden sm:flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 shadow-sm hover:border-teal-500 transition-all">
+                <div className="w-9 h-9 rounded-lg bg-teal-100 border border-teal-300 flex items-center justify-center text-teal-800 shrink-0">
+                  <Building2 className="w-4 h-4 stroke-[2.5]" />
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-black tracking-wider text-slate-600 block leading-tight">
+                    Condos
+                  </span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-xl font-black text-teal-950">{propiedades.length}</span>
+                    <span className="text-xs text-teal-800 font-black">Torres A-J</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Quick Action Buttons */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onNavigateTab('frontdesk')}
+                className="h-10 px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-900 border border-slate-300 font-extrabold text-xs shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <KeyRound className="w-4 h-4 text-teal-700 stroke-[2.5]" />
+                <span>Front Desk</span>
+              </button>
+
+              <button
+                onClick={onOpenNewReservation}
+                className="h-10 px-4 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-black text-xs shadow-md flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <Plus className="w-4 h-4 stroke-[3]" />
+                <span>Nueva Reserva</span>
+              </button>
+            </div>
+
           </div>
+
         </div>
+
       </div>
 
-      {/* 2. Sleek Unified Period & Date Navigator */}
+      {/* 2. Unified Period & Date Navigator */}
       <div className="p-3 rounded-2xl bg-white border border-slate-200/90 shadow-2xs flex flex-wrap items-center justify-between gap-3">
         
         {/* Left: Period Mode Switch */}
@@ -253,39 +323,39 @@ export const InicioView: React.FC<InicioViewProps> = ({
           <button
             type="button"
             onClick={() => setSelectedPeriod('current_month')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
               selectedPeriod === 'current_month'
                 ? 'bg-white text-teal-900 shadow-xs border border-slate-200/60'
-                : 'text-slate-600 hover:text-slate-900'
+                : 'text-slate-700 hover:text-slate-950 font-bold'
             }`}
           >
-            <Calendar className="w-3.5 h-3.5 text-teal-700" />
+            <Calendar className="w-3.5 h-3.5 text-teal-700 stroke-[2.5]" />
             <span>Por Mes</span>
           </button>
 
           <button
             type="button"
             onClick={() => setSelectedPeriod('current_year')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
               selectedPeriod === 'current_year'
                 ? 'bg-white text-teal-900 shadow-xs border border-slate-200/60'
-                : 'text-slate-600 hover:text-slate-900'
+                : 'text-slate-700 hover:text-slate-950 font-bold'
             }`}
           >
-            <TrendingUp className="w-3.5 h-3.5 text-teal-700" />
+            <TrendingUp className="w-3.5 h-3.5 text-teal-700 stroke-[2.5]" />
             <span>Por Año</span>
           </button>
 
           <button
             type="button"
             onClick={() => setSelectedPeriod('all')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
               selectedPeriod === 'all'
                 ? 'bg-white text-teal-900 shadow-xs border border-slate-200/60'
-                : 'text-slate-600 hover:text-slate-900'
+                : 'text-slate-700 hover:text-slate-950 font-bold'
             }`}
           >
-            <Activity className="w-3.5 h-3.5 text-teal-700" />
+            <Activity className="w-3.5 h-3.5 text-teal-700 stroke-[2.5]" />
             <span>Histórico Total</span>
           </button>
         </div>
@@ -304,10 +374,10 @@ export const InicioView: React.FC<InicioViewProps> = ({
                     setSelectedMonth(m => m - 1);
                   }
                 }}
-                className="h-8 w-8 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
+                className="h-8 w-8 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-800 flex items-center justify-center transition-colors cursor-pointer shadow-2xs font-bold"
                 title="Mes anterior"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
               </button>
 
               <div className="relative">
@@ -318,7 +388,7 @@ export const InicioView: React.FC<InicioViewProps> = ({
                     setSelectedYear(y);
                     setSelectedMonth(m);
                   }}
-                  className="h-8 pl-3 pr-8 rounded-lg bg-white border border-slate-200 text-xs font-bold text-teal-950 cursor-pointer shadow-2xs focus:ring-2 focus:ring-teal-500 outline-none"
+                  className="h-8 pl-3 pr-8 rounded-lg bg-white border border-slate-200 text-xs font-black text-slate-950 cursor-pointer shadow-2xs focus:ring-2 focus:ring-teal-500 outline-none"
                 >
                   {[2025, 2026, 2027].flatMap(y =>
                     monthNames.map((name, mIdx) => (
@@ -340,10 +410,10 @@ export const InicioView: React.FC<InicioViewProps> = ({
                     setSelectedMonth(m => m + 1);
                   }
                 }}
-                className="h-8 w-8 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
+                className="h-8 w-8 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-800 flex items-center justify-center transition-colors cursor-pointer shadow-2xs font-bold"
                 title="Mes siguiente"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-4 h-4 stroke-[2.5]" />
               </button>
 
               {(selectedMonth !== currentMonthIdx || selectedYear !== currentYear) && (
@@ -353,7 +423,7 @@ export const InicioView: React.FC<InicioViewProps> = ({
                     setSelectedYear(currentYear);
                     setSelectedMonth(currentMonthIdx);
                   }}
-                  className="h-8 px-2.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 text-[11px] font-bold transition-colors cursor-pointer ml-1"
+                  className="h-8 px-2.5 rounded-lg bg-teal-100 hover:bg-teal-200 text-teal-950 border border-teal-300 text-xs font-black transition-colors cursor-pointer ml-1"
                 >
                   Mes Actual
                 </button>
@@ -366,16 +436,16 @@ export const InicioView: React.FC<InicioViewProps> = ({
               <button
                 type="button"
                 onClick={() => setSelectedYear(y => y - 1)}
-                className="h-8 w-8 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
+                className="h-8 w-8 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-800 flex items-center justify-center transition-colors cursor-pointer shadow-2xs font-bold"
                 title="Año anterior"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
               </button>
 
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="h-8 px-3 rounded-lg bg-white border border-slate-200 text-xs font-bold text-teal-950 cursor-pointer shadow-2xs focus:ring-2 focus:ring-teal-500 outline-none"
+                className="h-8 px-3 rounded-lg bg-white border border-slate-200 text-xs font-black text-slate-950 cursor-pointer shadow-2xs focus:ring-2 focus:ring-teal-500 outline-none"
               >
                 {[2024, 2025, 2026, 2027, 2028].map(y => (
                   <option key={y} value={y}>Año {y}</option>
@@ -385,17 +455,17 @@ export const InicioView: React.FC<InicioViewProps> = ({
               <button
                 type="button"
                 onClick={() => setSelectedYear(y => y + 1)}
-                className="h-8 w-8 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
+                className="h-8 w-8 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-800 flex items-center justify-center transition-colors cursor-pointer shadow-2xs font-bold"
                 title="Año siguiente"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-4 h-4 stroke-[2.5]" />
               </button>
 
               {selectedYear !== currentYear && (
                 <button
                   type="button"
                   onClick={() => setSelectedYear(currentYear)}
-                  className="h-8 px-2.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 text-[11px] font-bold transition-colors cursor-pointer ml-1"
+                  className="h-8 px-2.5 rounded-lg bg-teal-100 hover:bg-teal-200 text-teal-950 border border-teal-300 text-xs font-black transition-colors cursor-pointer ml-1"
                 >
                   Año Actual
                 </button>
@@ -404,8 +474,8 @@ export const InicioView: React.FC<InicioViewProps> = ({
           )}
 
           {selectedPeriod === 'all' && (
-            <div className="h-9 px-3.5 rounded-xl bg-teal-50 border border-teal-200/80 text-teal-900 text-xs font-bold flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-teal-600" />
+            <div className="h-9 px-3.5 rounded-xl bg-teal-50 border border-teal-300 text-teal-950 text-xs font-black flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-teal-700" />
               <span>Mostrando historial completo ({reservaciones.length} reservaciones)</span>
             </div>
           )}
@@ -417,92 +487,92 @@ export const InicioView: React.FC<InicioViewProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
         {/* Card 1: Ocupación Actual */}
-        <div className="p-5 rounded-2xl glass-card border border-slate-200/90 relative overflow-hidden group hover:border-teal-300 transition-all">
+        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm relative overflow-hidden group hover:border-teal-400 transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Ocupación en Vivo</span>
-            <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-700">
-              <Percent className="w-5 h-5" />
+            <span className="text-xs font-black text-slate-800 uppercase tracking-wider">Ocupación en Vivo</span>
+            <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-800 font-bold">
+              <Percent className="w-5 h-5 stroke-[2.5]" />
             </div>
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-black text-slate-900">{currentOccupancyRate}%</span>
-            <span className="text-xs font-bold text-teal-700">({inHouseReservations.length} de {totalCondos} condos)</span>
+            <span className="text-3xl font-black text-slate-950">{currentOccupancyRate}%</span>
+            <span className="text-xs font-black text-teal-800">({inHouseReservations.length} de {totalCondos} condos)</span>
           </div>
-          <div className="mt-3 w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+          <div className="mt-3 w-full bg-slate-100 h-2.5 rounded-full overflow-hidden border border-slate-200">
             <div 
-              className="bg-gradient-to-r from-teal-500 to-teal-700 h-full rounded-full transition-all duration-500"
+              className="bg-teal-600 h-full rounded-full transition-all duration-500"
               style={{ width: `${Math.min(100, currentOccupancyRate)}%` }}
             />
           </div>
-          <div className="mt-2 text-[10px] text-slate-400 flex items-center justify-between font-medium">
+          <div className="mt-2 text-xs text-slate-700 flex items-center justify-between font-bold">
             <span>{totalCondos - inHouseReservations.length} condominios libres</span>
-            <span className="text-teal-700 font-bold">Tiempo Real</span>
+            <span className="text-teal-800 font-black">Tiempo Real</span>
           </div>
         </div>
 
         {/* Card 2: Reservaciones en el Período */}
-        <div className="p-5 rounded-2xl glass-card border border-slate-200/90 relative overflow-hidden group hover:border-teal-300 transition-all">
+        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm relative overflow-hidden group hover:border-sky-400 transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            <span className="text-xs font-black text-slate-800 uppercase tracking-wider">
               {selectedPeriod === 'current_month' ? `Estadías en ${monthNames[selectedMonth]}` : selectedPeriod === 'current_year' ? `Estadías en ${selectedYear}` : 'Estadías Históricas'}
             </span>
-            <div className="w-10 h-10 rounded-xl bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-700">
-              <CalendarDays className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-800 font-bold">
+              <CalendarDays className="w-5 h-5 stroke-[2.5]" />
             </div>
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-black text-sky-950">{totalPeriodStays}</span>
-            <span className="text-xs font-bold text-sky-700">reservaciones</span>
+            <span className="text-3xl font-black text-slate-950">{totalPeriodStays}</span>
+            <span className="text-xs font-black text-sky-800">reservaciones</span>
           </div>
-          <div className="mt-3 text-xs text-slate-600 flex items-center gap-1.5 font-semibold">
-            <Users className="w-3.5 h-3.5 text-sky-600" />
+          <div className="mt-3 text-xs text-slate-800 flex items-center gap-1.5 font-bold">
+            <Users className="w-4 h-4 text-sky-700" />
             <span>{totalPeriodGuests} huéspedes registrados</span>
           </div>
-          <div className="mt-1 text-[10px] text-slate-400">
+          <div className="mt-1 text-xs text-slate-600 font-semibold">
             Promedio: {totalPeriodStays > 0 ? (totalPeriodGuests / totalPeriodStays).toFixed(1) : 0} personas por reserva
           </div>
         </div>
 
         {/* Card 3: Llegadas Pendientes */}
-        <div className="p-5 rounded-2xl glass-card border border-slate-200/90 relative overflow-hidden group hover:border-amber-300 transition-all">
+        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm relative overflow-hidden group hover:border-amber-400 transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Próximos Check-Ins</span>
-            <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-700">
-              <Clock className="w-5 h-5" />
+            <span className="text-xs font-black text-slate-800 uppercase tracking-wider">Próximos Check-Ins</span>
+            <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-800 font-bold">
+              <Clock className="w-5 h-5 stroke-[2.5]" />
             </div>
           </div>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-3xl font-black text-amber-950">{pendingReservations.length}</span>
-            <span className="text-xs font-bold text-amber-700">por arribar</span>
+            <span className="text-xs font-black text-amber-800">por arribar</span>
           </div>
-          <div className="mt-3 text-xs text-slate-600 flex items-center gap-1 font-semibold">
-            <span className="w-2 h-2 rounded-full bg-amber-500" />
+          <div className="mt-3 text-xs text-slate-800 flex items-center gap-1.5 font-bold">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
             <span>Confirmadas o en proceso de arribo</span>
           </div>
-          <div className="mt-1 text-[10px] text-slate-400">
+          <div className="mt-1 text-xs text-slate-600 font-semibold">
             Revisar brazaletes y folios en Front Desk
           </div>
         </div>
 
         {/* Card 4: Solicitudes de Acceso */}
-        <div className="p-5 rounded-2xl glass-card border border-slate-200/90 relative overflow-hidden group hover:border-indigo-300 transition-all">
+        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm relative overflow-hidden group hover:border-indigo-400 transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Solicitudes de Acceso</span>
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-700">
-              <FileCheck className="w-5 h-5" />
+            <span className="text-xs font-black text-slate-800 uppercase tracking-wider">Solicitudes de Acceso</span>
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-800 font-bold">
+              <FileCheck className="w-5 h-5 stroke-[2.5]" />
             </div>
           </div>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-3xl font-black text-indigo-950">
               {solicitudes.filter(s => s.estatus === 'Pendiente' || s.estatus === 'En Proceso').length}
             </span>
-            <span className="text-xs font-bold text-indigo-700">pendientes</span>
+            <span className="text-xs font-black text-indigo-800">pendientes</span>
           </div>
-          <div className="mt-3 text-xs text-slate-600 flex items-center gap-1 font-semibold">
-            <Activity className="w-3.5 h-3.5 text-indigo-600" />
+          <div className="mt-3 text-xs text-slate-800 flex items-center gap-1.5 font-bold">
+            <Activity className="w-4 h-4 text-indigo-700" />
             <span>{solicitudes.length} solicitudes totales registradas</span>
           </div>
-          <div className="mt-1 text-[10px] text-slate-400">
+          <div className="mt-1 text-xs text-slate-600 font-semibold">
             Trabajadores, proveedores y visitas
           </div>
         </div>
@@ -513,18 +583,18 @@ export const InicioView: React.FC<InicioViewProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* Left 7 Cols: Ocupación por Torres & Edificios */}
-        <div className="lg:col-span-7 rounded-2xl bg-white border border-slate-200/90 p-5 shadow-2xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="lg:col-span-7 rounded-2xl bg-white border border-slate-200 p-5 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-200 pb-3">
             <div>
-              <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-teal-700" />
+              <h2 className="text-base font-black text-slate-950 flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-teal-800" />
                 <span>Ocupación por Torres (Torres A - J)</span>
               </h2>
-              <p className="text-[11px] text-slate-400">Estado de condominios ocupados vs disponibles en vivo</p>
+              <p className="text-xs text-slate-600 font-medium">Estado de condominios ocupados vs disponibles en vivo</p>
             </div>
             <button
               onClick={() => onNavigateTab('properties')}
-              className="text-xs font-bold text-teal-700 hover:text-teal-800 flex items-center gap-1 cursor-pointer"
+              className="text-xs font-extrabold text-teal-800 hover:text-teal-950 bg-teal-50 px-3 py-1.5 rounded-lg border border-teal-200 flex items-center gap-1 cursor-pointer"
             >
               <span>Ver Propiedades</span>
               <ChevronRight className="w-3.5 h-3.5" />
@@ -533,22 +603,22 @@ export const InicioView: React.FC<InicioViewProps> = ({
 
           <div className="space-y-3.5">
             {towerOccupancy.length === 0 ? (
-              <p className="text-xs text-slate-400 py-4 text-center">No hay torres registradas.</p>
+              <p className="text-xs text-slate-600 py-4 text-center">No hay torres registradas.</p>
             ) : (
               towerOccupancy.map(t => (
-                <div key={t.id} className="p-3 rounded-xl bg-slate-50/80 border border-slate-200/70 space-y-2">
+                <div key={t.id} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-slate-900 flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-teal-600" />
+                    <span className="font-black text-slate-950 flex items-center gap-1.5 text-sm">
+                      <span className="w-2.5 h-2.5 rounded-full bg-teal-600" />
                       Torre {t.nombre}
                     </span>
-                    <span className="font-extrabold text-slate-800">
+                    <span className="font-black text-slate-900 text-xs">
                       {t.occupied} de {t.total} condos ({t.percent}%)
                     </span>
                   </div>
                   
                   {/* Progress bar */}
-                  <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+                  <div className="w-full bg-slate-200 h-3 rounded-full overflow-hidden border border-slate-300">
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${
                         t.percent > 75 
@@ -556,7 +626,7 @@ export const InicioView: React.FC<InicioViewProps> = ({
                           : t.percent > 40 
                           ? 'bg-teal-600' 
                           : t.percent > 0 
-                          ? 'bg-sky-500' 
+                          ? 'bg-sky-600' 
                           : 'bg-slate-300'
                       }`}
                       style={{ width: `${t.percent}%` }}
@@ -569,13 +639,13 @@ export const InicioView: React.FC<InicioViewProps> = ({
         </div>
 
         {/* Right 5 Cols: Desglose por Tipo de Huésped */}
-        <div className="lg:col-span-5 rounded-2xl bg-white border border-slate-200/90 p-5 shadow-2xs space-y-4">
-          <div className="border-b border-slate-100 pb-3">
-            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <Layers className="w-4 h-4 text-teal-700" />
+        <div className="lg:col-span-5 rounded-2xl bg-white border border-slate-200 p-5 shadow-sm space-y-4">
+          <div className="border-b border-slate-200 pb-3">
+            <h2 className="text-base font-black text-slate-950 flex items-center gap-2">
+              <Layers className="w-4 h-4 text-teal-800" />
               <span>Distribución por Tipo de Estadía</span>
             </h2>
-            <p className="text-[11px] text-slate-400">
+            <p className="text-xs text-slate-600 font-medium">
               Desglose en el período seleccionado ({totalPeriodStays} reservaciones)
             </p>
           </div>
@@ -584,12 +654,12 @@ export const InicioView: React.FC<InicioViewProps> = ({
             {Object.entries(guestTypeDistribution).map(([tipo, count]) => {
               const pct = totalPeriodStays > 0 ? Math.round((count / totalPeriodStays) * 100) : 0;
               return (
-                <div key={tipo} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 text-xs">
+                <div key={tipo} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
                   <div className="space-y-0.5">
-                    <div className="font-bold text-slate-800">{tipo}</div>
-                    <div className="text-[10px] text-slate-400">{count} reservaciones ({pct}%)</div>
+                    <div className="font-black text-slate-950 text-sm">{tipo}</div>
+                    <div className="text-xs text-slate-600 font-bold">{count} reservaciones ({pct}%)</div>
                   </div>
-                  <span className="font-mono font-black text-sm text-teal-800 bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-200/80">
+                  <span className="font-mono font-black text-sm text-teal-950 bg-teal-100 px-3 py-1 rounded-lg border border-teal-300">
                     {count}
                   </span>
                 </div>
@@ -601,22 +671,22 @@ export const InicioView: React.FC<InicioViewProps> = ({
       </div>
 
       {/* 5. Gráfico de Tendencia Mensual (Año en Curso) */}
-      <div className="rounded-2xl bg-white border border-slate-200/90 p-5 shadow-2xs space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+      <div className="rounded-2xl bg-white border border-slate-200 p-5 shadow-sm space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-200 pb-3">
           <div>
-            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-teal-700" />
+            <h2 className="text-base font-black text-slate-950 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-teal-800" />
               <span>Flujo de Ocupación Mensual - Año {selectedYear}</span>
             </h2>
-            <p className="text-[11px] text-slate-400">Total de llegadas y reservaciones mes por mes</p>
+            <p className="text-xs text-slate-600 font-medium">Total de llegadas y reservaciones mes por mes</p>
           </div>
-          <span className="text-xs font-bold text-teal-800 bg-teal-50 px-2.5 py-1 rounded-md border border-teal-200">
+          <span className="text-xs font-black text-teal-950 bg-teal-100 px-3 py-1 rounded-md border border-teal-300">
             {monthlyTrend.reduce((acc, m) => acc + m.count, 0)} Reservas en {selectedYear}
           </span>
         </div>
 
         {/* Visual Bar Chart */}
-        <div className="grid grid-cols-12 gap-2 pt-6 pb-2 items-end min-h-[160px]">
+        <div className="grid grid-cols-12 gap-2 pt-6 pb-2 items-end min-h-[170px]">
           {monthlyTrend.map(m => {
             const barHeightPct = Math.max(12, Math.round((m.count / maxMonthCount) * 100));
             const isCurrentMonth = m.monthIdx === currentMonthIdx && selectedYear === currentYear;
@@ -624,27 +694,27 @@ export const InicioView: React.FC<InicioViewProps> = ({
             return (
               <div key={m.monthIdx} className="flex flex-col items-center gap-1.5 group cursor-pointer">
                 {/* Tooltip on hover */}
-                <div className="text-[10px] font-bold text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap bg-slate-100 px-1.5 py-0.5 rounded border border-slate-300">
+                <div className="text-xs font-black text-slate-900 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap bg-white px-2 py-0.5 rounded border border-slate-300 shadow-sm">
                   {m.count} res.
                 </div>
 
                 {/* Bar */}
-                <div className="w-full max-w-[36px] bg-slate-100 h-28 rounded-lg overflow-hidden flex items-end">
+                <div className="w-full max-w-[36px] bg-slate-100 h-28 rounded-lg overflow-hidden flex items-end border border-slate-200">
                   <div
                     className={`w-full rounded-lg transition-all duration-500 ${
                       isCurrentMonth
-                        ? 'bg-gradient-to-t from-teal-700 to-teal-500 shadow-sm'
+                        ? 'bg-teal-700 shadow-sm'
                         : m.count > 0
                         ? 'bg-slate-700 group-hover:bg-teal-600'
-                        : 'bg-slate-200'
+                        : 'bg-slate-300'
                     }`}
                     style={{ height: `${barHeightPct}%` }}
                   />
                 </div>
 
                 {/* Month Name */}
-                <span className={`text-[10px] font-bold uppercase ${
-                  isCurrentMonth ? 'text-teal-700 font-extrabold' : 'text-slate-500'
+                <span className={`text-xs font-black uppercase ${
+                  isCurrentMonth ? 'text-teal-800 font-black underline' : 'text-slate-700'
                 }`}>
                   {m.name}
                 </span>
@@ -658,18 +728,18 @@ export const InicioView: React.FC<InicioViewProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* Next Arrivals */}
-        <div className="rounded-2xl bg-white border border-slate-200/90 p-5 shadow-2xs space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-            <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1.5 uppercase tracking-wider text-emerald-800">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+        <div className="rounded-2xl bg-white border border-slate-200 p-5 shadow-sm space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
+            <h3 className="text-xs font-black text-emerald-950 flex items-center gap-1.5 uppercase tracking-wider">
+              <CheckCircle2 className="w-4 h-4 text-emerald-700" />
               <span>Próximas Llegadas (Check-Ins)</span>
             </h3>
-            <span className="text-[10px] font-bold text-slate-400">{upcomingArrivals.length} pendientes</span>
+            <span className="text-xs font-black text-slate-700 bg-slate-100 px-2 py-0.5 rounded">{upcomingArrivals.length} pendientes</span>
           </div>
 
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-200">
             {upcomingArrivals.length === 0 ? (
-              <p className="text-xs text-slate-400 py-6 text-center">No hay llegadas pendientes.</p>
+              <p className="text-xs text-slate-600 py-6 text-center">No hay llegadas pendientes.</p>
             ) : (
               upcomingArrivals.map(res => {
                 const prop = getPropiedadById(res.propiedad_id);
@@ -678,33 +748,33 @@ export const InicioView: React.FC<InicioViewProps> = ({
                 return (
                   <div key={res.id} className="py-2.5 flex items-center justify-between gap-2 text-xs">
                     <div className="space-y-0.5">
-                      <div className="font-bold text-slate-900 flex items-center gap-2">
+                      <div className="font-black text-slate-950 text-sm flex items-center gap-2">
                         <span>{prop?.nombre || `Unidad ${res.propiedad_id}`}</span>
-                        <span className="text-[10px] font-normal text-slate-500">
+                        <span className="text-xs font-bold text-slate-700">
                           {huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Sin nombre'}
                         </span>
                       </div>
-                      <div className="text-[10px] text-emerald-800 font-semibold flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-emerald-600" />
+                      <div className="text-xs text-emerald-900 font-extrabold flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5 text-emerald-700" />
                         <span>Arribo: {res.fecha_checkin}</span>
-                        <span className="text-slate-400">• Folio #{res.codigo || res.id}</span>
+                        <span className="text-slate-600">• Folio #{res.codigo || res.id}</span>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-1 shrink-0">
                       <button
                         onClick={() => onOpenQrPass(res)}
-                        className="p-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-700 transition-colors cursor-pointer"
+                        className="p-2 rounded-lg bg-teal-100 hover:bg-teal-200 text-teal-950 border border-teal-300 transition-colors cursor-pointer font-bold"
                         title="Generar Pase QR"
                       >
-                        <QrCode className="w-3.5 h-3.5" />
+                        <QrCode className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => onViewReservationDetail(res)}
-                        className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
+                        className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-colors cursor-pointer font-bold"
                         title="Ver Detalles"
                       >
-                        <Eye className="w-3.5 h-3.5" />
+                        <Eye className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -715,18 +785,18 @@ export const InicioView: React.FC<InicioViewProps> = ({
         </div>
 
         {/* Next Departures */}
-        <div className="rounded-2xl bg-white border border-slate-200/90 p-5 shadow-2xs space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-            <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1.5 uppercase tracking-wider text-rose-800">
-              <LogOut className="w-4 h-4 text-rose-600" />
+        <div className="rounded-2xl bg-white border border-slate-200 p-5 shadow-sm space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
+            <h3 className="text-xs font-black text-rose-950 flex items-center gap-1.5 uppercase tracking-wider">
+              <LogOut className="w-4 h-4 text-rose-700" />
               <span>Próximas Salidas (Check-Outs)</span>
             </h3>
-            <span className="text-[10px] font-bold text-slate-400">{upcomingDepartures.length} en casa</span>
+            <span className="text-xs font-black text-slate-700 bg-slate-100 px-2 py-0.5 rounded">{upcomingDepartures.length} en casa</span>
           </div>
 
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-200">
             {upcomingDepartures.length === 0 ? (
-              <p className="text-xs text-slate-400 py-6 text-center">No hay salidas programadas en casa.</p>
+              <p className="text-xs text-slate-600 py-6 text-center">No hay salidas programadas en casa.</p>
             ) : (
               upcomingDepartures.map(res => {
                 const prop = getPropiedadById(res.propiedad_id);
@@ -735,33 +805,33 @@ export const InicioView: React.FC<InicioViewProps> = ({
                 return (
                   <div key={res.id} className="py-2.5 flex items-center justify-between gap-2 text-xs">
                     <div className="space-y-0.5">
-                      <div className="font-bold text-slate-900 flex items-center gap-2">
+                      <div className="font-black text-slate-950 text-sm flex items-center gap-2">
                         <span>{prop?.nombre || `Unidad ${res.propiedad_id}`}</span>
-                        <span className="text-[10px] font-normal text-slate-500">
+                        <span className="text-xs font-bold text-slate-700">
                           {huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Sin nombre'}
                         </span>
                       </div>
-                      <div className="text-[10px] text-rose-800 font-semibold flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-rose-600" />
+                      <div className="text-xs text-rose-900 font-extrabold flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5 text-rose-700" />
                         <span>Salida: {res.fecha_checkout}</span>
-                        <span className="text-slate-400">• Folio #{res.codigo || res.id}</span>
+                        <span className="text-slate-600">• Folio #{res.codigo || res.id}</span>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-1 shrink-0">
                       <button
                         onClick={() => onOpenQrPass(res)}
-                        className="p-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-700 transition-colors cursor-pointer"
+                        className="p-2 rounded-lg bg-teal-100 hover:bg-teal-200 text-teal-950 border border-teal-300 transition-colors cursor-pointer font-bold"
                         title="Generar Pase QR"
                       >
-                        <QrCode className="w-3.5 h-3.5" />
+                        <QrCode className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => onViewReservationDetail(res)}
-                        className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
+                        className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-colors cursor-pointer font-bold"
                         title="Ver Detalles"
                       >
-                        <Eye className="w-3.5 h-3.5" />
+                        <Eye className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -776,3 +846,6 @@ export const InicioView: React.FC<InicioViewProps> = ({
     </div>
   );
 };
+
+export default InicioView;
+
