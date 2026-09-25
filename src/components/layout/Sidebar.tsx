@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 import logoImg from '../../assets/logoDashboard.png';
-import logoIcon from '../../assets/logo.png';
+import logoIcon from '../../assets/logoBG.png';
 
 export const Sidebar: React.FC = () => {
   const {
@@ -78,9 +78,8 @@ export const Sidebar: React.FC = () => {
 
   return (
     <aside
-      className={`${
-        isSidebarCollapsed ? 'w-20' : 'w-64'
-      } transition-all duration-300 ease-in-out bg-white/95 backdrop-blur-md border-r border-slate-200/90 flex flex-col shrink-0 h-screen sticky top-0 z-40 shadow-xs no-print print:hidden select-none`}
+      className={`${isSidebarCollapsed ? 'w-20' : 'w-64'
+        } transition-all duration-300 ease-in-out bg-white/95 backdrop-blur-md border-r border-slate-200/90 flex flex-col shrink-0 h-screen sticky top-0 z-40 shadow-xs no-print print:hidden select-none`}
     >
       {/* Brand Header */}
       {!isSidebarCollapsed ? (
@@ -178,24 +177,21 @@ export const Sidebar: React.FC = () => {
               <div key={item.id} className="relative group flex justify-center">
                 <button
                   onClick={() => setActiveTab(item.id)}
-                  className={`w-full h-11 flex items-center justify-center rounded-xl transition-all duration-150 relative cursor-pointer ${
-                    isActive
+                  className={`w-full h-11 flex items-center justify-center rounded-xl transition-all duration-150 relative cursor-pointer ${isActive
                       ? 'bg-teal-600 text-white shadow-md shadow-teal-700/20 font-bold'
                       : 'text-slate-600 hover:text-teal-700 hover:bg-slate-100/90'
-                  }`}
+                    }`}
                 >
                   <Icon
-                    className={`w-5 h-5 transition-colors ${
-                      isActive ? 'text-white' : 'text-slate-500 group-hover:text-teal-600'
-                    }`}
+                    className={`w-5 h-5 transition-colors ${isActive ? 'text-white' : 'text-slate-500 group-hover:text-teal-600'
+                      }`}
                   />
 
                   {/* Notification Badge Dot in Collapsed Mode */}
                   {item.badge && (
                     <span
-                      className={`absolute top-1.5 right-2 px-1 min-w-[15px] h-3.5 rounded-full text-[9px] font-extrabold flex items-center justify-center ring-2 ring-white ${
-                        isActive ? 'bg-amber-400 text-slate-950' : 'bg-teal-600 text-white shadow-xs'
-                      }`}
+                      className={`absolute top-1.5 right-2 px-1 min-w-[15px] h-3.5 rounded-full text-[9px] font-extrabold flex items-center justify-center ring-2 ring-white ${isActive ? 'bg-amber-400 text-slate-950' : 'bg-teal-600 text-white shadow-xs'
+                        }`}
                     >
                       {item.badgeCount && item.badgeCount > 9 ? '9+' : item.badgeCount || '•'}
                     </span>
@@ -207,13 +203,12 @@ export const Sidebar: React.FC = () => {
                   <div className="relative px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-bold whitespace-nowrap shadow-2xl border border-slate-700/80 flex items-center gap-2">
                     {/* Tooltip Arrow Pointer */}
                     <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 rotate-45 border-l border-b border-slate-700/80" />
-                    
+
                     <span>{item.label}</span>
 
                     {item.badge && (
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold ${
-                        isActive ? 'bg-amber-300 text-slate-950' : 'bg-teal-500/30 text-teal-300 border border-teal-400/40'
-                      }`}>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold ${isActive ? 'bg-amber-300 text-slate-950' : 'bg-teal-500/30 text-teal-300 border border-teal-400/40'
+                        }`}>
                         {item.badge}
                       </span>
                     )}
@@ -227,26 +222,23 @@ export const Sidebar: React.FC = () => {
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs font-semibold transition-colors duration-150 group cursor-pointer ${
-                isActive
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs font-semibold transition-colors duration-150 group cursor-pointer ${isActive
                   ? 'bg-teal-600 text-white shadow-xs font-bold'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/90'
-              }`}
+                }`}
             >
               <div className="flex items-center gap-3 min-w-0">
                 <Icon
-                  className={`w-4 h-4 shrink-0 transition-colors ${
-                    isActive ? 'text-white' : 'text-slate-400 group-hover:text-teal-600'
-                  }`}
+                  className={`w-4 h-4 shrink-0 transition-colors ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-teal-600'
+                    }`}
                 />
                 <span className="truncate">{item.label}</span>
               </div>
 
               {item.badge && (
                 <span
-                  className={`text-[10px] px-2 py-0.5 rounded-md font-semibold shrink-0 transition-colors ${
-                    isActive ? 'bg-white/20 text-white' : item.badgeColor
-                  }`}
+                  className={`text-[10px] px-2 py-0.5 rounded-md font-semibold shrink-0 transition-colors ${isActive ? 'bg-white/20 text-white' : item.badgeColor
+                    }`}
                 >
                   {item.badge}
                 </span>
