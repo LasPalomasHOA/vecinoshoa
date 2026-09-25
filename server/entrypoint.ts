@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'http';
-import { handleApiRequest } from './router';
+import { handleApiRequest } from './router.ts';
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   try {

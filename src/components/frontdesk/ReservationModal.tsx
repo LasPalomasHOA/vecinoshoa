@@ -67,13 +67,15 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
       setEstado(reservationToEdit.estado);
       setNotas(reservationToEdit.notas || '');
     } else {
-      const defaultProp = initialData?.propiedadId || propiedades[0]?.id || 101;
-      setPropiedadId(defaultProp);
+      const defaultProp = (typeof initialData?.propiedadId === 'number' && initialData.propiedadId > 0)
+        ? initialData.propiedadId
+        : (propiedades[0]?.id || 101);
+      setPropiedadId(Number(defaultProp));
       setCodigo(`RES-${Math.floor(100000 + Math.random() * 900000)}`);
       setTipoHuesped('Huésped sin Cobro (NPG)');
       
-      const inDate = initialData?.fechaCheckin || '2026-09-23';
-      let outDate = initialData?.fechaCheckout;
+      const inDate = (typeof initialData?.fechaCheckin === 'string' && initialData.fechaCheckin) || '2026-09-23';
+      let outDate = typeof initialData?.fechaCheckout === 'string' ? initialData.fechaCheckout : undefined;
       if (!outDate) {
         try {
           const d = new Date(inDate + 'T12:00:00');
@@ -111,7 +113,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
   // Overlap conflict check
   const conflictReservation = useMemo(() => {
     if (!propiedadId || !fechaCheckin || !fechaCheckout) return undefined;
-    return checkReservationOverlap(propiedadId, fechaCheckin, fechaCheckout, reservationToEdit?.id);
+    return checkReservationOverlap(Number(propiedadId), fechaCheckin, fechaCheckout, reservationToEdit?.id);
   }, [propiedadId, fechaCheckin, fechaCheckout, reservationToEdit, checkReservationOverlap]);
 
   const conflictGuest = conflictReservation ? getHuespedById(conflictReservation.huesped_id) : undefined;
@@ -124,45 +126,45 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
 
     if (reservationToEdit) {
       updateReservacion(reservationToEdit.id, {
-        propiedad_id: propiedadId,
-        huesped_id: huespedId,
-        codigo,
+        propiedad_id: Number(propiedadId),
+        huesped_id: Number(huespedId),
+        codigo: codigo.trim() || undefined,
         tipo_huesped: tipoHuesped,
         fecha_checkin: fechaCheckin,
         fecha_checkout: fechaCheckout,
-        numero_ocupantes: numeroOcupantes,
-        numero_autos: numeroAutos,
-        brazaletes,
-        vehiculo_info: vehiculoInfo,
+        numero_ocupantes: Number(numeroOcupantes) || 1,
+        numero_autos: Number(numeroAutos) || 0,
+        brazaletes: brazaletes.trim() || undefined,
+        vehiculo_info: vehiculoInfo.trim() || undefined,
         pago_tipo: pagoTipo,
         estado,
-        notas
+        notas: notas.trim() || undefined
       });
     } else {
       const huespedData = isNewHuesped
         ? {
-            nombres: newHuespedNombre || 'Nuevo',
-            apellidos: newHuespedApellido || 'Huésped',
-            telefono: newHuespedTelefono,
-            email: newHuespedEmail
+            nombres: newHuespedNombre.trim() || 'Nuevo',
+            apellidos: newHuespedApellido.trim() || 'Huésped',
+            telefono: newHuespedTelefono.trim() || undefined,
+            email: newHuespedEmail.trim() || undefined
           }
         : undefined;
 
       addReservacion(
         {
-          propiedad_id: propiedadId,
-          huesped_id: isNewHuesped ? 0 : huespedId,
-          codigo,
+          propiedad_id: Number(propiedadId) || propiedades[0]?.id || 101,
+          huesped_id: isNewHuesped ? 0 : Number(huespedId) || 1,
+          codigo: codigo.trim() || undefined,
           tipo_huesped: tipoHuesped,
           fecha_checkin: fechaCheckin,
           fecha_checkout: fechaCheckout,
-          numero_ocupantes: numeroOcupantes,
-          numero_autos: numeroAutos,
-          brazaletes,
-          vehiculo_info: vehiculoInfo,
+          numero_ocupantes: Number(numeroOcupantes) || 1,
+          numero_autos: Number(numeroAutos) || 0,
+          brazaletes: brazaletes.trim() || undefined,
+          vehiculo_info: vehiculoInfo.trim() || undefined,
           pago_tipo: pagoTipo,
           estado,
-          notas
+          notas: notas.trim() || undefined
         },
         huespedData
       );

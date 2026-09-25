@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'http';
-import * as hoaService from './services/hoaService';
+import * as hoaService from './services/hoaService.ts';
 
 export interface ApiRequest extends IncomingMessage {
   body?: any;

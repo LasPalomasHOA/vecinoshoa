@@ -1,6 +1,6 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
-import { handleApiRequest } from './server/router';
+import { handleApiRequest } from './server/router.ts';
 
 function apiDevServerPlugin(): Plugin {
   return {
