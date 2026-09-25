@@ -225,21 +225,20 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
-                <th className="py-3 px-4">Folio / ID</th>
-                <th className="py-3 px-4">Propiedad</th>
-                <th className="py-3 px-4">Entrada (Check-in)</th>
-                <th className="py-3 px-4">Salida (Check-out)</th>
-                <th className="py-3 px-4">Huésped Titular</th>
-                <th className="py-3 px-4">Tipo & Pago</th>
-                <th className="py-3 px-4">Estatus</th>
-                <th className="py-3 px-4">Brazaletes & Vehículo</th>
-                <th className="py-3 px-4 text-right">Acciones</th>
+                <th className="py-3 px-3 whitespace-nowrap w-20">Folio / ID</th>
+                <th className="py-3 px-3 whitespace-nowrap w-28">Propiedad</th>
+                <th className="py-3 px-3 whitespace-nowrap w-28">Estadía / Fechas</th>
+                <th className="py-3 px-3 whitespace-nowrap min-w-[130px]">Huésped Titular</th>
+                <th className="py-3 px-3 whitespace-nowrap w-28">Tipo & Pago</th>
+                <th className="py-3 px-3 whitespace-nowrap w-24">Estatus</th>
+                <th className="py-3 px-3 max-w-[160px]">Brazaletes & Vehículo</th>
+                <th className="py-3 px-3 text-right whitespace-nowrap w-32">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredReservations.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center text-slate-400 font-medium">
+                  <td colSpan={8} className="py-12 text-center text-slate-400 font-medium">
                     No se encontraron reservaciones con los filtros activos.
                   </td>
                 </tr>
@@ -249,6 +248,93 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
                   const huesped = getHuespedById(res.huesped_id);
                   const isCheckedIn = res.estado === 'En Casa (Checked-in)';
 
+                  // Clean formatted Tipo badge
+                  const getTipoBadge = () => {
+                    const tipo = String(res.tipo_huesped || '');
+                    if (tipo.includes('Dueño') || tipo.includes('Bloqueo')) {
+                      return {
+                        label: 'Dueño HOA',
+                        className: 'bg-slate-100 text-slate-700 border border-slate-200/80'
+                      };
+                    }
+                    if (tipo.includes('Cobro (PG)') || tipo.includes('PG')) {
+                      return {
+                        label: 'Huésped (PG)',
+                        className: 'bg-sky-50 text-sky-800 border border-sky-200/80'
+                      };
+                    }
+                    if (tipo.includes('sin Cobro') || tipo.includes('NPG')) {
+                      return {
+                        label: 'Huésped (NPG)',
+                        className: 'bg-teal-50 text-teal-800 border border-teal-200/80'
+                      };
+                    }
+                    if (tipo.includes('Renta') || tipo.includes('Streamline')) {
+                      return {
+                        label: 'Renta / Streamline',
+                        className: 'bg-indigo-50 text-indigo-800 border border-indigo-200/80'
+                      };
+                    }
+                    if (tipo.includes('Amenity') || tipo.includes('amenidades')) {
+                      return {
+                        label: 'Uso Amenidades',
+                        className: 'bg-amber-50 text-amber-900 border border-amber-200/80'
+                      };
+                    }
+                    return {
+                      label: tipo || 'Estándar',
+                      className: 'bg-slate-100 text-slate-700 border border-slate-200'
+                    };
+                  };
+
+                  // Clean formatted Estatus badge
+                  const getEstadoBadge = () => {
+                    if (res.estado === 'En Casa (Checked-in)') {
+                      return {
+                        label: 'En Casa',
+                        className: 'bg-emerald-50 text-emerald-800 border border-emerald-200/80 font-bold',
+                        dotColor: 'bg-emerald-500'
+                      };
+                    }
+                    if (res.estado === 'Confirmada') {
+                      return {
+                        label: 'Confirmada',
+                        className: 'bg-amber-50 text-amber-900 border border-amber-200/80 font-bold',
+                        dotColor: 'bg-amber-500'
+                      };
+                    }
+                    if (res.estado === 'Pendiente') {
+                      return {
+                        label: 'Pendiente',
+                        className: 'bg-sky-50 text-sky-800 border border-sky-200/80 font-bold',
+                        dotColor: 'bg-sky-500'
+                      };
+                    }
+                    if (res.estado === 'Checked-out') {
+                      return {
+                        label: 'Checked-out',
+                        className: 'bg-slate-100 text-slate-600 border border-slate-200 font-semibold',
+                        dotColor: 'bg-slate-400'
+                      };
+                    }
+                    return {
+                      label: res.estado,
+                      className: 'bg-slate-100 text-slate-700 border border-slate-200 font-semibold',
+                      dotColor: 'bg-slate-400'
+                    };
+                  };
+
+                  const tipoBadge = getTipoBadge();
+                  const estadoBadge = getEstadoBadge();
+
+                  // Clean Brazaletes text
+                  const hasValidBrazaletes = res.brazaletes && res.brazaletes !== 'x' && res.brazaletes !== 'X';
+                  const isBrazaletesPendiente = res.brazaletes === 'Pendiente';
+
+                  // Clean Vehículo text
+                  const hasValidVehiculo = res.vehiculo_info && res.vehiculo_info !== 'x' && res.vehiculo_info !== 'X';
+                  const isVehiculoPendiente = res.vehiculo_info === 'Pendiente al arribo';
+
                   return (
                     <tr 
                       key={res.id} 
@@ -257,104 +343,98 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
                       }`}
                     >
                       {/* Code */}
-                      <td className="py-3 px-4 font-mono font-bold text-teal-700">
+                      <td className="py-3 px-3 font-mono font-bold text-teal-700 whitespace-nowrap align-middle">
                         <button
                           onClick={() => onViewReservationDetail(res)}
-                          className="hover:underline flex items-center gap-1"
+                          className="hover:underline flex items-center gap-1 cursor-pointer"
                         >
                           {res.codigo || res.id}
                         </button>
                       </td>
 
                       {/* Condo */}
-                      <td className="py-3 px-4">
-                        <span className="font-extrabold text-slate-900 px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200">
+                      <td className="py-3 px-3 whitespace-nowrap align-middle">
+                        <span className="font-extrabold text-slate-900 px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 shadow-2xs">
                           {prop?.nombre || `ID: ${res.propiedad_id}`}
                         </span>
                       </td>
 
-                      {/* Checkin */}
-                      <td className="py-3 px-4 text-slate-700 font-medium">
-                        {res.fecha_checkin}
-                      </td>
-
-                      {/* Checkout */}
-                      <td className="py-3 px-4 text-slate-700 font-medium">
-                        {res.fecha_checkout}
+                      {/* Fechas / Estadía */}
+                      <td className="py-3 px-3 align-middle whitespace-nowrap text-slate-700">
+                        <div className="font-semibold text-xs text-slate-800">{res.fecha_checkin}</div>
+                        <div className="text-[10px] text-slate-400 font-medium">al {res.fecha_checkout}</div>
                       </td>
 
                       {/* Guest */}
-                      <td className="py-3 px-4">
-                        <div className="font-bold text-slate-900">
+                      <td className="py-3 px-3 align-middle whitespace-nowrap">
+                        <div className="font-bold text-slate-900 text-xs truncate max-w-[140px]">
                           {huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Sin nombre'}
                         </div>
                         {huesped?.telefono && (
-                          <div className="text-[10px] text-slate-500 flex items-center gap-1">
-                            <Phone className="w-2.5 h-2.5" />
+                          <div className="text-[10px] text-slate-400 flex items-center gap-1 whitespace-nowrap mt-0.5">
+                            <Phone className="w-2.5 h-2.5 text-slate-400" />
                             <span>{huesped.telefono}</span>
                           </div>
                         )}
                       </td>
 
-                      {/* Tipo */}
-                      <td className="py-3 px-4">
-                        <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                          res.tipo_huesped === 'Bloqueo de Dueño'
-                            ? 'bg-slate-100 text-slate-800 border border-slate-300'
-                            : res.tipo_huesped === 'Huésped con Cobro (PG)'
-                            ? 'bg-sky-50 text-sky-800 border border-sky-200'
-                            : res.tipo_huesped === 'Huésped sin Cobro (NPG)'
-                            ? 'bg-teal-50 text-teal-800 border border-teal-200'
-                            : 'bg-indigo-50 text-indigo-800 border border-indigo-200'
-                        }`}>
-                          {res.tipo_huesped}
-                        </span>
-                        <span className="block text-[10px] text-slate-500 mt-0.5">
-                          {res.pago_tipo || 'Sin pago'}
-                        </span>
+                      {/* Tipo & Pago */}
+                      <td className="py-3 px-3 align-middle whitespace-nowrap">
+                        <div className="inline-flex flex-col items-start gap-0.5">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold whitespace-nowrap shadow-2xs ${tipoBadge.className}`}>
+                            {tipoBadge.label}
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-medium">
+                            {res.pago_tipo && res.pago_tipo !== 'Sin pago' ? res.pago_tipo : 'Sin pago'}
+                          </span>
+                        </div>
                       </td>
 
                       {/* Estatus */}
-                      <td className="py-3 px-4">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                          res.estado === 'En Casa (Checked-in)'
-                            ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                            : res.estado === 'Checked-out'
-                            ? 'bg-slate-100 text-slate-600 border border-slate-200'
-                            : 'bg-amber-50 text-amber-800 border border-amber-200'
-                        }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${
-                            res.estado === 'En Casa (Checked-in)' ? 'bg-emerald-600' : res.estado === 'Checked-out' ? 'bg-slate-400' : 'bg-amber-500'
-                          }`} />
-                          {res.estado}
+                      <td className="py-3 px-3 align-middle whitespace-nowrap">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] whitespace-nowrap shadow-2xs ${estadoBadge.className}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${estadoBadge.dotColor}`} />
+                          {estadoBadge.label}
                         </span>
                       </td>
 
-                      {/* Brazaletes */}
-                      <td className="py-3 px-4 max-w-xs">
-                        {res.brazaletes ? (
-                          <div className="flex items-center gap-1 text-teal-800 font-semibold text-[11px]">
-                            <Tag className="w-3 h-3 text-teal-600 shrink-0" />
-                            <span className="truncate">{res.brazaletes}</span>
+                      {/* Brazaletes & Vehículo */}
+                      <td className="py-3 px-3 max-w-[160px] align-middle">
+                        {hasValidBrazaletes ? (
+                          <div className="flex items-center gap-1.5 text-slate-700 font-medium text-[11px] truncate" title={res.brazaletes}>
+                            <Tag className={`w-3 h-3 shrink-0 ${isBrazaletesPendiente ? 'text-amber-500' : 'text-teal-600'}`} />
+                            <span className={`truncate ${isBrazaletesPendiente ? 'text-amber-700 font-semibold' : ''}`}>
+                              {res.brazaletes}
+                            </span>
                           </div>
                         ) : (
-                          <span className="text-slate-400 italic text-[10px]">Sin asignar</span>
+                          <div className="flex items-center gap-1.5 text-slate-400 italic text-[10px]">
+                            <Tag className="w-3 h-3 text-slate-300 shrink-0" />
+                            <span>Sin brazalete</span>
+                          </div>
                         )}
-                        {res.vehiculo_info && (
-                          <div className="flex items-center gap-1 text-slate-500 text-[10px] mt-0.5 truncate">
-                            <Car className="w-3 h-3 shrink-0" />
-                            <span className="truncate">{res.vehiculo_info}</span>
+                        {hasValidVehiculo ? (
+                          <div className="flex items-center gap-1.5 text-slate-500 text-[10px] mt-0.5 truncate" title={res.vehiculo_info}>
+                            <Car className="w-3 h-3 text-slate-400 shrink-0" />
+                            <span className={`truncate ${isVehiculoPendiente ? 'text-slate-400 italic' : ''}`}>
+                              {res.vehiculo_info}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5 text-slate-400 italic text-[10px] mt-0.5">
+                            <Car className="w-3 h-3 text-slate-300 shrink-0" />
+                            <span>Sin vehículo</span>
                           </div>
                         )}
                       </td>
 
                       {/* Actions */}
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
+                      <td className="py-3 px-3 text-right whitespace-nowrap align-middle">
+                        <div className="flex items-center justify-end gap-1">
                           {res.estado !== 'En Casa (Checked-in)' && res.estado !== 'Checked-out' ? (
                             <button
                               onClick={() => onCheckIn(res)}
-                              className="px-2.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] shadow-xs flex items-center gap-1"
+                              className="h-7 px-2.5 rounded-md bg-teal-600 hover:bg-teal-700 text-white font-bold text-[11px] shadow-xs flex items-center gap-1 whitespace-nowrap cursor-pointer transition-colors shrink-0"
                               title="Registrar Check-In"
                             >
                               <CheckCircle className="w-3.5 h-3.5" />
@@ -363,7 +443,7 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
                           ) : res.estado === 'En Casa (Checked-in)' ? (
                             <button
                               onClick={() => checkOutReservacion(res.id)}
-                              className="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] border border-slate-300"
+                              className="h-7 px-2.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] border border-slate-300 flex items-center gap-1 whitespace-nowrap cursor-pointer transition-colors shrink-0"
                               title="Registrar Salida"
                             >
                               <LogOut className="w-3.5 h-3.5" />
@@ -373,7 +453,7 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
 
                           <button
                             onClick={() => onViewReservationDetail(res)}
-                            className="p-1.5 rounded-md hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors"
+                            className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer shrink-0"
                             title="Ver detalles"
                           >
                             <Eye className="w-3.5 h-3.5" />
@@ -381,7 +461,7 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
 
                           <button
                             onClick={() => onEditReservation(res)}
-                            className="p-1.5 rounded-md hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors"
+                            className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer shrink-0"
                             title="Editar"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
@@ -393,7 +473,7 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
                                 deleteReservacion(res.id);
                               }
                             }}
-                            className="p-1.5 rounded-md hover:bg-rose-50 text-rose-600 transition-colors"
+                            className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer shrink-0"
                             title="Eliminar"
                           >
                             <Trash2 className="w-3.5 h-3.5" />

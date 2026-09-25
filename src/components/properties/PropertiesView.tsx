@@ -65,6 +65,33 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
     return true;
   });
 
+  // Clean formatted Grupo badge helper
+  const getGrupoBadge = (grupoNombre?: string) => {
+    const g = String(grupoNombre || '');
+    if (g.includes('POOL') || g.includes('Rental Pool')) {
+      return {
+        label: 'Rental Pool (POOL)',
+        className: 'bg-sky-50 text-sky-800 border border-sky-200/80 font-semibold'
+      };
+    }
+    if (g.includes('NR') || g.includes('No Rental') || g.includes('Uso Propio')) {
+      return {
+        label: 'No Rental (NR)',
+        className: 'bg-slate-100 text-slate-700 border border-slate-200/80 font-semibold'
+      };
+    }
+    if (g.includes('PREMIUM') || g.includes('Premium')) {
+      return {
+        label: 'Premium Residences',
+        className: 'bg-amber-50 text-amber-900 border border-amber-200/80 font-semibold'
+      };
+    }
+    return {
+      label: grupoNombre || 'General',
+      className: 'bg-slate-100 text-slate-700 border border-slate-200 font-semibold'
+    };
+  };
+
   return (
     <div className="space-y-5">
       
@@ -149,22 +176,20 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
-                  <th className="py-3 px-4">Condominio</th>
-                  <th className="py-3 px-4">Edificio / Torre</th>
-                  <th className="py-3 px-4">Distribución</th>
-                  <th className="py-3 px-4">Propietario</th>
-                  <th className="py-3 px-4">Email Propietario</th>
-                  <th className="py-3 px-4">Cuota HOA</th>
-                  <th className="py-3 px-4">Grupo</th>
-                  <th className="py-3 px-4">Medidores (Luz/Agua)</th>
-                  <th className="py-3 px-4">Estatus</th>
-                  <th className="py-3 px-4 text-right">Acciones</th>
+                  <th className="py-3 px-3.5 whitespace-nowrap">Condominio</th>
+                  <th className="py-3 px-3.5 whitespace-nowrap">Distribución</th>
+                  <th className="py-3 px-3.5 whitespace-nowrap">Propietario</th>
+                  <th className="py-3 px-3.5 whitespace-nowrap">Cuota HOA</th>
+                  <th className="py-3 px-3.5 whitespace-nowrap">Grupo</th>
+                  <th className="py-3 px-3.5 whitespace-nowrap">Medidores (Luz/Agua)</th>
+                  <th className="py-3 px-3.5 whitespace-nowrap">Estatus</th>
+                  <th className="py-3 px-3.5 text-right whitespace-nowrap">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredProperties.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="py-12 text-center text-slate-400 font-medium">
+                    <td colSpan={8} className="py-12 text-center text-slate-400 font-medium">
                       No se encontraron condominios con estos filtros.
                     </td>
                   </tr>
@@ -173,67 +198,66 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
                     const ed = getEdificioById(prop.edificio_id);
                     const owner = getOwnerByPropiedadId(prop.id);
                     const grupo = getGrupoById(prop.grupo_id);
+                    const grupoBadge = getGrupoBadge(grupo?.nombre);
 
                     return (
                       <tr key={prop.id} className="hover:bg-teal-50/40 transition-colors group">
                         
-                        {/* Name */}
-                        <td className="py-3 px-4">
+                        {/* Name & Torre */}
+                        <td className="py-3 px-3.5 align-middle whitespace-nowrap">
                           <span className="font-extrabold text-sm text-teal-800">
                             {prop.nombre}
                           </span>
-                          <span className="block text-[10px] text-slate-500">Piso {prop.piso} • {prop.area || 'Estándar'}</span>
-                        </td>
-
-                        {/* Torre */}
-                        <td className="py-3 px-4 font-semibold text-slate-800">
-                          {ed?.nombre || `Torre ${prop.edificio_id}`}
+                          <span className="block text-[10px] text-slate-500 mt-0.5">
+                            {ed?.nombre ? `Torre ${ed.nombre}` : `Torre ${prop.edificio_id}`} • Piso {prop.piso}
+                          </span>
                         </td>
 
                         {/* Layout */}
-                        <td className="py-3 px-4 text-slate-700">
-                          <span className="font-bold">{prop.dormitorios}</span> rec • <span className="font-bold">{prop.banos}</span> baños
-                          <span className="block text-[10px] text-slate-500">Capacidad: {prop.capacidad_personas} pers.</span>
+                        <td className="py-3 px-3.5 align-middle whitespace-nowrap text-slate-700">
+                          <div>
+                            <span className="font-bold">{prop.dormitorios}</span> rec • <span className="font-bold">{prop.banos}</span> baños
+                          </div>
+                          <span className="block text-[10px] text-slate-500 mt-0.5">
+                            Capacidad: {prop.capacidad_personas} pers.
+                          </span>
                         </td>
 
-                        {/* Owner */}
-                        <td className="py-3 px-4">
+                        {/* Owner & Email */}
+                        <td className="py-3 px-3.5 align-middle whitespace-nowrap">
                           {owner ? (
-                            <span className="font-bold text-slate-900">{owner.nombre} {owner.apellido}</span>
+                            <div>
+                              <span className="font-bold text-slate-900 block">{owner.nombre} {owner.apellido}</span>
+                              <span className="text-[10px] text-slate-500 font-mono">{owner.email || '—'}</span>
+                            </div>
                           ) : (
                             <span className="text-slate-400 italic text-[11px]">Sin asignar</span>
                           )}
                         </td>
 
-                        {/* Email */}
-                        <td className="py-3 px-4 text-slate-600 font-mono text-[11px]">
-                          {owner?.email || '—'}
-                        </td>
-
                         {/* Cuota HOA */}
-                        <td className="py-3 px-4 font-mono font-bold text-teal-700">
+                        <td className="py-3 px-3.5 align-middle whitespace-nowrap font-mono font-bold text-teal-700">
                           ${prop.cuota_hoa || 420} {prop.moneda}
                         </td>
 
                         {/* Grupo */}
-                        <td className="py-3 px-4">
-                          <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                            grupo?.nombre === 'POOL'
-                              ? 'bg-sky-50 text-sky-800 border border-sky-200'
-                              : 'bg-slate-100 text-slate-700 border border-slate-200'
-                          }`}>
-                            {grupo?.nombre || 'NR'}
+                        <td className="py-3 px-3.5 align-middle whitespace-nowrap">
+                          <span 
+                            className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] whitespace-nowrap shadow-2xs ${grupoBadge.className}`}
+                            title={grupo?.nombre}
+                          >
+                            {grupoBadge.label}
                           </span>
                         </td>
 
                         {/* Medidores */}
-                        <td className="py-3 px-4 text-slate-600 text-[11px]">
+                        <td className="py-3 px-3.5 align-middle whitespace-nowrap text-slate-600 text-[11px]">
                           <div className="flex items-center gap-1 text-[10px] font-mono">
                             <Zap className="w-3 h-3 text-amber-500 shrink-0" />
                             <span>{prop.medidor_electricidad || 'N/A'}</span>
                           </div>
                           {prop.medidor_agua && (
-                            <div className="flex items-center gap-1 text-[10px] font-mono text-slate-500">
+                            <div className="flex items-center gap-1 text-[10px] font-mono text-slate-500 mt-0.5">
                               <Droplet className="w-3 h-3 text-sky-500 shrink-0" />
                               <span>{prop.medidor_agua}</span>
                             </div>
@@ -241,19 +265,19 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
                         </td>
 
                         {/* Estado */}
-                        <td className="py-3 px-4">
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                        <td className="py-3 px-3.5 align-middle whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/80 shadow-2xs">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
                             {prop.estado}
                           </span>
                         </td>
 
                         {/* Actions */}
-                        <td className="py-3 px-4 text-right">
+                        <td className="py-3 px-3.5 text-right align-middle whitespace-nowrap">
                           <div className="flex items-center justify-end gap-1">
                             <button
                               onClick={() => onEditProperty(prop)}
-                              className="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors flex items-center gap-1"
+                              className="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer"
                             >
                               <Edit className="w-3 h-3 text-slate-500" />
                               <span>Editar</span>
@@ -264,7 +288,7 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
                                   deletePropiedad(prop.id);
                                 }
                               }}
-                              className="p-1 rounded-md hover:bg-rose-50 text-rose-600 transition-colors"
+                              className="p-1 rounded-md hover:bg-rose-50 text-rose-600 transition-colors cursor-pointer"
                               title="Eliminar"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -300,10 +324,8 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
                     </div>
                     <p className="text-xs text-slate-500 mt-0.5">Piso {prop.piso} • Capacidad: {prop.capacidad_personas} personas</p>
                   </div>
-                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                    grupo?.nombre === 'POOL' ? 'bg-sky-50 text-sky-800' : 'bg-slate-100 text-slate-600'
-                  }`}>
-                    {grupo?.nombre || 'NR'}
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] whitespace-nowrap shadow-2xs ${getGrupoBadge(grupo?.nombre).className}`}>
+                    {getGrupoBadge(grupo?.nombre).label}
                   </span>
                 </div>
 
