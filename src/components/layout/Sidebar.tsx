@@ -11,9 +11,7 @@ import {
   RotateCcw,
   LogOut,
   ChevronLeft,
-  ChevronRight,
-  PanelLeftClose,
-  PanelLeftOpen
+  ChevronRight
 } from 'lucide-react';
 
 import logoImg from '../../assets/logoDashboard.png';
@@ -103,7 +101,7 @@ export const Sidebar: React.FC = () => {
           </button>
         </div>
       ) : (
-        <div className="py-3 px-2 flex flex-col items-center gap-2 border-b border-slate-100">
+        <div className="py-3 px-2 flex flex-col items-center gap-2 border-b border-slate-100 relative group">
           <img
             src={logoIcon}
             alt="Las Palomas HOA Logo"
@@ -116,6 +114,14 @@ export const Sidebar: React.FC = () => {
           >
             <ChevronRight className="w-4 h-4 text-teal-700" />
           </button>
+
+          {/* Header Tooltip on hover */}
+          <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 z-50 pointer-events-none opacity-0 translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-150 ease-out hidden group-hover:block">
+            <div className="relative px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-bold whitespace-nowrap shadow-2xl border border-slate-700/80">
+              <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 rotate-45 border-l border-b border-slate-700/80" />
+              <span>Expandir menú lateral</span>
+            </div>
+          </div>
         </div>
       )}
 
@@ -135,22 +141,28 @@ export const Sidebar: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="mx-auto my-2.5 flex justify-center">
-          <div
-            className="w-10 h-10 rounded-lg overflow-hidden border border-teal-200/80 shadow-xs cursor-help"
-            title="Las Palomas Resort - Puerto Peñasco, SON (Temporada 2026)"
-          >
+        <div className="mx-auto my-2.5 flex justify-center relative group">
+          <div className="w-10 h-10 rounded-lg overflow-hidden border border-teal-200/80 shadow-xs cursor-help">
             <img
               src="/las_palomas_resort.jpg"
               alt="Las Palomas"
               className="w-full h-full object-cover"
             />
           </div>
+
+          {/* Resort Tooltip */}
+          <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 z-50 pointer-events-none opacity-0 translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-150 ease-out hidden group-hover:block">
+            <div className="relative px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs whitespace-nowrap shadow-2xl border border-slate-700/80">
+              <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 rotate-45 border-l border-b border-slate-700/80" />
+              <p className="font-bold text-white">Las Palomas Resort</p>
+              <p className="text-[10px] text-teal-300 font-semibold">Puerto Peñasco • 2026</p>
+            </div>
+          </div>
         </div>
       )}
 
       {/* Navigation Links */}
-      <div className={`py-2 flex-1 overflow-y-auto space-y-1 ${isSidebarCollapsed ? 'px-2' : 'px-3'}`}>
+      <div className={`py-2 flex-1 space-y-1.5 overflow-visible ${isSidebarCollapsed ? 'px-2.5' : 'px-3'}`}>
         {!isSidebarCollapsed && (
           <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
             Menú de Gestión
@@ -163,33 +175,51 @@ export const Sidebar: React.FC = () => {
 
           if (isSidebarCollapsed) {
             return (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                title={item.badge ? `${item.label} (${item.badge})` : item.label}
-                className={`w-full h-11 flex items-center justify-center rounded-xl transition-all duration-150 relative group cursor-pointer ${
-                  isActive
-                    ? 'bg-teal-600 text-white shadow-xs font-bold'
-                    : 'text-slate-600 hover:text-teal-700 hover:bg-slate-100/90'
-                }`}
-              >
-                <Icon
-                  className={`w-5 h-5 transition-colors ${
-                    isActive ? 'text-white' : 'text-slate-500 group-hover:text-teal-600'
+              <div key={item.id} className="relative group flex justify-center">
+                <button
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full h-11 flex items-center justify-center rounded-xl transition-all duration-150 relative cursor-pointer ${
+                    isActive
+                      ? 'bg-teal-600 text-white shadow-md shadow-teal-700/20 font-bold'
+                      : 'text-slate-600 hover:text-teal-700 hover:bg-slate-100/90'
                   }`}
-                />
-
-                {/* Badge indicator in collapsed mode */}
-                {item.badge && (
-                  <span
-                    className={`absolute top-1.5 right-2 px-1 min-w-[15px] h-3.5 rounded-full text-[9px] font-bold flex items-center justify-center ring-2 ring-white ${
-                      isActive ? 'bg-amber-400 text-slate-950' : 'bg-teal-600 text-white'
+                >
+                  <Icon
+                    className={`w-5 h-5 transition-colors ${
+                      isActive ? 'text-white' : 'text-slate-500 group-hover:text-teal-600'
                     }`}
-                  >
-                    {item.badgeCount && item.badgeCount > 9 ? '9+' : item.badgeCount || '•'}
-                  </span>
-                )}
-              </button>
+                  />
+
+                  {/* Notification Badge Dot in Collapsed Mode */}
+                  {item.badge && (
+                    <span
+                      className={`absolute top-1.5 right-2 px-1 min-w-[15px] h-3.5 rounded-full text-[9px] font-extrabold flex items-center justify-center ring-2 ring-white ${
+                        isActive ? 'bg-amber-400 text-slate-950' : 'bg-teal-600 text-white shadow-xs'
+                      }`}
+                    >
+                      {item.badgeCount && item.badgeCount > 9 ? '9+' : item.badgeCount || '•'}
+                    </span>
+                  )}
+                </button>
+
+                {/* Floating Popover Tooltip Badge on Hover */}
+                <div className="absolute left-full ml-3.5 top-1/2 -translate-y-1/2 z-50 pointer-events-none opacity-0 translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-150 ease-out hidden group-hover:flex items-center">
+                  <div className="relative px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-bold whitespace-nowrap shadow-2xl border border-slate-700/80 flex items-center gap-2">
+                    {/* Tooltip Arrow Pointer */}
+                    <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 rotate-45 border-l border-b border-slate-700/80" />
+                    
+                    <span>{item.label}</span>
+
+                    {item.badge && (
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold ${
+                        isActive ? 'bg-amber-300 text-slate-950' : 'bg-teal-500/30 text-teal-300 border border-teal-400/40'
+                      }`}>
+                        {item.badge}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
             );
           }
 
@@ -261,21 +291,37 @@ export const Sidebar: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-2">
+          <div className="flex flex-col items-center gap-2 relative group">
             <div
               className="w-9 h-9 rounded-full bg-teal-600 text-white font-bold text-xs flex items-center justify-center ring-2 ring-white shadow-xs cursor-pointer"
-              title={`${currentUser?.nombre} ${currentUser?.apellido} (${currentUser?.rol || 'Personal HOA'})`}
             >
               {currentUser?.nombre?.[0] || 'U'}{currentUser?.apellido?.[0] || 'A'}
             </div>
-            <div className="flex items-center gap-1">
+
+            {/* Profile Tooltip on Hover */}
+            <div className="absolute left-full ml-3 top-2 z-50 pointer-events-none opacity-0 translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-150 ease-out hidden group-hover:block">
+              <div className="relative px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs whitespace-nowrap shadow-2xl border border-slate-700/80">
+                <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 rotate-45 border-l border-b border-slate-700/80" />
+                <p className="font-bold text-white">{currentUser?.nombre} {currentUser?.apellido}</p>
+                <p className="text-[10px] text-teal-300 font-semibold">{currentUser?.rol || 'Personal HOA'}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1 relative group/logout">
               <button
                 onClick={logout}
-                title="Cerrar sesión"
                 className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
               </button>
+
+              {/* Logout Tooltip on Hover */}
+              <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 z-50 pointer-events-none opacity-0 translate-x-1 group-hover/logout:opacity-100 group-hover/logout:translate-x-0 transition-all duration-150 ease-out hidden group-hover/logout:block">
+                <div className="relative px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-bold whitespace-nowrap shadow-2xl border border-slate-700/80">
+                  <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 rotate-45 border-l border-b border-slate-700/80" />
+                  <span>Cerrar sesión</span>
+                </div>
+              </div>
             </div>
           </div>
         )}
