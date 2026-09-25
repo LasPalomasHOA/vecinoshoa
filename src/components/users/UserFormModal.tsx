@@ -97,10 +97,10 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-      <div className="relative w-full max-w-xl bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden my-8 animate-scale-up">
+      <div className="relative w-full max-w-xl bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden animate-scale-up my-auto max-h-[95vh] flex flex-col">
         
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50/80">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/80 shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-700">
               <User className="w-4 h-4" />
@@ -111,14 +111,14 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+        <form onSubmit={handleSubmit} className="p-5 space-y-3.5 overflow-y-auto flex-1">
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>

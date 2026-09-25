@@ -176,14 +176,14 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
-                  <th className="py-3 px-3.5 whitespace-nowrap">Condominio</th>
-                  <th className="py-3 px-3.5 whitespace-nowrap">Distribución</th>
-                  <th className="py-3 px-3.5 whitespace-nowrap">Propietario</th>
-                  <th className="py-3 px-3.5 whitespace-nowrap">Cuota HOA</th>
-                  <th className="py-3 px-3.5 whitespace-nowrap">Grupo</th>
-                  <th className="py-3 px-3.5 whitespace-nowrap">Medidores (Luz/Agua)</th>
-                  <th className="py-3 px-3.5 whitespace-nowrap">Estatus</th>
-                  <th className="py-3 px-3.5 text-right whitespace-nowrap">Acciones</th>
+                  <th className="py-3 px-3.5 whitespace-nowrap w-44">Condominio</th>
+                  <th className="py-3 px-3.5 whitespace-nowrap w-36">Distribución</th>
+                  <th className="py-3 px-3.5 whitespace-nowrap min-w-[170px]">Propietario</th>
+                  <th className="py-3 px-3.5 whitespace-nowrap w-28">Cuota HOA</th>
+                  <th className="py-3 px-3.5 whitespace-nowrap w-36">Grupo</th>
+                  <th className="py-3 px-3.5 whitespace-nowrap w-40">Medidores (Luz/Agua)</th>
+                  <th className="py-3 px-3.5 whitespace-nowrap w-24">Estatus</th>
+                  <th className="py-3 px-3.5 text-right whitespace-nowrap w-28">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">

@@ -42,10 +42,10 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-      <div className="relative w-full max-w-2xl bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-2xl bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden max-h-[95vh] flex flex-col">
         
         {/* Header */}
-        <div className="p-6 bg-gradient-to-r from-teal-700 to-teal-800 text-white flex items-start justify-between">
+        <div className="px-6 py-4 bg-gradient-to-r from-teal-700 to-teal-800 text-white flex items-start justify-between shrink-0">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="font-mono text-xs px-2.5 py-0.5 rounded-md bg-white/20 font-bold">
@@ -63,14 +63,14 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-teal-200 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg text-teal-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
+        <div className="p-5 space-y-3.5 overflow-y-auto flex-1">
           
           {/* Guest and Dates */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
