@@ -231,15 +231,15 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
-                <th className="py-3 px-3 whitespace-nowrap w-20">Folio / ID</th>
-                <th className="py-3 px-3 whitespace-nowrap w-28">Propiedad</th>
-                <th className="py-3 px-3 whitespace-nowrap w-28">Estadía / Fechas</th>
-                <th className="py-3 px-3 whitespace-nowrap min-w-[130px]">Huésped Titular</th>
-                <th className="py-3 px-3 whitespace-nowrap w-28">Tipo & Pago</th>
-                <th className="py-3 px-3 whitespace-nowrap w-24">Estatus</th>
-                <th className="py-3 px-3 max-w-[160px]">Brazaletes & Vehículo</th>
-                <th className="py-3 px-3 text-right whitespace-nowrap w-32">Acciones</th>
+              <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                <th className="py-2.5 px-2.5 whitespace-nowrap">Folio / ID</th>
+                <th className="py-2.5 px-2.5 whitespace-nowrap">Propiedad</th>
+                <th className="py-2.5 px-2.5 whitespace-nowrap">Estadía / Fechas</th>
+                <th className="py-2.5 px-2.5 whitespace-nowrap">Huésped Titular</th>
+                <th className="py-2.5 px-2.5 whitespace-nowrap">Tipo & Pago</th>
+                <th className="py-2.5 px-2.5 whitespace-nowrap">Estatus</th>
+                <th className="py-2.5 px-2.5 whitespace-nowrap">Brazaletes & Vehículo</th>
+                <th className="py-2.5 px-2.5 text-right whitespace-nowrap">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -350,7 +350,7 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
                       }`}
                     >
                       {/* Code */}
-                      <td className="py-3 px-3 font-mono font-bold text-teal-700 whitespace-nowrap align-middle">
+                      <td className="py-2.5 px-2.5 font-mono font-bold text-teal-700 whitespace-nowrap align-middle">
                         <button
                           onClick={() => onViewReservationDetail(res)}
                           className="hover:underline flex items-center gap-1 cursor-pointer"
@@ -360,28 +360,28 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
                       </td>
 
                       {/* Condo */}
-                      <td className="py-3 px-3 whitespace-nowrap align-middle">
-                        <span className="font-extrabold text-slate-900 px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 shadow-2xs">
+                      <td className="py-2.5 px-2.5 whitespace-nowrap align-middle">
+                        <span className="font-extrabold text-xs text-slate-900 px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 shadow-2xs">
                           {prop?.nombre || `ID: ${res.propiedad_id}`}
                         </span>
                       </td>
 
                       {/* Fechas / Estadía */}
-                      <td className="py-3 px-3 align-middle whitespace-nowrap text-slate-700">
+                      <td className="py-2.5 px-2.5 align-middle whitespace-nowrap text-slate-700">
                         <div className="font-semibold text-xs text-slate-800">{res.fecha_checkin}</div>
                         <div className="text-[10px] text-slate-400 font-medium">al {res.fecha_checkout}</div>
                       </td>
 
                       {/* Guest */}
-                      <td className="py-3 px-3 align-middle whitespace-nowrap">
-                        <div className="font-bold text-slate-900 text-xs truncate max-w-[140px]">
+                      <td className="py-2.5 px-2.5 align-middle whitespace-nowrap">
+                        <div className="font-bold text-slate-900 text-xs truncate max-w-[130px]">
                           {huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Sin nombre'}
                         </div>
                         
                         {/* Acompañantes Badge with Tooltip */}
                         {Array.isArray(res.acompanantes) && res.acompanantes.length > 0 && (
                           <div 
-                            className="inline-flex items-center gap-1 text-[10px] text-teal-800 bg-teal-50 border border-teal-200 px-1.5 py-0.5 rounded-md font-semibold mt-0.5 cursor-help"
+                            className="inline-flex items-center gap-1 text-[9px] text-teal-800 bg-teal-50 border border-teal-200 px-1.5 py-0.2 rounded font-semibold mt-0.5 cursor-help"
                             title={`Acompañantes: ${res.acompanantes.map(a => `${a.nombre_completo} (${a.tipo})`).join(', ')}`}
                           >
                             <Users className="w-2.5 h-2.5 text-teal-600" />
@@ -398,9 +398,9 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
                       </td>
 
                       {/* Tipo & Pago */}
-                      <td className="py-3 px-3 align-middle whitespace-nowrap">
+                      <td className="py-2.5 px-2.5 align-middle whitespace-nowrap">
                         <div className="inline-flex flex-col items-start gap-0.5">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold whitespace-nowrap shadow-2xs ${tipoBadge.className}`}>
+                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-semibold whitespace-nowrap shadow-2xs ${tipoBadge.className}`}>
                             {tipoBadge.label}
                           </span>
                           <span className="text-[10px] text-slate-400 font-medium">
@@ -410,15 +410,15 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
                       </td>
 
                       {/* Estatus */}
-                      <td className="py-3 px-3 align-middle whitespace-nowrap">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] whitespace-nowrap shadow-2xs ${estadoBadge.className}`}>
+                      <td className="py-2.5 px-2.5 align-middle whitespace-nowrap">
+                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] whitespace-nowrap shadow-2xs ${estadoBadge.className}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${estadoBadge.dotColor}`} />
                           {estadoBadge.label}
                         </span>
                       </td>
 
                       {/* Brazaletes & Vehículo */}
-                      <td className="py-3 px-3 max-w-[170px] align-middle">
+                      <td className="py-2.5 px-2.5 align-middle whitespace-nowrap">
                         {(() => {
                           const acompList = Array.isArray(res.acompanantes) ? res.acompanantes : [];
                           const totalOccupants = 1 + acompList.length;
@@ -429,8 +429,8 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
 
                           return (
                             <div>
-                              <div className="flex items-center gap-1.5">
-                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold ${
+                              <div className="flex items-center gap-1">
+                                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold ${
                                   allDelivered 
                                     ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' 
                                     : someDelivered 
@@ -442,7 +442,7 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
                                 </span>
                               </div>
                               {res.brazaletes && !res.brazaletes.includes('entregados') && (
-                                <div className="text-[10px] text-slate-500 mt-0.5 truncate" title={res.brazaletes}>
+                                <div className="text-[10px] text-slate-500 mt-0.5 truncate max-w-[130px]" title={res.brazaletes}>
                                   {res.brazaletes}
                                 </div>
                               )}
@@ -450,14 +450,14 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
                           );
                         })()}
                         {hasValidVehiculo ? (
-                          <div className="flex items-center gap-1.5 text-slate-500 text-[10px] mt-1 truncate" title={res.vehiculo_info}>
+                          <div className="flex items-center gap-1 text-slate-500 text-[10px] mt-0.5 truncate max-w-[130px]" title={res.vehiculo_info}>
                             <Car className="w-3 h-3 text-slate-400 shrink-0" />
                             <span className={`truncate ${isVehiculoPendiente ? 'text-slate-400 italic' : ''}`}>
                               {res.vehiculo_info}
                             </span>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-1.5 text-slate-400 italic text-[10px] mt-0.5">
+                          <div className="flex items-center gap-1 text-slate-400 italic text-[10px] mt-0.5">
                             <Car className="w-3 h-3 text-slate-300 shrink-0" />
                             <span>Sin vehículo</span>
                           </div>
@@ -465,40 +465,40 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
                       </td>
 
                       {/* Actions */}
-                      <td className="py-3 px-3 text-right whitespace-nowrap align-middle">
+                      <td className="py-2.5 px-2.5 text-right whitespace-nowrap align-middle">
                         <div className="flex items-center justify-end gap-1">
                           {res.estado !== 'En Casa (Checked-in)' && res.estado !== 'Checked-out' ? (
                             <button
                               onClick={() => onCheckIn(res)}
-                              className="h-7 px-2.5 rounded-md bg-teal-600 hover:bg-teal-700 text-white font-bold text-[11px] shadow-xs flex items-center gap-1 whitespace-nowrap cursor-pointer transition-colors shrink-0"
+                              className="h-6.5 px-2 rounded-md bg-teal-600 hover:bg-teal-700 text-white font-bold text-[10px] shadow-xs flex items-center gap-1 whitespace-nowrap cursor-pointer transition-colors shrink-0"
                               title="Registrar Check-In"
                             >
-                              <CheckCircle className="w-3.5 h-3.5" />
+                              <CheckCircle className="w-3 h-3" />
                               <span>Check-In</span>
                             </button>
                           ) : res.estado === 'En Casa (Checked-in)' ? (
                             <button
                               onClick={() => checkOutReservacion(res.id)}
-                              className="h-7 px-2.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] border border-slate-300 flex items-center gap-1 whitespace-nowrap cursor-pointer transition-colors shrink-0"
+                              className="h-6.5 px-2 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[10px] border border-slate-300 flex items-center gap-1 whitespace-nowrap cursor-pointer transition-colors shrink-0"
                               title="Registrar Salida"
                             >
-                              <LogOut className="w-3.5 h-3.5" />
+                              <LogOut className="w-3 h-3" />
                               <span>Salida</span>
                             </button>
                           ) : null}
 
                           <button
                             onClick={() => onOpenQrPass(res)}
-                            className="h-7 px-2 rounded-md bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200/90 font-bold text-[11px] flex items-center gap-1 whitespace-nowrap cursor-pointer transition-colors shrink-0"
+                            className="h-6.5 px-1.5 rounded-md bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200/90 font-bold text-[10px] flex items-center gap-1 whitespace-nowrap cursor-pointer transition-colors shrink-0"
                             title="Generar / Ver Pase QR (Entrada y Salida)"
                           >
-                            <QrCode className="w-3.5 h-3.5 text-teal-700" />
+                            <QrCode className="w-3 h-3 text-teal-700" />
                             <span>Pase QR</span>
                           </button>
 
                           <button
                             onClick={() => onViewReservationDetail(res)}
-                            className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer shrink-0"
+                            className="h-6.5 w-6.5 flex items-center justify-center rounded-md hover:bg-slate-100 text-slate-400 hover:text-teal-700 transition-colors cursor-pointer shrink-0"
                             title="Ver detalles"
                           >
                             <Eye className="w-3.5 h-3.5" />
@@ -506,7 +506,7 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
 
                           <button
                             onClick={() => onEditReservation(res)}
-                            className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer shrink-0"
+                            className="h-6.5 w-6.5 flex items-center justify-center rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer shrink-0"
                             title="Editar"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
@@ -518,7 +518,7 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
                                 deleteReservacion(res.id);
                               }
                             }}
-                            className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer shrink-0"
+                            className="h-6.5 w-6.5 flex items-center justify-center rounded-md hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer shrink-0"
                             title="Eliminar"
                           >
                             <Trash2 className="w-3.5 h-3.5" />

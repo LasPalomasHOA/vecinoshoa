@@ -140,9 +140,10 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
   };
 
   const handleCopyLink = () => {
+    const edificioLabel = edificio?.nombre ? (edificio.nombre.toLowerCase().startsWith('torre') ? edificio.nombre : `Torre ${edificio.nombre}`) : '';
     const text = `🌴 *PASE DE ACCESO - LAS PALOMAS RESORT*\n` +
       `📌 *Folio:* ${currentReservation.codigo || currentReservation.id}\n` +
-      `🏢 *Condominio:* ${prop?.nombre || currentReservation.propiedad_id} (${edificio?.nombre ? `Torre ${edificio.nombre}` : ''})\n` +
+      `🏢 *Condominio:* ${prop?.nombre || currentReservation.propiedad_id}${edificioLabel ? ` (${edificioLabel})` : ''}\n` +
       `👤 *Huésped Titular:* ${huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Huésped'}\n` +
       `📅 *Estadía:* ${currentReservation.fecha_checkin} al ${currentReservation.fecha_checkout}\n` +
       `🎟️ *Tipo de Pase:* ${passType === 'ALL' ? 'Entrada y Salida (Estadía Completa)' : passType === 'ENTRY' ? 'Pase de Entrada' : 'Pase de Salida'}\n` +
@@ -359,82 +360,82 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/65 backdrop-blur-xs overflow-y-auto print:p-0 print:bg-white print:static qr-modal-active">
-      <div className="relative w-full max-w-2xl bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden my-6 animate-scale-up print:border-none print:shadow-none print:my-0 print:max-w-none">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/65 backdrop-blur-xs print:p-0 print:bg-white print:static qr-modal-active">
+      <div className="relative w-full max-w-2xl max-h-[94vh] flex flex-col bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden animate-scale-up print:border-none print:shadow-none print:max-w-none print:max-h-none">
         
         {/* Header Modal (Hidden in Print) */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-teal-900 via-teal-800 to-teal-900 text-white no-print">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center backdrop-blur-xs">
-              <QrIcon className="w-5 h-5 text-teal-200" />
+        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100 bg-gradient-to-r from-teal-900 via-teal-800 to-teal-900 text-white shrink-0 no-print">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center backdrop-blur-xs">
+              <QrIcon className="w-4 h-4 text-teal-200" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-white">Generador de Pase QR</h2>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/30 text-teal-200 border border-teal-400/30">
+                <h2 className="text-sm sm:text-base font-bold text-white">Generador de Pase QR</h2>
+                <span className="px-2 py-0.2 rounded-full text-[9px] font-bold bg-teal-500/30 text-teal-200 border border-teal-400/30">
                   Front Desk
                 </span>
               </div>
-              <p className="text-xs text-teal-200/80">Pase Digital de Entradas y Salidas de Huéspedes</p>
+              <p className="text-[11px] text-teal-200/80">Pase Digital de Entradas y Salidas de Huéspedes</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-teal-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            className="p-1 rounded-lg text-teal-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Pass Type Selector Tabs (Hidden in Print) */}
-        <div className="px-6 pt-4 pb-2 bg-slate-50/80 border-b border-slate-100 no-print">
+        <div className="px-5 py-2 bg-slate-50/90 border-b border-slate-200/80 shrink-0 no-print">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="text-xs font-semibold text-slate-600">Tipo de pase a generar:</div>
-            <div className="inline-flex p-1 rounded-xl bg-slate-200/70 border border-slate-300/60 text-xs font-semibold">
+            <div className="inline-flex p-0.5 rounded-lg bg-slate-200/80 border border-slate-300/70 text-xs font-semibold">
               <button
                 type="button"
                 onClick={() => setPassType('ALL')}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded-md transition-all cursor-pointer text-xs ${
                   passType === 'ALL'
                     ? 'bg-teal-700 text-white shadow-xs font-bold'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                🌟 Entrada & Salida
+                Entrada & Salida
               </button>
               <button
                 type="button"
                 onClick={() => setPassType('ENTRY')}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded-md transition-all cursor-pointer text-xs ${
                   passType === 'ENTRY'
                     ? 'bg-emerald-600 text-white shadow-xs font-bold'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                🟢 Solo Entrada
+                Solo Entrada
               </button>
               <button
                 type="button"
                 onClick={() => setPassType('EXIT')}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded-md transition-all cursor-pointer text-xs ${
                   passType === 'EXIT'
                     ? 'bg-rose-600 text-white shadow-xs font-bold'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                🔴 Solo Salida
+                Solo Salida
               </button>
             </div>
           </div>
         </div>
 
         {/* Main Pass Printable & Exportable Area */}
-        <div id="qr-printable-pass" className="p-6 bg-white space-y-6 print:p-0 print:m-0">
+        <div id="qr-printable-pass" className="p-4 sm:p-5 bg-slate-50/50 overflow-y-auto flex-1 print:p-0 print:m-0 print:bg-white">
           
           {/* Visual Digital Access Pass Card (Exact image design) */}
           <div 
             ref={cardRef} 
-            className="rounded-2xl border-2 border-teal-600/30 bg-white p-6 shadow-sm relative overflow-hidden print:border-slate-800 print:shadow-none print:p-5"
+            className="rounded-2xl border-2 border-teal-600/30 bg-white p-4 sm:p-5 shadow-sm relative overflow-hidden print:border-slate-800 print:shadow-none print:p-4"
             style={{ backgroundColor: '#ffffff' }}
           >
             
@@ -444,88 +445,88 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
             </div>
 
             {/* Pass Top Branding */}
-            <div className="flex items-start justify-between border-b border-slate-200/80 pb-4 mb-5">
+            <div className="flex items-start justify-between border-b border-slate-200/80 pb-3 mb-3.5">
               <div>
-                <div className="flex items-center gap-1.5 text-[11px] font-bold tracking-wider text-teal-800 uppercase">
-                  <Sparkles className="w-3.5 h-3.5 text-teal-600" />
+                <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider text-teal-800 uppercase">
+                  <Sparkles className="w-3 h-3 text-teal-600" />
                   <span>Las Palomas Beach & Golf Resort</span>
                 </div>
-                <h3 className="text-xl font-black text-slate-900 tracking-tight mt-0.5">
+                <h3 className="text-lg font-black text-slate-900 tracking-tight mt-0.5">
                   PASE DIGITAL DE ACCESO
                 </h3>
-                <div className="text-xs text-slate-500 font-medium">
+                <div className="text-[11px] text-slate-500 font-medium">
                   {passType === 'ALL' && 'Autorización para Entrada y Salida durante Estadía'}
                   {passType === 'ENTRY' && 'Pase de Entrada / Check-In en Puerta'}
                   {passType === 'EXIT' && 'Pase de Salida / Check-Out y Entrega'}
                 </div>
               </div>
 
-              <div className="text-right">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Folio Oficial</div>
-                <div className="font-mono font-black text-base text-teal-700 bg-teal-50 px-3 py-1 rounded-lg border border-teal-200 inline-block mt-0.5">
+              <div className="text-right shrink-0">
+                <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Folio Oficial</div>
+                <div className="font-mono font-black text-sm text-teal-700 bg-teal-50 px-2.5 py-0.5 rounded-md border border-teal-200 inline-block mt-0.5">
                   {currentReservation.codigo || `RES-${currentReservation.id}`}
                 </div>
               </div>
             </div>
 
             {/* Grid with QR Code + Details */}
-            <div className="grid grid-cols-1 sm:grid-cols-12 gap-5 items-center">
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-center">
               
               {/* QR Code Frame */}
-              <div className="sm:col-span-5 flex flex-col items-center justify-center p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
+              <div className="sm:col-span-5 flex flex-col items-center justify-center p-3 bg-white rounded-xl border border-slate-200 shadow-2xs">
                 {qrDataUrl ? (
                   <div className="relative flex flex-col items-center">
                     <img 
                       src={qrDataUrl} 
                       alt="Código QR de Acceso" 
-                      className="w-48 h-48 sm:w-44 sm:h-44 object-contain rounded-lg"
+                      className="w-36 h-36 sm:w-40 sm:h-40 object-contain rounded-lg"
                       crossOrigin="anonymous"
                     />
-                    <div className="mt-2 text-center">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200">
+                    <div className="mt-1.5 text-center">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-teal-50 text-teal-800 border border-teal-200">
                         <ShieldCheck className="w-3 h-3 text-teal-600" />
                         Código QR Verificado
                       </span>
                     </div>
                   </div>
                 ) : (
-                  <div className="w-44 h-44 flex items-center justify-center bg-slate-100 rounded-lg text-slate-400 text-xs animate-pulse">
+                  <div className="w-36 h-36 flex items-center justify-center bg-slate-100 rounded-lg text-slate-400 text-xs animate-pulse">
                     Generando QR...
                   </div>
                 )}
-                <div className="text-[10px] text-slate-400 text-center mt-1.5">
+                <div className="text-[9px] text-slate-400 text-center mt-1">
                   Escanear en caseta o Front Desk
                 </div>
               </div>
 
               {/* Guest & Reservation Info */}
-              <div className="sm:col-span-7 space-y-3">
+              <div className="sm:col-span-7 space-y-2">
                 
                 {/* Condo & Tower */}
-                <div className="bg-slate-50/90 p-3 rounded-xl border border-slate-200/80">
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Unidad Asignada</div>
-                  <div className="text-base font-black text-slate-900 flex items-center justify-between gap-2 mt-0.5">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="w-4 h-4 text-teal-600 shrink-0" />
+                <div className="bg-slate-50/90 p-2.5 rounded-xl border border-slate-200/80">
+                  <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Unidad Asignada</div>
+                  <div className="text-sm font-black text-slate-900 flex items-center justify-between gap-2 mt-0.5">
+                    <div className="flex items-center gap-1.5">
+                      <Building2 className="w-3.5 h-3.5 text-teal-600 shrink-0" />
                       <span>Condominio {prop?.nombre || currentReservation.propiedad_id}</span>
                     </div>
                     {edificio?.nombre && (
-                      <span className="text-xs font-bold text-teal-800 bg-teal-100/80 border border-teal-200/80 px-2 py-0.5 rounded-md shrink-0">
-                        Torre {edificio.nombre}
+                      <span className="text-[10px] font-bold text-teal-800 bg-teal-100/80 border border-teal-200/80 px-1.5 py-0.2 rounded shrink-0">
+                        {edificio.nombre.toLowerCase().startsWith('torre') ? edificio.nombre : `Torre ${edificio.nombre}`}
                       </span>
                     )}
                   </div>
                 </div>
 
                 {/* Guest Name */}
-                <div className="bg-slate-50/90 p-3 rounded-xl border border-slate-200/80">
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Huésped Titular</div>
-                  <div className="text-sm font-bold text-slate-900 flex items-center gap-2 mt-0.5">
-                    <User className="w-4 h-4 text-slate-600 shrink-0" />
+                <div className="bg-slate-50/90 p-2.5 rounded-xl border border-slate-200/80">
+                  <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Huésped Titular</div>
+                  <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5 mt-0.5">
+                    <User className="w-3.5 h-3.5 text-slate-600 shrink-0" />
                     <span>{huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'No especificado'}</span>
                   </div>
                   {huesped?.telefono && (
-                    <div className="text-xs text-slate-500 mt-0.5 ml-6">
+                    <div className="text-[11px] text-slate-500 mt-0.5 ml-5">
                       Tel: {huesped.telefono}
                     </div>
                   )}
@@ -533,8 +534,8 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
 
                 {/* Dates & Validity */}
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200">
-                    <div className="text-[10px] font-bold text-emerald-800 uppercase flex items-center gap-1">
+                  <div className="p-2 rounded-lg bg-emerald-50/70 border border-emerald-200">
+                    <div className="text-[9px] font-bold text-emerald-800 uppercase flex items-center gap-1">
                       <Clock className="w-3 h-3 text-emerald-600" />
                       Check-In
                     </div>
@@ -543,8 +544,8 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
                     </div>
                   </div>
 
-                  <div className="p-2.5 rounded-xl bg-rose-50/70 border border-rose-200">
-                    <div className="text-[10px] font-bold text-rose-800 uppercase flex items-center gap-1">
+                  <div className="p-2 rounded-lg bg-rose-50/70 border border-rose-200">
+                    <div className="text-[9px] font-bold text-rose-800 uppercase flex items-center gap-1">
                       <Clock className="w-3 h-3 text-rose-600" />
                       Check-Out
                     </div>
@@ -555,21 +556,21 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
                 </div>
 
                 {/* Badges Info (Occupants, Bracelets, Vehicle) */}
-                <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 font-semibold text-slate-700">
+                <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 font-semibold text-slate-700">
                     <Users className="w-3 h-3 text-teal-600" />
                     <span>{totalOccupants} {totalOccupants === 1 ? 'Huésped' : 'Huéspedes'}</span>
                   </span>
 
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 font-semibold text-slate-700">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 font-semibold text-slate-700">
                     <Tag className="w-3 h-3 text-amber-600" />
                     <span>{currentReservation.brazaletes || 'Brazaletes según registro'}</span>
                   </span>
 
                   {currentReservation.vehiculo_info && (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 font-semibold text-slate-700">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 font-semibold text-slate-700">
                       <Car className="w-3 h-3 text-sky-600" />
-                      <span className="truncate max-w-[170px]">{currentReservation.vehiculo_info}</span>
+                      <span className="truncate max-w-[150px]">{currentReservation.vehiculo_info}</span>
                     </span>
                   )}
                 </div>
@@ -580,19 +581,19 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
 
             {/* Companions Mini List if any */}
             {acompList.length > 0 && (
-              <div className="mt-4 pt-3 border-t border-slate-200/80">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+              <div className="mt-3 pt-2.5 border-t border-slate-200/80">
+                <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                   Acompañantes Autorizados ({acompList.length})
                 </div>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-1">
                   {acompList.map((a, idx) => (
                     <span 
                       key={a.id || idx}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[11px] text-slate-700 font-medium"
+                      className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-slate-50 border border-slate-200 text-[10px] text-slate-700 font-medium"
                     >
                       <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
                       {a.nombre_completo}
-                      <span className="text-[10px] text-slate-400">({a.tipo})</span>
+                      <span className="text-[9px] text-slate-400">({a.tipo})</span>
                     </span>
                   ))}
                 </div>
@@ -600,7 +601,7 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
             )}
 
             {/* Footer Rules & Instructions */}
-            <div className="mt-4 pt-3 border-t border-slate-200/80 flex items-center justify-between text-[10px] text-slate-500">
+            <div className="mt-3 pt-2 border-t border-slate-200/80 flex items-center justify-between text-[9px] text-slate-500">
               <span className="flex items-center gap-1">
                 <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />
                 Uso obligatorio de brazalete en áreas comunes y albercas.
@@ -613,58 +614,58 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
         </div>
 
         {/* Action Footer Toolbar (Hidden in Print) */}
-        <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 no-print">
+        <div className="p-3 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2.5 shrink-0 no-print">
           
-          <div className="flex items-center flex-wrap gap-2">
+          <div className="flex items-center flex-wrap gap-1.5">
             <button
               onClick={handlePrint}
-              className="h-9 px-3.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold text-xs shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="h-8 px-2.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold text-[11px] shadow-2xs flex items-center gap-1 transition-colors cursor-pointer"
               title="Imprimir solo el pase de acceso sin la tabla de fondo"
             >
-              <Printer className="w-4 h-4 text-slate-600" />
+              <Printer className="w-3.5 h-3.5 text-slate-600" />
               <span>Imprimir Pase</span>
             </button>
 
             <button
               onClick={handleDownloadFullPass}
               disabled={isCapturing}
-              className="h-9 px-3.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-60"
+              className="h-8 px-2.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-[11px] shadow-2xs flex items-center gap-1 transition-colors cursor-pointer disabled:opacity-60"
               title="Descargar imagen completa del pase con detalles y QR"
             >
-              {isCapturing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              {isCapturing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
               <span>Descargar Pase (PNG)</span>
             </button>
 
             <button
               onClick={handleShareWhatsAppImage}
               disabled={isCapturing}
-              className="h-9 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-60"
+              className="h-8 px-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] shadow-2xs flex items-center gap-1 transition-colors cursor-pointer disabled:opacity-60"
               title="Enviar imagen del pase por WhatsApp"
             >
-              {isCapturing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
+              {isCapturing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Share2 className="w-3.5 h-3.5" />}
               <span>Enviar por WhatsApp</span>
             </button>
 
             <button
               onClick={handleCopyLink}
-              className="h-9 px-3 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-medium text-xs shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="h-8 px-2 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-medium text-[11px] shadow-2xs flex items-center gap-1 transition-colors cursor-pointer"
               title="Copiar texto resumen al portapapeles"
             >
-              {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-slate-500" />}
+              {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-500" />}
               <span>{copied ? 'Copiado' : 'Copiar'}</span>
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {!isCheckedIn && !isCheckedOut && onCheckIn && (
               <button
                 onClick={() => {
                   onClose();
                   onCheckIn(currentReservation);
                 }}
-                className="h-9 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="h-8 px-3 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-[11px] shadow-xs flex items-center gap-1 transition-colors cursor-pointer"
               >
-                <CheckCircle className="w-4 h-4" />
+                <CheckCircle className="w-3.5 h-3.5" />
                 <span>Registrar Check-In</span>
               </button>
             )}
@@ -677,16 +678,16 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
                     onClose();
                   }
                 }}
-                className="h-9 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="h-8 px-3 rounded-lg bg-slate-800 hover:bg-slate-900 text-white font-bold text-[11px] shadow-xs flex items-center gap-1 transition-colors cursor-pointer"
               >
-                <LogOut className="w-4 h-4" />
+                <LogOut className="w-3.5 h-3.5" />
                 <span>Registrar Salida</span>
               </button>
             )}
 
             <button
               onClick={onClose}
-              className="h-9 px-4 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs transition-colors cursor-pointer"
+              className="h-8 px-3 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold text-[11px] transition-colors cursor-pointer"
             >
               Cerrar
             </button>
