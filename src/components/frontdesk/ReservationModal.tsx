@@ -286,10 +286,10 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-      <div className="relative w-full max-w-2xl bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden my-8 animate-scale-up">
+      <div className="relative w-full max-w-2xl bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden animate-scale-up my-auto max-h-[95vh] flex flex-col">
         
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50/80">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/80 shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-700">
               <Calendar className="w-4 h-4" />
@@ -303,14 +303,14 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+        <form onSubmit={handleSubmit} className="p-5 space-y-3.5 overflow-y-auto flex-1">
           
           {/* Row 1: Property & Code */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -321,7 +321,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
               <select
                 value={propiedadId}
                 onChange={(e) => setPropiedadId(Number(e.target.value))}
-                className="w-full px-3 py-2 rounded-xl form-input text-xs font-bold text-teal-900"
+                className="w-full px-3 py-2 rounded-lg form-input text-xs font-bold text-teal-900"
                 required
               >
                 {propiedades.map(prop => (
@@ -341,7 +341,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
                 value={codigo}
                 onChange={(e) => setCodigo(e.target.value)}
                 placeholder="ej. 2569009 o SL:973438"
-                className="w-full px-3 py-2 rounded-xl form-input text-xs font-mono"
+                className="w-full px-3 py-2 rounded-lg form-input text-xs font-mono"
               />
             </div>
           </div>
@@ -577,7 +577,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
           </div>
 
           {/* Dates with Night Counter */}
-          <div className="p-4 rounded-xl bg-gradient-to-r from-teal-50/50 via-slate-50/70 to-sky-50/50 border border-teal-100/80 space-y-3">
+          <div className="p-4 rounded-lg bg-gradient-to-r from-teal-50/50 via-slate-50/70 to-sky-50/50 border border-teal-100/80 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5 text-teal-700" /> Periodo de Estadía
@@ -607,7 +607,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
                       setFechaCheckout(d.toISOString().split('T')[0]);
                     }
                   }}
-                  className="w-full px-3 py-2 rounded-xl form-input text-xs font-medium"
+                  className="w-full px-3 py-2 rounded-lg form-input text-xs font-medium"
                 />
               </div>
               <div>
@@ -620,7 +620,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
                   min={fechaCheckin}
                   value={fechaCheckout}
                   onChange={(e) => setFechaCheckout(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl form-input text-xs font-medium"
+                  className="w-full px-3 py-2 rounded-lg form-input text-xs font-medium"
                 />
               </div>
             </div>
@@ -635,7 +635,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
               <select
                 value={tipoHuesped}
                 onChange={(e) => setTipoHuesped(e.target.value as TipoHuesped)}
-                className="w-full px-3 py-2 rounded-xl form-input text-xs font-medium"
+                className="w-full px-3 py-2 rounded-lg form-input text-xs font-medium"
               >
                 <option value="Bloqueo de Dueño">Bloqueo de Dueño</option>
                 <option value="Huésped con Cobro (PG)">Huésped con Cobro (PG)</option>
@@ -653,7 +653,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
               <select
                 value={pagoTipo}
                 onChange={(e) => setPagoTipo(e.target.value as any)}
-                className="w-full px-3 py-2 rounded-xl form-input text-xs font-medium"
+                className="w-full px-3 py-2 rounded-lg form-input text-xs font-medium"
               >
                 <option value="Sin pago">Sin pago</option>
                 <option value="Con pago">Con pago</option>
@@ -669,7 +669,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
               <select
                 value={estado}
                 onChange={(e) => setEstado(e.target.value as EstadoReservacion)}
-                className="w-full px-3 py-2 rounded-xl form-input text-xs font-semibold"
+                className="w-full px-3 py-2 rounded-lg form-input text-xs font-semibold"
               >
                 <option value="Confirmada">Confirmada</option>
                 <option value="En Casa (Checked-in)">En Casa (Checked-in)</option>
@@ -703,7 +703,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
                 value={vehiculoInfo}
                 onChange={(e) => setVehiculoInfo(e.target.value)}
                 placeholder="ej. Ford F150 Blue AJM5429"
-                className="w-full px-3 py-2 rounded-xl form-input text-xs"
+                className="w-full px-3 py-2 rounded-lg form-input text-xs"
               />
             </div>
           </div>
@@ -718,13 +718,13 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
               value={notas}
               onChange={(e) => setNotas(e.target.value)}
               placeholder="Comentarios adicionales o permisos especiales..."
-              className="w-full px-3 py-2 rounded-xl form-input text-xs"
+              className="w-full px-3 py-2 rounded-lg form-input text-xs"
             />
           </div>
 
           {/* Conflict Error Alert if overlap detected */}
           {conflictReservation && (
-            <div className="p-3.5 rounded-xl bg-rose-50/90 border border-rose-200 text-rose-900 text-xs flex items-start gap-2.5 animate-fadeIn">
+            <div className="p-3.5 rounded-lg bg-rose-50/90 border border-rose-200 text-rose-900 text-xs flex items-start gap-2.5 animate-fadeIn">
               <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
               <div>
                 <span className="font-bold text-rose-950 block">Fechas No Disponibles (Superposición de Reservaciones):</span>
@@ -740,14 +740,14 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
+              className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={!!conflictReservation}
-              className={`px-6 py-2 rounded-xl font-bold text-xs shadow-md transition-all ${
+              className={`px-6 py-2 rounded-lg font-bold text-xs shadow-md transition-all ${
                 conflictReservation
                   ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'
                   : 'bg-teal-600 hover:bg-teal-700 text-white shadow-teal-700/20 active:scale-95'

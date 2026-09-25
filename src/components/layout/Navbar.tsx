@@ -34,7 +34,7 @@ export const Navbar: React.FC = () => {
       <div className="w-64 sm:w-72 shrink-0 flex items-center gap-1.5 text-xs text-slate-500 font-medium truncate">
         <span className="font-semibold text-slate-600 shrink-0">Principal</span>
         <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-        <span className="font-bold text-teal-800 bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-200/60 truncate">
+        <span className="font-bold text-teal-800 bg-teal-50 px-2.5 py-1 rounded-md border border-teal-200/60 truncate">
           {getBreadcrumbTitle()}
         </span>
       </div>
@@ -48,7 +48,7 @@ export const Navbar: React.FC = () => {
             placeholder="Buscar por condo (A 101, F 202), huésped, placas o brazalete..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-9 pl-9 pr-8 text-xs rounded-xl form-input shadow-xs placeholder:text-slate-400"
+            className="w-full h-9 pl-9 pr-8 text-xs rounded-lg form-input shadow-xs placeholder:text-slate-400"
           />
           {searchQuery && (
             <button
@@ -63,13 +63,13 @@ export const Navbar: React.FC = () => {
 
       {/* Right User & System Badges (Constant on all pages) */}
       <div className="w-64 sm:w-72 shrink-0 flex items-center justify-end gap-2.5">
-        <div className="hidden lg:flex items-center gap-1.5 text-[11px] font-semibold text-teal-800 bg-teal-50/80 h-9 px-3 rounded-xl border border-teal-100">
+        <div className="hidden lg:flex items-center gap-1.5 text-[11px] font-semibold text-teal-800 bg-teal-50/80 h-9 px-3 rounded-lg border border-teal-100">
           <CalendarCheck className="w-3.5 h-3.5 text-teal-600 shrink-0" />
           <span>24 Sep 2026</span>
         </div>
 
         {currentUser && (
-          <div className="flex items-center gap-2 h-9 px-3 rounded-xl bg-slate-100/90 border border-slate-200/80 text-xs">
+          <div className="flex items-center gap-2 h-9 px-3 rounded-lg bg-slate-100/90 border border-slate-200/80 text-xs">
             <span className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-emerald-200 shrink-0" />
             <span className="font-bold text-slate-800 truncate max-w-[110px]">{currentUser.nombre}</span>
             <span className="text-[10px] bg-white px-1.5 py-0.5 rounded-md font-semibold text-teal-700 border border-slate-200 shrink-0">

@@ -106,7 +106,7 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-emerald-100 bg-emerald-50/70">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+            <div className="w-9 h-9 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-xs">
               <Key className="w-5 h-5" />
             </div>
             <div>
@@ -282,7 +282,7 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({
               value={vehiculoInfo}
               onChange={(e) => setVehiculoInfo(e.target.value)}
               placeholder="ej. Corbatin 38516 Ford F150 Blue AJM5429"
-              className="w-full px-3.5 py-2 rounded-xl form-input text-xs"
+              className="w-full px-3.5 py-2 rounded-lg form-input text-xs"
             />
           </div>
 

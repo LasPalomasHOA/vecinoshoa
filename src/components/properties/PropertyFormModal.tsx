@@ -127,10 +127,10 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-      <div className="relative w-full max-w-2xl bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden my-8 animate-scale-up">
+      <div className="relative w-full max-w-2xl bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden animate-scale-up my-auto max-h-[94vh] flex flex-col">
         
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50/80">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/80 shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-700">
               <Building2 className="w-4 h-4" />
@@ -141,14 +141,14 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+        <form onSubmit={handleSubmit} className="p-5 space-y-3.5 overflow-y-auto flex-1">
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -161,7 +161,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
                 placeholder="ej. A 101, F 202, J 701"
-                className="w-full px-3 py-2 rounded-xl form-input text-xs font-bold text-teal-900"
+                className="w-full px-3 py-2 rounded-lg form-input text-xs font-bold text-teal-900"
               />
             </div>
 
@@ -172,7 +172,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
               <select
                 value={edificioId}
                 onChange={(e) => setEdificioId(Number(e.target.value))}
-                className="w-full px-3 py-2 rounded-xl form-input text-xs font-medium"
+                className="w-full px-3 py-2 rounded-lg form-input text-xs font-medium"
               >
                 {edificios.map(ed => (
                   <option key={ed.id} value={ed.id}>
@@ -191,7 +191,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
               <select
                 value={ownerId}
                 onChange={(e) => setOwnerId(Number(e.target.value))}
-                className="w-full px-3 py-2 rounded-xl form-input text-xs"
+                className="w-full px-3 py-2 rounded-lg form-input text-xs"
               >
                 <option value={0}>Sin asignar / Pendiente</option>
                 {ownersList.map(u => (
@@ -209,7 +209,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
               <select
                 value={grupoId}
                 onChange={(e) => setGrupoId(Number(e.target.value))}
-                className="w-full px-3 py-2 rounded-xl form-input text-xs"
+                className="w-full px-3 py-2 rounded-lg form-input text-xs"
               >
                 {grupos.map(g => (
                   <option key={g.id} value={g.id}>
@@ -269,11 +269,11 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
           </div>
 
           {/* Medidores */}
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+          <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-2.5">
             <span className="text-xs font-bold text-slate-800 block">
               Medidores y Datos Administrativos
             </span>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
               <div>
                 <label className="block text-[11px] font-semibold text-slate-600 mb-1">ID de Impuesto</label>
                 <input
@@ -281,7 +281,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
                   value={idImpuesto}
                   onChange={(e) => setIdImpuesto(e.target.value)}
                   placeholder="610004-403-088"
-                  className="w-full px-3 py-2 rounded-lg form-input text-xs font-mono"
+                  className="w-full px-3 py-1.5 rounded-lg form-input text-xs font-mono"
                 />
               </div>
               <div>
@@ -291,7 +291,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
                   value={medidorElectricidad}
                   onChange={(e) => setMedidorElectricidad(e.target.value)}
                   placeholder="2B380T"
-                  className="w-full px-3 py-2 rounded-lg form-input text-xs font-mono"
+                  className="w-full px-3 py-1.5 rounded-lg form-input text-xs font-mono"
                 />
               </div>
               <div>
@@ -301,12 +301,12 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
                   value={medidorAgua}
                   onChange={(e) => setMedidorAgua(e.target.value)}
                   placeholder="AG-101"
-                  className="w-full px-3 py-2 rounded-lg form-input text-xs font-mono"
+                  className="w-full px-3 py-1.5 rounded-lg form-input text-xs font-mono"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-0.5">
               <div>
                 <label className="block text-[11px] font-semibold text-slate-600 mb-1">Empresa Manejadora</label>
                 <input
@@ -314,7 +314,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
                   value={empresaManejadora}
                   onChange={(e) => setEmpresaManejadora(e.target.value)}
                   placeholder="Las Palomas Rental Pool / Direct"
-                  className="w-full px-3 py-2 rounded-lg form-input text-xs"
+                  className="w-full px-3 py-1.5 rounded-lg form-input text-xs"
                 />
               </div>
               <div>
@@ -323,14 +323,14 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
                   type="number"
                   value={cuotaHoa}
                   onChange={(e) => setCuotaHoa(Number(e.target.value))}
-                  className="w-full px-3 py-2 rounded-lg form-input text-xs font-mono text-teal-800 font-bold"
+                  className="w-full px-3 py-1.5 rounded-lg form-input text-xs font-mono text-teal-800 font-bold"
                 />
               </div>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+            <label className="block text-xs font-bold text-slate-700 mb-1">
               Notas y Observaciones
             </label>
             <textarea
@@ -338,21 +338,21 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
               value={notas}
               onChange={(e) => setNotas(e.target.value)}
               placeholder="Detalles sobre cerraduras electrónicas o remodelaciones..."
-              className="w-full px-3.5 py-2 rounded-xl form-input text-xs"
+              className="w-full px-3.5 py-1.5 rounded-lg form-input text-xs"
             />
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
+              className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-6 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-700/20"
+              className="px-6 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-700/20 cursor-pointer"
             >
               {propertyToEdit ? 'Actualizar Propiedad' : 'Guardar Propiedad'}
             </button>

@@ -81,8 +81,8 @@ export const Sidebar: React.FC = () => {
       </div>
 
       {/* Resort Mini Card with Glass styling */}
-      <div className="mx-4 my-3 p-3 rounded-2xl bg-gradient-to-r from-teal-50/90 to-sky-50/70 border border-teal-100/90 flex items-center gap-3 relative overflow-hidden shadow-xs">
-        <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-teal-200/80 shadow-xs">
+      <div className="mx-4 my-3 p-3 rounded-xl bg-gradient-to-r from-teal-50/90 to-sky-50/70 border border-teal-100/90 flex items-center gap-3 relative overflow-hidden shadow-xs">
+        <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 border border-teal-200/80 shadow-xs">
           <img
             src="/las_palomas_resort.jpg"
             alt="Las Palomas"
@@ -109,7 +109,7 @@ export const Sidebar: React.FC = () => {
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-colors duration-150 group cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs font-semibold transition-colors duration-150 group cursor-pointer ${
                 isActive
                   ? 'bg-teal-600 text-white shadow-xs font-bold'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/90'
@@ -154,14 +154,14 @@ export const Sidebar: React.FC = () => {
             <button
               onClick={resetToDefaults}
               title="Restablecer catálogo demo oficial"
-              className="p-1.5 rounded-xl text-slate-400 hover:text-teal-700 hover:bg-teal-50 transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-teal-700 hover:bg-teal-50 transition-colors cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={logout}
               title="Cerrar sesión"
-              className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
             </button>

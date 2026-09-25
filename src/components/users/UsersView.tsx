@@ -73,7 +73,7 @@ export const UsersView: React.FC<UsersViewProps> = ({
     <div className="space-y-5">
       
       {/* Top Filter Controls */}
-      <div className="p-3 rounded-2xl bg-white border border-slate-200/90 shadow-xs flex flex-wrap items-center justify-between gap-3 min-h-[56px]">
+      <div className="p-3 rounded-xl bg-white border border-slate-200/90 shadow-xs flex flex-wrap items-center justify-between gap-3 min-h-[56px]">
         
         <div className="flex flex-wrap items-center gap-2.5">
           <div className="flex items-center gap-2">
@@ -81,7 +81,7 @@ export const UsersView: React.FC<UsersViewProps> = ({
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="h-9 px-3 text-xs rounded-xl form-input font-medium cursor-pointer border-slate-200"
+              className="h-9 px-3 text-xs rounded-lg form-input font-medium cursor-pointer border-slate-200"
             >
               <option value="ALL">Todos los Roles ({usuarios.length})</option>
               {rolesList.map(role => (
@@ -97,7 +97,7 @@ export const UsersView: React.FC<UsersViewProps> = ({
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-9 px-3 text-xs rounded-xl form-input font-medium cursor-pointer border-slate-200"
+              className="h-9 px-3 text-xs rounded-lg form-input font-medium cursor-pointer border-slate-200"
             >
               <option value="ALL">Todos los Estatus</option>
               <option value="Active">Solo Activos</option>
@@ -109,7 +109,7 @@ export const UsersView: React.FC<UsersViewProps> = ({
 
         <button
           onClick={onOpenNewUser}
-          className="h-9 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-colors duration-150 cursor-pointer"
+          className="h-9 px-4 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-colors duration-150 cursor-pointer"
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />
           <span>Registrar Usuario / Dueño</span>
@@ -123,14 +123,14 @@ export const UsersView: React.FC<UsersViewProps> = ({
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
-                <th className="py-3 px-4"># ID</th>
-                <th className="py-3 px-4">Nombre Completo</th>
-                <th className="py-3 px-4">Email</th>
-                <th className="py-3 px-4">Rol / Puesto</th>
-                <th className="py-3 px-4">Propiedades Asociadas</th>
-                <th className="py-3 px-4">Ubicación / Idioma</th>
-                <th className="py-3 px-4">Estatus</th>
-                <th className="py-3 px-4 text-right">Acciones</th>
+                <th className="py-3 px-3.5 whitespace-nowrap w-16"># ID</th>
+                <th className="py-3 px-3.5 whitespace-nowrap min-w-[170px]">Nombre Completo</th>
+                <th className="py-3 px-3.5 whitespace-nowrap min-w-[170px]">Email</th>
+                <th className="py-3 px-3.5 whitespace-nowrap w-36">Rol / Puesto</th>
+                <th className="py-3 px-3.5 whitespace-nowrap w-44">Propiedades Asociadas</th>
+                <th className="py-3 px-3.5 whitespace-nowrap w-40">Ubicación / Idioma</th>
+                <th className="py-3 px-3.5 whitespace-nowrap w-24">Estatus</th>
+                <th className="py-3 px-3.5 text-right whitespace-nowrap w-28">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -147,39 +147,42 @@ export const UsersView: React.FC<UsersViewProps> = ({
                   return (
                     <tr key={user.id} className="hover:bg-teal-50/40 transition-colors">
                       {/* ID */}
-                      <td className="py-3 px-4 font-mono font-bold text-teal-700">
-                        {user.id}
+                      <td className="py-3 px-3.5 font-mono font-bold text-teal-700 whitespace-nowrap align-middle">
+                        #{user.id}
                       </td>
 
                       {/* Name */}
-                      <td className="py-3 px-4">
-                        <div className="font-extrabold text-slate-900 text-sm">
+                      <td className="py-3 px-3.5 align-middle whitespace-nowrap">
+                        <span className="font-extrabold text-sm text-slate-900 block">
                           {user.nombre} {user.apellido}
-                        </div>
-                        {user.telefono && (
-                          <div className="text-[11px] text-slate-500 flex items-center gap-1">
-                            <Phone className="w-3 h-3 text-slate-400" />
-                            {user.telefono}
+                        </span>
+                        {user.telefono ? (
+                          <div className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
+                            <Phone className="w-2.5 h-2.5 text-slate-400" />
+                            <span>{user.telefono}</span>
                           </div>
+                        ) : (
+                          <span className="block text-[10px] text-slate-400 mt-0.5">Sin teléfono</span>
                         )}
                       </td>
 
                       {/* Email */}
-                      <td className="py-3 px-4 font-mono text-slate-700 text-[11px]">
-                        {user.email}
+                      <td className="py-3 px-3.5 align-middle whitespace-nowrap">
+                        <span className="font-mono text-slate-900 block text-xs">{user.email}</span>
+                        <span className="text-[10px] text-slate-500 uppercase block mt-0.5">Idioma: {user.idioma}</span>
                       </td>
 
                       {/* Rol */}
-                      <td className="py-3 px-4">
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold inline-block ${
+                      <td className="py-3 px-3.5 align-middle whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold whitespace-nowrap shadow-2xs ${
                           user.rol === 'Administrador'
-                            ? 'bg-rose-50 text-rose-800 border border-rose-200'
+                            ? 'bg-rose-50 text-rose-800 border border-rose-200/80'
                             : user.rol === 'Dueño'
-                            ? 'bg-amber-50 text-amber-900 border border-amber-200'
+                            ? 'bg-amber-50 text-amber-900 border border-amber-200/80'
                             : user.rol === 'Recepcionista'
-                            ? 'bg-sky-50 text-sky-800 border border-sky-200'
+                            ? 'bg-sky-50 text-sky-800 border border-sky-200/80'
                             : user.rol.includes('Mantenimiento')
-                            ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                            ? 'bg-emerald-50 text-emerald-800 border border-emerald-200/80'
                             : 'bg-slate-100 text-slate-700 border border-slate-200'
                         }`}>
                           {user.rol}
@@ -187,11 +190,11 @@ export const UsersView: React.FC<UsersViewProps> = ({
                       </td>
 
                       {/* Condos */}
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-3.5 align-middle whitespace-nowrap">
                         {condos.length > 0 ? (
-                          <div className="flex flex-wrap gap-1">
+                          <div className="flex flex-wrap items-center gap-1">
                             {condos.map(condo => (
-                              <span key={condo} className="px-2 py-0.5 rounded bg-teal-50 border border-teal-200 text-teal-800 font-bold text-[10px]">
+                              <span key={condo} className="inline-flex items-center px-2 py-0.5 rounded-md bg-teal-50 border border-teal-200 text-teal-800 font-extrabold text-[10px] shadow-2xs whitespace-nowrap">
                                 {condo}
                               </span>
                             ))}
@@ -202,25 +205,29 @@ export const UsersView: React.FC<UsersViewProps> = ({
                       </td>
 
                       {/* Location */}
-                      <td className="py-3 px-4 text-slate-600 text-[11px]">
-                        {user.ciudad ? `${user.ciudad}${user.estado_geo ? `, ${user.estado_geo}` : ''}` : 'Puerto Peñasco'}
-                        <span className="block text-[10px] text-slate-400 uppercase">{user.idioma}</span>
+                      <td className="py-3 px-3.5 align-middle whitespace-nowrap text-slate-700">
+                        <div className="text-xs text-slate-800 font-medium">
+                          {user.ciudad ? `${user.ciudad}${user.estado_geo ? `, ${user.estado_geo}` : ''}` : 'Puerto Peñasco, Sonora'}
+                        </div>
+                        <span className="block text-[10px] text-slate-500 mt-0.5">
+                          {user.codigo_postal ? `CP ${user.codigo_postal}` : 'Residente'}
+                        </span>
                       </td>
 
                       {/* Status */}
-                      <td className="py-3 px-4">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                      <td className="py-3 px-3.5 align-middle whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/80 shadow-2xs">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
                           {user.status}
                         </span>
                       </td>
 
                       {/* Actions */}
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3 px-3.5 text-right align-middle whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => onEditUser(user)}
-                            className="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors flex items-center gap-1"
+                            className="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer"
                           >
                             <Edit className="w-3 h-3 text-slate-500" />
                             <span>Editar</span>
@@ -231,7 +238,7 @@ export const UsersView: React.FC<UsersViewProps> = ({
                                 deleteUsuario(user.id);
                               }
                             }}
-                            className="p-1 rounded-md hover:bg-rose-50 text-rose-600 transition-colors"
+                            className="p-1 rounded-md hover:bg-rose-50 text-rose-600 transition-colors cursor-pointer"
                             title="Eliminar"
                           >
                             <Trash2 className="w-3.5 h-3.5" />

@@ -175,7 +175,7 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
       <div className="relative w-full max-w-2xl bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden my-8 animate-scale-up">
         
         {/* Header */}
-        <div className="p-6 bg-gradient-to-r from-teal-700 to-teal-800 text-white flex items-start justify-between">
+        <div className="px-6 py-4 bg-gradient-to-r from-teal-700 to-teal-800 text-white flex items-start justify-between shrink-0">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="font-mono text-xs px-2.5 py-0.5 rounded-md bg-white/20 font-bold">
@@ -200,13 +200,13 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
+        <div className="p-5 space-y-3.5 overflow-y-auto flex-1">
           
           {/* Guest and Dates */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
             {/* Guest Box */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+            <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2.5">
               <div className="flex items-center gap-1.5 text-xs font-bold text-teal-800">
                 <User className="w-4 h-4 text-teal-700" /> Huésped Titular (Responsable)
               </div>
@@ -232,7 +232,7 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
             </div>
 
             {/* Dates Box */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+            <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2.5">
               <div className="flex items-center gap-1.5 text-xs font-bold text-sky-800">
                 <Calendar className="w-4 h-4 text-sky-700" /> Periodo de Estadía
               </div>
@@ -379,7 +379,7 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
           </div>
 
           {/* Brazaletes & Vehículo Highlight Strip */}
-          <div className="p-4 rounded-xl bg-teal-50 border border-teal-200 space-y-1.5">
+          <div className="p-4 rounded-lg bg-teal-50 border border-teal-200 space-y-1.5">
             <div className="flex justify-between items-center text-xs">
               <span className="font-bold text-teal-900 flex items-center gap-1.5">
                 <Tag className="w-4 h-4 text-teal-700" /> Control de Acceso & Pagos
@@ -403,7 +403,7 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
 
           {/* Owner details */}
           {owner && (
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
+            <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
                 <Shield className="w-4 h-4 text-amber-600" />
                 <div>

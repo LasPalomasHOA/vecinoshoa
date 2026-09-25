@@ -1,6 +1,6 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
-import { MapPin, KeyRound, Clock, Building2, Sparkles, Activity } from 'lucide-react';
+import { MapPin, KeyRound, Clock, Building2, Sparkles, ShieldCheck } from 'lucide-react';
 
 export const HeroBanner: React.FC = () => {
   const { reservaciones, propiedades, solicitudes } = useApp();
@@ -10,63 +10,95 @@ export const HeroBanner: React.FC = () => {
   const pendingRequests = solicitudes.filter(s => s.estatus === 'Pendiente' || s.estatus === 'En Proceso').length;
 
   return (
-    <div className="relative rounded-2xl overflow-hidden mb-6 border border-slate-200/80 shadow-md bg-slate-900 text-white group no-print print:hidden">
-      
-      {/* Background Resort Image with Subtle Movement */}
+    <div className="relative mb-6 rounded-xl overflow-hidden border border-white/80 bg-gradient-to-r from-white/90 via-white/75 to-teal-50/50 backdrop-blur-2xl shadow-[0_10px_30px_rgba(0,0,0,0.03)] no-print print:hidden">
+
+      {/* Background Soft Resort Refraction with Light Ambience */}
       <img
         src="/las_palomas_resort.jpg"
-        alt="Las Palomas Seaside Golf Community"
-        className="absolute inset-0 w-full h-full object-cover object-center opacity-35 mix-blend-overlay filter blur-[0.5px] group-hover:scale-105 transition-transform duration-700 ease-out"
+        alt="Las Palomas Seaside"
+        className="absolute inset-0 w-full h-full object-cover object-center opacity-10 filter blur-[2px] pointer-events-none"
       />
-      
-      {/* Color overlay gradient */}
-      <div className="absolute inset-0 bg-gradient-to-r from-teal-950/95 via-slate-950/80 to-teal-900/60" />
 
-      {/* Decorative glass glow */}
-      <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-teal-500/15 blur-3xl pointer-events-none" />
+      {/* Subtle Specular Ambient Lighting */}
+      <div className="absolute -top-20 -left-20 w-72 h-72 rounded-full bg-teal-300/15 blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-20 -right-20 w-72 h-72 rounded-full bg-emerald-300/15 blur-3xl pointer-events-none" />
 
-      {/* Content */}
-      <div className="relative z-10 p-6 md:p-7 flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-teal-500/20 text-teal-300 border border-teal-400/30 backdrop-blur-xs">
-              <MapPin className="w-3 h-3" /> Puerto Peñasco, Sonora
+      {/* Glass Highlight Top Line */}
+      <div className="h-[2px] w-full bg-gradient-to-r from-teal-500/60 via-emerald-400/80 to-sky-400/60" />
+
+      {/* Main Glass Workspace */}
+      <div className="relative z-10 p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+
+        {/* Left: Branding & Resort Header */}
+        <div className="space-y-1.5 min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-0.5 rounded-md bg-white/85 backdrop-blur-md text-teal-800 border border-teal-200/60 shadow-2xs">
+              <MapPin className="w-3 h-3 text-teal-600" /> Puerto Peñasco, Sonora
             </span>
-            <span className="inline-flex items-center gap-1 text-[11px] text-teal-200/90 font-semibold px-2 py-0.5 rounded-full bg-white/10 backdrop-blur-xs border border-white/10">
-              <Activity className="w-2.5 h-2.5 text-emerald-400" /> Operaciones HOA 2026
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-md bg-emerald-50/90 text-emerald-800 border border-emerald-200/60 shadow-2xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Operaciones HOA 2026
             </span>
           </div>
 
-          <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white drop-shadow-sm">
+          <h1 className="text-2xl sm:text-[26px] font-black tracking-tight text-slate-900 leading-tight">
             Las Palomas Seaside Golf Community
           </h1>
-          <p className="text-xs md:text-sm text-teal-100/90 max-w-xl font-medium leading-relaxed">
+
+          <p className="text-xs sm:text-sm text-slate-600 font-normal leading-relaxed max-w-xl">
             Portal administrativo y de recepción. Control de condominios, propietarios, calendario de ocupación timeline y autorizaciones de acceso.
           </p>
         </div>
 
-        {/* Live Glass Counters */}
-        <div className="flex items-center gap-3 shrink-0">
-          
-          <div className="px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-center min-w-[100px] shadow-lg transition-all hover:bg-white/15 hover:border-teal-300/40">
-            <span className="text-[10px] uppercase font-bold tracking-wider text-teal-200 block flex items-center justify-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> En Casa
-            </span>
-            <span className="text-2xl font-black text-white mt-0.5 block">{inHouseCount}</span>
+        {/* Right: Integrated Glassmorphic Operational Capsule */}
+        <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+
+          {/* Glass Card: En Casa */}
+          <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/85 backdrop-blur-md border border-white/90 shadow-2xs hover:bg-white transition-all hover:border-emerald-300">
+            <div className="w-9 h-9 rounded-md bg-emerald-50 border border-emerald-200/80 flex items-center justify-center text-emerald-600 shrink-0">
+              <KeyRound className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 block">
+                En Casa
+              </span>
+              <div className="flex items-baseline gap-1">
+                <span className="text-xl font-black text-slate-900">{inHouseCount}</span>
+                <span className="text-[10px] text-emerald-700 font-semibold">activas</span>
+              </div>
+            </div>
           </div>
 
-          <div className="px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-center min-w-[100px] shadow-lg transition-all hover:bg-white/15 hover:border-amber-300/40">
-            <span className="text-[10px] uppercase font-bold tracking-wider text-amber-200 block flex items-center justify-center gap-1">
-              <Clock className="w-3 h-3 text-amber-300" /> Llegadas
-            </span>
-            <span className="text-2xl font-black text-amber-200 mt-0.5 block">{pendingCheckins}</span>
+          {/* Glass Card: Llegadas */}
+          <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/85 backdrop-blur-md border border-white/90 shadow-2xs hover:bg-white transition-all hover:border-amber-300">
+            <div className="w-9 h-9 rounded-md bg-amber-50 border border-amber-200/80 flex items-center justify-center text-amber-600 shrink-0">
+              <Clock className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 block">
+                Llegadas
+              </span>
+              <div className="flex items-baseline gap-1">
+                <span className="text-xl font-black text-amber-700">{pendingCheckins}</span>
+                <span className="text-[10px] text-amber-700 font-semibold">pendientes</span>
+              </div>
+            </div>
           </div>
 
-          <div className="px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-center min-w-[100px] shadow-lg transition-all hover:bg-white/15 hover:border-sky-300/40 hidden sm:block">
-            <span className="text-[10px] uppercase font-bold tracking-wider text-sky-200 block flex items-center justify-center gap-1">
-              <Building2 className="w-3 h-3 text-sky-300" /> Condos
-            </span>
-            <span className="text-2xl font-black text-white mt-0.5 block">{propiedades.length}</span>
+          {/* Glass Card: Condos */}
+          <div className="hidden sm:flex items-center gap-3 px-4 py-3 rounded-lg bg-white/85 backdrop-blur-md border border-white/90 shadow-2xs hover:bg-white transition-all hover:border-teal-300">
+            <div className="w-9 h-9 rounded-md bg-teal-50 border border-teal-200/80 flex items-center justify-center text-teal-700 shrink-0">
+              <Building2 className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 block">
+                Condos
+              </span>
+              <div className="flex items-baseline gap-1">
+                <span className="text-xl font-black text-teal-900">{propiedades.length}</span>
+                <span className="text-[10px] text-teal-700 font-semibold">Torres A-J</span>
+              </div>
+            </div>
           </div>
 
         </div>

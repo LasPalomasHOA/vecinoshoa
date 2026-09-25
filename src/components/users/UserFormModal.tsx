@@ -97,10 +97,10 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-      <div className="relative w-full max-w-xl bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden my-8 animate-scale-up">
+      <div className="relative w-full max-w-xl bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden animate-scale-up my-auto max-h-[95vh] flex flex-col">
         
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50/80">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/80 shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-700">
               <User className="w-4 h-4" />
@@ -111,14 +111,14 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+        <form onSubmit={handleSubmit} className="p-5 space-y-3.5 overflow-y-auto flex-1">
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -129,7 +129,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
                 placeholder="ej. Manuel"
-                className="w-full px-3 py-2 rounded-xl form-input text-xs"
+                className="w-full px-3 py-2 rounded-lg form-input text-xs"
               />
             </div>
             <div>
@@ -140,7 +140,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
                 value={apellido}
                 onChange={(e) => setApellido(e.target.value)}
                 placeholder="ej. Garcia"
-                className="w-full px-3 py-2 rounded-xl form-input text-xs"
+                className="w-full px-3 py-2 rounded-lg form-input text-xs"
               />
             </div>
           </div>
@@ -154,7 +154,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="ej. mgarcia@laspalomashoamx.com"
-                className="w-full px-3 py-2 rounded-xl form-input text-xs font-mono"
+                className="w-full px-3 py-2 rounded-lg form-input text-xs font-mono"
               />
             </div>
             <div>
@@ -164,7 +164,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
                 value={telefono}
                 onChange={(e) => setTelefono(e.target.value)}
                 placeholder="+52 638 100 2233"
-                className="w-full px-3 py-2 rounded-xl form-input text-xs"
+                className="w-full px-3 py-2 rounded-lg form-input text-xs"
               />
             </div>
           </div>
@@ -175,7 +175,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
               <select
                 value={rol}
                 onChange={(e) => setRol(e.target.value as RolUsuario)}
-                className="w-full px-3 py-2 rounded-xl form-input text-xs font-bold text-teal-900"
+                className="w-full px-3 py-2 rounded-lg form-input text-xs font-bold text-teal-900"
               >
                 {rolesList.map(r => (
                   <option key={r} value={r}>
@@ -189,7 +189,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
               <select
                 value={idioma}
                 onChange={(e) => setIdioma(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl form-input text-xs"
+                className="w-full px-3 py-2 rounded-lg form-input text-xs"
               >
                 <option value="es">Español</option>
                 <option value="en">English (Inglés)</option>
@@ -197,7 +197,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
             </div>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+          <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-2.5">
             <span className="text-xs font-bold text-slate-700 block">Dirección de Contacto (Opcional)</span>
             <div className="grid grid-cols-3 gap-2">
               <div>
@@ -238,7 +238,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as UserStatus)}
-              className="w-full px-3 py-2 rounded-xl form-input text-xs font-semibold"
+              className="w-full px-3 py-2 rounded-lg form-input text-xs font-semibold"
             >
               <option value="Active">Active (Activo)</option>
               <option value="Inactive">Inactive (Inactivo)</option>
@@ -250,13 +250,13 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
+              className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-6 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-700/20"
+              className="px-6 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-700/20"
             >
               {userToEdit ? 'Guardar Cambios' : 'Registrar Usuario'}
             </button>

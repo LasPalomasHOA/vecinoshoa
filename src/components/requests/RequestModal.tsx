@@ -53,7 +53,7 @@ export const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose }) =
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-      <div className="relative w-full max-w-lg bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden animate-scale-up">
+      <div className="relative w-full max-w-lg bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden animate-scale-up">
         
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50/80">
@@ -84,7 +84,7 @@ export const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose }) =
             <select
               value={propiedadId}
               onChange={(e) => setPropiedadId(Number(e.target.value))}
-              className="w-full px-3.5 py-2 rounded-xl form-input text-xs font-bold text-teal-900"
+              className="w-full px-3.5 py-2 rounded-lg form-input text-xs font-bold text-teal-900"
             >
               {propiedades.map(p => (
                 <option key={p.id} value={p.id}>
@@ -104,7 +104,7 @@ export const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose }) =
               value={creadorNombre}
               onChange={(e) => setCreadorNombre(e.target.value)}
               placeholder="ej. Ennia Celaya / Propietario"
-              className="w-full px-3.5 py-2 rounded-xl form-input text-xs"
+              className="w-full px-3.5 py-2 rounded-lg form-input text-xs"
             />
           </div>
 
@@ -118,7 +118,7 @@ export const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose }) =
               value={solicitud}
               onChange={(e) => setSolicitud(e.target.value)}
               placeholder="ej. Santana Glass vendrá mañana para revisar reparación de ventanales..."
-              className="w-full px-3.5 py-2 rounded-xl form-input text-xs"
+              className="w-full px-3.5 py-2 rounded-lg form-input text-xs"
             />
           </div>
 
@@ -131,7 +131,7 @@ export const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose }) =
               required
               value={fechaEsperada}
               onChange={(e) => setFechaEsperada(e.target.value)}
-              className="w-full px-3.5 py-2 rounded-xl form-input text-xs font-mono"
+              className="w-full px-3.5 py-2 rounded-lg form-input text-xs font-mono"
             />
           </div>
 
@@ -144,7 +144,7 @@ export const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose }) =
               value={comentario}
               onChange={(e) => setComentario(e.target.value)}
               placeholder="ej. Se requiere identificación oficial en caseta"
-              className="w-full px-3.5 py-2 rounded-xl form-input text-xs"
+              className="w-full px-3.5 py-2 rounded-lg form-input text-xs"
             />
           </div>
 
@@ -152,13 +152,13 @@ export const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose }) =
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
+              className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-6 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-700/20"
+              className="px-6 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-700/20"
             >
               Registrar Pase
             </button>

@@ -25,7 +25,7 @@ export const BuildingsManagerModal: React.FC<BuildingsManagerModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-      <div className="relative w-full max-w-lg bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden animate-scale-up">
+      <div className="relative w-full max-w-lg bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden animate-scale-up">
         
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50/80">
@@ -49,7 +49,7 @@ export const BuildingsManagerModal: React.FC<BuildingsManagerModalProps> = ({
         {/* Content */}
         <div className="p-6 space-y-4">
           
-          <form onSubmit={handleAdd} className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+          <form onSubmit={handleAdd} className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
             <label className="block text-xs font-bold text-slate-700">
               Agregar una nueva torre / edificio
             </label>
@@ -59,11 +59,11 @@ export const BuildingsManagerModal: React.FC<BuildingsManagerModalProps> = ({
                 value={newNombre}
                 onChange={(e) => setNewNombre(e.target.value)}
                 placeholder="ej. K - Marbella o Torre Nueva"
-                className="flex-1 px-3 py-2 rounded-xl form-input text-xs"
+                className="flex-1 px-3 py-2 rounded-lg form-input text-xs"
               />
               <button
                 type="submit"
-                className="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs flex items-center gap-1"
+                className="px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs flex items-center gap-1"
               >
                 <Plus className="w-4 h-4" />
                 <span>Agregar</span>
@@ -82,7 +82,7 @@ export const BuildingsManagerModal: React.FC<BuildingsManagerModalProps> = ({
                 return (
                   <div
                     key={ed.id}
-                    className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between group hover:border-teal-300 transition-colors"
+                    className="p-3 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between group hover:border-teal-300 transition-colors"
                   >
                     <div>
                       <span className="font-bold text-xs text-slate-900 block">{ed.nombre}</span>
@@ -113,7 +113,7 @@ export const BuildingsManagerModal: React.FC<BuildingsManagerModalProps> = ({
         <div className="flex items-center justify-end p-4 border-t border-slate-100 bg-slate-50/80">
           <button
             onClick={onClose}
-            className="px-5 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold"
+            className="px-5 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold"
           >
             Listo
           </button>
