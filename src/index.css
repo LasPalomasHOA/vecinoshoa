@@ -173,35 +173,28 @@
   background: #94a3b8;
 }
 
-/* Calendar Timeline Bar Badges in Light Theme */
+/* Calendar Timeline Bar Badges in Official HOA Palette */
 .res-bar-owner {
-  background: linear-gradient(135deg, #475569 0%, #334155 100%);
+  background-color: #5c7c93;
   color: #ffffff;
-  border-left: 3px solid #1e293b;
 }
 
 .res-bar-pg {
-  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  background-color: #2196F3;
   color: #ffffff;
-  border-left: 3px solid #075985;
 }
 
 .res-bar-npg {
-  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+  background-color: #00897B;
   color: #ffffff;
-  border-left: 3px solid #115e59;
 }
 
-.res-bar-pending {
-  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-  color: #ffffff;
-  border-left: 3px solid #92400e;
+.res-status-pending {
+  border-top: 3.5px solid #F4511E;
 }
 
-.res-bar-checkedin {
-  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
-  color: #ffffff;
-  border-left: 3px solid #166534;
+.res-status-checkedin {
+  border-top: 3.5px solid #8BC34A;
 }
 
 /* Print Styles for Reports */

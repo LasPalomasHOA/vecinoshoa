@@ -4,18 +4,14 @@ import { useAuth } from '../../context/AuthContext';
 import { 
   Search, 
   ChevronRight,
-  CalendarCheck,
-  PanelLeftClose,
-  PanelLeftOpen
+  CalendarCheck
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const { 
     activeTab, 
     searchQuery, 
-    setSearchQuery,
-    isSidebarCollapsed,
-    toggleSidebar
+    setSearchQuery
   } = useApp();
 
   const { currentUser } = useAuth();
@@ -34,28 +30,13 @@ export const Navbar: React.FC = () => {
   return (
     <header className="sticky top-0 z-30 h-14 bg-white/95 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between gap-3 border-b border-slate-200/80 shadow-xs no-print print:hidden">
       
-      {/* Sidebar Toggle & Breadcrumbs */}
-      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-        <button
-          onClick={toggleSidebar}
-          className="p-2 rounded-lg text-slate-500 hover:text-teal-700 hover:bg-slate-100/90 transition-colors cursor-pointer"
-          title={isSidebarCollapsed ? "Expandir menú lateral" : "Minimizar menú lateral"}
-          aria-label={isSidebarCollapsed ? "Expandir menú lateral" : "Minimizar menú lateral"}
-        >
-          {isSidebarCollapsed ? (
-            <PanelLeftOpen className="w-4 h-4 text-teal-700" />
-          ) : (
-            <PanelLeftClose className="w-4 h-4" />
-          )}
-        </button>
-
-        <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium truncate max-w-[200px] sm:max-w-xs">
-          <span className="font-semibold text-slate-600 shrink-0 hidden sm:inline">Principal</span>
-          <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0 hidden sm:inline" />
-          <span className="font-bold text-teal-800 bg-teal-50 px-2.5 py-1 rounded-md border border-teal-200/60 truncate">
-            {getBreadcrumbTitle()}
-          </span>
-        </div>
+      {/* Breadcrumbs */}
+      <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium truncate max-w-[200px] sm:max-w-xs shrink-0">
+        <span className="font-semibold text-slate-600 shrink-0 hidden sm:inline">Principal</span>
+        <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0 hidden sm:inline" />
+        <span className="font-bold text-teal-800 bg-teal-50 px-2.5 py-1 rounded-md border border-teal-200/60 truncate">
+          {getBreadcrumbTitle()}
+        </span>
       </div>
 
       {/* Global Quick Search */}

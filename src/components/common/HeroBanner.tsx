@@ -44,10 +44,6 @@ export const HeroBanner: React.FC = () => {
           <h1 className="text-2xl sm:text-[26px] font-black tracking-tight text-slate-900 leading-tight">
             Las Palomas Seaside Golf Community
           </h1>
-
-          <p className="text-xs sm:text-sm text-slate-600 font-normal leading-relaxed max-w-xl">
-            Portal administrativo y de recepción. Control de condominios, propietarios, calendario de ocupación timeline y autorizaciones de acceso.
-          </p>
         </div>
 
         {/* Right: Integrated Glassmorphic Operational Capsule */}

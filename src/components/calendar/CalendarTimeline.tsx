@@ -185,12 +185,29 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
   }, [reservaciones, currentYear, currentMonth, filteredProperties, daysInMonth]);
 
   const getReservationColor = (res: Reservacion) => {
-    if (res.estado === 'En Casa (Checked-in)') return 'res-bar-checkedin';
-    if (res.tipo_huesped === 'Bloqueo de Dueño') return 'res-bar-owner';
-    if (res.tipo_huesped === 'Huésped con Cobro (PG)') return 'res-bar-pg';
-    if (res.tipo_huesped === 'Huésped sin Cobro (NPG)') return 'res-bar-npg';
-    if (res.estado === 'Pendiente') return 'res-bar-pending';
-    return 'res-bar-npg';
+    // 1. Solid background color by Tipo de Huésped
+    let bgClass = 'bg-[#00897B] text-white'; // default NPG
+    const tipo = res.tipo_huesped || '';
+
+    if (tipo.includes('Dueño') || tipo.includes('Owner')) {
+      bgClass = 'bg-[#5c7c93] text-white';
+    } else if (tipo.includes('con Cobro') || tipo.includes('PG') || tipo.includes('Paying Guest')) {
+      bgClass = 'bg-[#2196F3] text-white';
+    } else if (tipo.includes('sin Cobro') || tipo.includes('NPG') || tipo.includes('Non-paying')) {
+      bgClass = 'bg-[#00897B] text-white';
+    } else if (tipo.includes('Amenidad') || tipo.includes('Amenity')) {
+      bgClass = 'bg-[#7c3aed] text-white';
+    }
+
+    // 2. Top accent status border by Estatus (Pendiente vs Entrada Registrada)
+    let statusBorder = 'border-t-[3.5px] border-[#F4511E]'; // default Pendiente (Naranja)
+    if (res.estado === 'En Casa (Checked-in)') {
+      statusBorder = 'border-t-[3.5px] border-[#8BC34A]'; // Entrada Registrada (Verde Lima)
+    } else if (res.estado === 'Checked-out') {
+      statusBorder = 'border-t-[3.5px] border-slate-300/80';
+    }
+
+    return `${bgClass} ${statusBorder}`;
   };
 
   // Helper for cell clicks
