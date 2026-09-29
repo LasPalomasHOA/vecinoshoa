@@ -194,7 +194,7 @@ export const InicioView: React.FC<InicioViewProps> = ({
 
       {/* 1. Header / Luxury Resort Panoramic Hero Banner */}
       <div className="relative rounded-3xl overflow-hidden border border-slate-200/90 shadow-md no-print print:hidden">
-        
+
         {/* Full Visibility Vivid Resort Background Photo */}
         <img
           src="/las_palomas_resort.jpg"
@@ -208,10 +208,10 @@ export const InicioView: React.FC<InicioViewProps> = ({
 
         {/* Banner Content: 2-tier Luxury Layout */}
         <div className="relative z-10 p-5 sm:p-6 lg:p-7 flex flex-col justify-between gap-6 min-h-[220px]">
-          
+
           {/* Top Row: Meta Badges + Quick Action Buttons */}
           <div className="flex flex-wrap items-center justify-between gap-3">
-            
+
             {/* Meta Badges */}
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 text-xs font-black px-3 py-1 rounded-full bg-white/95 backdrop-blur-md text-teal-900 border border-white/80 shadow-xs">
@@ -249,7 +249,7 @@ export const InicioView: React.FC<InicioViewProps> = ({
 
           {/* Bottom Row: Main Title & Description + Unified Live Stat Dock */}
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-5">
-            
+
             {/* Left: Resort Title & User Greeting */}
             <div className="space-y-2 max-w-2xl">
               <div className="space-y-1">
@@ -265,15 +265,11 @@ export const InicioView: React.FC<InicioViewProps> = ({
                   </div>
                 )}
               </div>
-
-              <p className="text-xs sm:text-sm text-slate-800 font-semibold leading-relaxed max-w-xl">
-                Portal administrativo y de recepción. Control de condominios, propietarios, estadísticas de ocupación y autorizaciones de acceso.
-              </p>
             </div>
 
             {/* Right: Unified Frosted Glass Island for Live Metrics */}
             <div className="flex items-center gap-1 sm:gap-2 p-1.5 sm:p-2 rounded-2xl bg-white/85 backdrop-blur-xl border border-white/80 shadow-lg shrink-0">
-              
+
               {/* En Casa */}
               <div className="px-3.5 py-1.5 rounded-xl hover:bg-white/60 transition-colors">
                 <div className="flex items-center gap-1.5">
@@ -553,9 +549,7 @@ export const InicioView: React.FC<InicioViewProps> = ({
             <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
             <span>Confirmadas o en proceso de arribo</span>
           </div>
-          <div className="mt-1 text-xs text-slate-600 font-semibold">
-            Revisar brazaletes y folios en Front Desk
-          </div>
+
         </div>
 
         {/* Card 4: Solicitudes de Acceso */}
@@ -577,7 +571,7 @@ export const InicioView: React.FC<InicioViewProps> = ({
             <span>{solicitudes.length} solicitudes totales registradas</span>
           </div>
           <div className="mt-1 text-xs text-slate-600 font-semibold">
-            Trabajadores, proveedores y visitas
+
           </div>
         </div>
 
