@@ -12,7 +12,7 @@ import {
 } from '../types';
 import { api } from '../services/api';
 
-export type ActiveTab = 'frontdesk' | 'calendar' | 'properties' | 'users' | 'requests' | 'reports';
+export type ActiveTab = 'inicio' | 'frontdesk' | 'calendar' | 'properties' | 'users' | 'requests' | 'reports';
 
 interface Toast {
   id: string;
@@ -89,7 +89,7 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('frontdesk');
+  const [activeTab, setActiveTab] = useState<ActiveTab>('inicio');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
     try {

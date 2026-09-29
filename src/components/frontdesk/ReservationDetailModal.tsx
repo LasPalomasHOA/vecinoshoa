@@ -174,82 +174,80 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-      <div className="relative w-full max-w-2xl bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden my-8 animate-scale-up">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs">
+      <div className="relative w-full max-w-2xl max-h-[92vh] flex flex-col bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden animate-scale-up">
         
         {/* Header */}
-        <div className="px-6 py-4 bg-gradient-to-r from-teal-700 to-teal-800 text-white flex items-start justify-between shrink-0">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-xs px-2.5 py-0.5 rounded-md bg-white/20 font-bold">
-                FOLIO #{currentReservation.codigo || currentReservation.id}
-              </span>
-              <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                isCheckedIn ? 'bg-emerald-400 text-emerald-950' : 'bg-amber-300 text-amber-950'
-              }`}>
-                {currentReservation.estado}
-              </span>
-            </div>
-            <h2 className="text-xl font-black text-white">
-              Condominio {prop?.nombre} <span className="text-sm font-normal text-teal-100">({edificio?.nombre})</span>
+        <div className="px-5 py-3 bg-gradient-to-r from-teal-700 to-teal-800 text-white flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <span className="font-mono text-xs px-2.5 py-0.5 rounded-md bg-white/20 font-bold">
+              FOLIO #{currentReservation.codigo || currentReservation.id}
+            </span>
+            <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+              isCheckedIn ? 'bg-emerald-400 text-emerald-950' : 'bg-amber-300 text-amber-950'
+            }`}>
+              {currentReservation.estado}
+            </span>
+            <h2 className="text-base sm:text-lg font-black text-white">
+              Condominio {prop?.nombre} <span className="text-xs font-normal text-teal-100">({edificio?.nombre})</span>
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-teal-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            className="p-1 rounded-lg text-teal-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-5 space-y-3.5 overflow-y-auto flex-1">
+        <div className="p-4 space-y-2.5 overflow-y-auto flex-1 text-xs">
           
           {/* Guest and Dates */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             
             {/* Guest Box */}
-            <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2.5">
+            <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1.5">
               <div className="flex items-center gap-1.5 text-xs font-bold text-teal-800">
-                <User className="w-4 h-4 text-teal-700" /> Huésped Titular (Responsable)
+                <User className="w-3.5 h-3.5 text-teal-700" /> Huésped Titular (Responsable)
               </div>
               <div>
-                <p className="text-sm font-bold text-slate-900">
+                <p className="text-xs font-bold text-slate-900">
                   {huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'No especificado'}
                 </p>
                 {huesped?.telefono && (
-                  <p className="text-xs text-slate-600 flex items-center gap-1.5 mt-0.5">
-                    <Phone className="w-3 h-3 text-slate-400" /> {huesped.telefono}
+                  <p className="text-[11px] text-slate-600 flex items-center gap-1 mt-0.5">
+                    <Phone className="w-2.5 h-2.5 text-slate-400" /> {huesped.telefono}
                   </p>
                 )}
                 {huesped?.email && (
-                  <p className="text-xs text-slate-600 flex items-center gap-1.5 mt-0.5">
-                    <Mail className="w-3 h-3 text-slate-400" /> {huesped.email}
+                  <p className="text-[11px] text-slate-600 flex items-center gap-1 mt-0.5">
+                    <Mail className="w-2.5 h-2.5 text-slate-400" /> {huesped.email}
                   </p>
                 )}
               </div>
-              <div className="pt-2 border-t border-slate-200 flex justify-between text-xs">
+              <div className="pt-1.5 border-t border-slate-200 flex justify-between text-[11px]">
                 <span className="text-slate-500">Tipo:</span>
                 <span className="font-semibold text-teal-800">{currentReservation.tipo_huesped}</span>
               </div>
             </div>
 
             {/* Dates Box */}
-            <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2.5">
+            <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1.5">
               <div className="flex items-center gap-1.5 text-xs font-bold text-sky-800">
-                <Calendar className="w-4 h-4 text-sky-700" /> Periodo de Estadía
+                <Calendar className="w-3.5 h-3.5 text-sky-700" /> Periodo de Estadía
               </div>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="p-2 rounded-lg bg-white border border-slate-200">
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Check-in</span>
-                  <span className="font-mono text-slate-900 font-bold">{currentReservation.fecha_checkin}</span>
+              <div className="grid grid-cols-2 gap-1.5 text-xs">
+                <div className="p-1.5 rounded-md bg-white border border-slate-200">
+                  <span className="text-[9px] text-slate-400 uppercase font-bold block">Check-in</span>
+                  <span className="font-mono text-slate-900 font-bold text-[11px]">{currentReservation.fecha_checkin}</span>
                 </div>
-                <div className="p-2 rounded-lg bg-white border border-slate-200">
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Check-out</span>
-                  <span className="font-mono text-slate-900 font-bold">{currentReservation.fecha_checkout}</span>
+                <div className="p-1.5 rounded-md bg-white border border-slate-200">
+                  <span className="text-[9px] text-slate-400 uppercase font-bold block">Check-out</span>
+                  <span className="font-mono text-slate-900 font-bold text-[11px]">{currentReservation.fecha_checkout}</span>
                 </div>
               </div>
-              <div className="pt-1 flex justify-between text-xs">
+              <div className="pt-1 flex justify-between text-[11px]">
                 <span className="text-slate-500">Ocupación / Autos:</span>
                 <span className="font-bold text-slate-800">{totalOccupants} personas ({currentReservation.numero_autos} autos)</span>
               </div>
@@ -258,15 +256,15 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
           </div>
 
           {/* Interactive List of Occupants & Wristbands Breakdown */}
-          <div className="p-4 rounded-xl bg-gradient-to-b from-teal-50/60 to-slate-50 border border-teal-100 space-y-3">
+          <div className="p-3 rounded-xl bg-gradient-to-b from-teal-50/60 to-slate-50 border border-teal-100 space-y-2">
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <Users className="w-4 h-4 text-teal-700" />
                 <span className="text-xs font-bold text-slate-900">Lista de Ocupantes y Entrega de Brazaletes</span>
               </div>
               
               <div className="flex items-center gap-2">
-                <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                   deliveredCount === totalOccupants 
                     ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' 
                     : 'bg-amber-100 text-amber-800 border border-amber-300'
@@ -278,24 +276,20 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
                   type="button"
                   disabled={isUpdating}
                   onClick={() => handleToggleAll(deliveredCount !== totalOccupants)}
-                  className="text-[11px] text-teal-700 hover:text-teal-900 font-bold hover:underline cursor-pointer ml-1"
+                  className="text-[10px] text-teal-700 hover:text-teal-900 font-bold hover:underline cursor-pointer"
                 >
                   {deliveredCount === totalOccupants ? 'Desmarcar todos' : '✓ Entregar a todos'}
                 </button>
               </div>
             </div>
 
-            <p className="text-[11px] text-slate-500">
-              Haz clic en el botón de cualquier ocupante para registrar o alternar su entrega de brazalete individual:
-            </p>
-
-            <div className="space-y-2">
+            <div className="space-y-1.5 max-h-48 overflow-y-auto pr-0.5">
               {/* Titular item */}
-              <div className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl text-xs hover:border-teal-300 transition-colors shadow-2xs">
+              <div className="flex items-center justify-between px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs hover:border-teal-300 transition-colors shadow-2xs">
                 <div>
                   <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                    <span>{huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Huésped Titular'}</span>
-                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-teal-50 text-teal-700 font-semibold border border-teal-200">
+                    <span className="text-xs">{huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Huésped Titular'}</span>
+                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-teal-50 text-teal-700 font-semibold border border-teal-200">
                       Titular
                     </span>
                   </div>
@@ -310,21 +304,21 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
                     titularDelivered, 
                     huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Titular'
                   )}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 ${
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-all active:scale-95 ${
                     titularDelivered 
                       ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 shadow-2xs' 
                       : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 shadow-2xs'
                   }`}
-                  title="Haz clic para cambiar estado de entrega"
+                  title="Haz clic para alternar entrega"
                 >
                   {titularDelivered ? (
                     <>
-                      <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" />
+                      <Check className="w-3 h-3 text-emerald-600 stroke-[3]" />
                       <span>Brazalete Entregado</span>
                     </>
                   ) : (
                     <>
-                      <Clock className="w-3.5 h-3.5 text-amber-600" />
+                      <Clock className="w-3 h-3 text-amber-600" />
                       <span>Pendiente</span>
                     </>
                   )}
@@ -335,12 +329,12 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
               {acompList.map((acomp, idx) => (
                 <div 
                   key={acomp.id || idx} 
-                  className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl text-xs hover:border-teal-300 transition-colors shadow-2xs"
+                  className="flex items-center justify-between px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs hover:border-teal-300 transition-colors shadow-2xs"
                 >
                   <div>
                     <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                      <span>{acomp.nombre_completo}</span>
-                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 font-semibold border border-slate-200">
+                      <span className="text-xs">{acomp.nombre_completo}</span>
+                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 font-semibold border border-slate-200">
                         {acomp.tipo}
                       </span>
                     </div>
@@ -357,21 +351,21 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
                       acomp.brazalete_entregado, 
                       acomp.nombre_completo
                     )}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 ${
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-all active:scale-95 ${
                       acomp.brazalete_entregado 
                         ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 shadow-2xs' 
                         : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 shadow-2xs'
                     }`}
-                    title="Haz clic para cambiar estado de entrega"
+                    title="Haz clic para alternar entrega"
                   >
                     {acomp.brazalete_entregado ? (
                       <>
-                        <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" />
+                        <Check className="w-3 h-3 text-emerald-600 stroke-[3]" />
                         <span>Brazalete Entregado</span>
                       </>
                     ) : (
                       <>
-                        <Clock className="w-3.5 h-3.5 text-amber-600" />
+                        <Clock className="w-3 h-3 text-amber-600" />
                         <span>Pendiente</span>
                       </>
                     )}
@@ -382,23 +376,23 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
           </div>
 
           {/* Brazaletes & Vehículo Highlight Strip */}
-          <div className="p-4 rounded-lg bg-teal-50 border border-teal-200 space-y-1.5">
+          <div className="p-2.5 rounded-lg bg-teal-50 border border-teal-200 space-y-1">
             <div className="flex justify-between items-center text-xs">
               <span className="font-bold text-teal-900 flex items-center gap-1.5">
-                <Tag className="w-4 h-4 text-teal-700" /> Control de Acceso & Pagos
+                <Tag className="w-3.5 h-3.5 text-teal-700" /> Control de Acceso & Pagos
               </span>
-              <span className="text-teal-800 font-medium">
+              <span className="text-teal-800 text-[11px] font-medium">
                 Condición: <strong>{currentReservation.pago_tipo || 'Sin pago'}</strong>
               </span>
             </div>
             {currentReservation.brazaletes && (
-              <p className="text-xs font-semibold text-teal-950">
+              <p className="text-[11px] font-semibold text-teal-950">
                 Detalle: {currentReservation.brazaletes}
               </p>
             )}
             {currentReservation.vehiculo_info && (
-              <p className="text-xs text-slate-700 flex items-center gap-1.5 pt-1 border-t border-teal-200/60">
-                <Car className="w-3.5 h-3.5 text-slate-500" />
+              <p className="text-[11px] text-slate-700 flex items-center gap-1.5 pt-1 border-t border-teal-200/60">
+                <Car className="w-3 h-3 text-slate-500" />
                 Vehículo registrado: {currentReservation.vehiculo_info}
               </p>
             )}
@@ -406,15 +400,15 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
 
           {/* Owner details */}
           {owner && (
-            <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
+            <div className="p-2 px-3 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-amber-600" />
-                <div>
-                  <span className="text-slate-500">Propietario del Condo:</span>
-                  <p className="font-bold text-slate-800">{owner.nombre} {owner.apellido} ({owner.email})</p>
+                <Shield className="w-3.5 h-3.5 text-amber-600" />
+                <div className="text-[11px]">
+                  <span className="text-slate-500">Propietario del Condo: </span>
+                  <span className="font-bold text-slate-800">{owner.nombre} {owner.apellido} ({owner.email})</span>
                 </div>
               </div>
-              <span className="text-[10px] px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-bold">
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 font-bold">
                 Dueño HOA
               </span>
             </div>
@@ -422,26 +416,26 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
 
           {/* Notes */}
           {currentReservation.notas && (
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1">
-              <span className="font-bold text-slate-600">Notas:</span>
-              <p className="text-slate-800">{currentReservation.notas}</p>
+            <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-0.5">
+              <span className="font-bold text-slate-600 text-[11px]">Notas:</span>
+              <p className="text-slate-800 text-[11px]">{currentReservation.notas}</p>
             </div>
           )}
 
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-4 border-t border-slate-100 bg-slate-50/80">
+        <div className="flex items-center justify-between p-3.5 border-t border-slate-200 bg-slate-50 shrink-0">
           <div className="flex items-center gap-2">
             <button
               onClick={() => {
                 onClose();
                 onOpenQrPass(currentReservation);
               }}
-              className="px-3.5 py-2 rounded-xl bg-teal-50 border border-teal-200 text-teal-800 hover:bg-teal-100 text-xs font-bold cursor-pointer flex items-center gap-1.5 shadow-2xs transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-teal-50 border border-teal-200 text-teal-800 hover:bg-teal-100 text-xs font-bold cursor-pointer flex items-center gap-1.5 shadow-2xs transition-colors"
             >
-              <QrCode className="w-4 h-4 text-teal-700" />
-              <span>Pase QR de Acceso</span>
+              <QrCode className="w-3.5 h-3.5 text-teal-700" />
+              <span>Pase QR</span>
             </button>
 
             <button
@@ -449,10 +443,10 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
                 onClose();
                 onEdit(currentReservation);
               }}
-              className="px-3.5 py-2 rounded-xl bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-bold cursor-pointer flex items-center gap-1.5 transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-bold cursor-pointer flex items-center gap-1.5 transition-colors"
             >
               <Edit3 className="w-3.5 h-3.5" />
-              <span>Editar Datos</span>
+              <span>Editar</span>
             </button>
           </div>
 
@@ -463,10 +457,10 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
                   onClose();
                   onCheckIn(currentReservation);
                 }}
-                className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-700/20 flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                className="px-4 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
               >
-                <CheckCircle2 className="w-4 h-4" />
-                <span>Registrar Entrada (Check-In)</span>
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Check-In</span>
               </button>
             ) : isCheckedIn ? (
               <button
@@ -474,15 +468,15 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
                   checkOutReservacion(currentReservation.id);
                   onClose();
                 }}
-                className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs active:scale-95 cursor-pointer"
+                className="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs active:scale-95 cursor-pointer"
               >
-                Registrar Salida (Check-Out)
+                Check-Out (Salida)
               </button>
             ) : null}
 
             <button
               onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-semibold cursor-pointer"
+              className="px-3.5 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-semibold cursor-pointer"
             >
               Cerrar
             </button>
