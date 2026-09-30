@@ -31,15 +31,13 @@ interface GuestQrModalProps {
   onClose: () => void;
   reservation: Reservacion | null;
   onCheckIn?: (res: Reservacion) => void;
-  initialPassType?: 'ALL' | 'ENTRY' | 'EXIT';
 }
 
 export const GuestQrModal: React.FC<GuestQrModalProps> = ({
   isOpen,
   onClose,
   reservation,
-  onCheckIn,
-  initialPassType = 'ALL'
+  onCheckIn
 }) => {
   const { 
     reservaciones, 
@@ -50,19 +48,12 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
     showToast 
   } = useApp();
 
-  const [passType, setPassType] = useState<'ALL' | 'ENTRY' | 'EXIT'>(initialPassType);
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [copied, setCopied] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   const currentReservation = reservaciones.find(r => r.id === reservation?.id) || reservation;
-
-  useEffect(() => {
-    if (initialPassType) {
-      setPassType(initialPassType);
-    }
-  }, [initialPassType, isOpen]);
 
   // Manage body classes to isolate printing and modal state
   useEffect(() => {
@@ -91,7 +82,7 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
       id: currentReservation.id,
       condo: prop?.nombre || `Unidad ${currentReservation.propiedad_id}`,
       titular: huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Huésped',
-      tipo_pase: passType === 'ALL' ? 'Entrada & Salida' : passType === 'ENTRY' ? 'Acceso de Entrada' : 'Pase de Salida',
+      tipo_pase: 'Entrada & Salida',
       checkin: currentReservation.fecha_checkin,
       checkout: currentReservation.fecha_checkout,
       estado: currentReservation.estado,
@@ -113,7 +104,7 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
       .catch(err => {
         console.error('Error generando QR:', err);
       });
-  }, [currentReservation, passType, getPropiedadById, getHuespedById]);
+  }, [currentReservation, getPropiedadById, getHuespedById]);
 
   if (!isOpen || !currentReservation) return null;
 
@@ -146,7 +137,7 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
       `🏢 *Condominio:* ${prop?.nombre || currentReservation.propiedad_id}${edificioLabel ? ` (${edificioLabel})` : ''}\n` +
       `👤 *Huésped Titular:* ${huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Huésped'}\n` +
       `📅 *Estadía:* ${currentReservation.fecha_checkin} al ${currentReservation.fecha_checkout}\n` +
-      `🎟️ *Tipo de Pase:* ${passType === 'ALL' ? 'Entrada y Salida (Estadía Completa)' : passType === 'ENTRY' ? 'Pase de Entrada' : 'Pase de Salida'}\n` +
+      `🎟️ *Tipo de Pase:* Entrada y Salida (Estadía Completa)\n` +
       `👥 *Ocupantes:* ${totalOccupants} personas\n` +
       `🚗 *Vehículo:* ${currentReservation.vehiculo_info || 'Sin vehículo'}\n` +
       `ℹ️ Presente este pase en caseta o recepción al ingresar o salir.`;
@@ -387,48 +378,6 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
           </button>
         </div>
 
-        {/* Pass Type Selector Tabs (Hidden in Print) */}
-        <div className="px-5 py-2 bg-slate-50/90 border-b border-slate-200/80 shrink-0 no-print">
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <div className="text-xs font-semibold text-slate-600">Tipo de pase a generar:</div>
-            <div className="inline-flex p-0.5 rounded-lg bg-slate-200/80 border border-slate-300/70 text-xs font-semibold">
-              <button
-                type="button"
-                onClick={() => setPassType('ALL')}
-                className={`px-2.5 py-1 rounded-md transition-all cursor-pointer text-xs ${
-                  passType === 'ALL'
-                    ? 'bg-teal-700 text-white shadow-xs font-bold'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Entrada & Salida
-              </button>
-              <button
-                type="button"
-                onClick={() => setPassType('ENTRY')}
-                className={`px-2.5 py-1 rounded-md transition-all cursor-pointer text-xs ${
-                  passType === 'ENTRY'
-                    ? 'bg-emerald-600 text-white shadow-xs font-bold'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Solo Entrada
-              </button>
-              <button
-                type="button"
-                onClick={() => setPassType('EXIT')}
-                className={`px-2.5 py-1 rounded-md transition-all cursor-pointer text-xs ${
-                  passType === 'EXIT'
-                    ? 'bg-rose-600 text-white shadow-xs font-bold'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Solo Salida
-              </button>
-            </div>
-          </div>
-        </div>
-
         {/* Main Pass Printable & Exportable Area */}
         <div id="qr-printable-pass" className="p-4 sm:p-5 bg-slate-50/50 overflow-y-auto flex-1 print:p-0 print:m-0 print:bg-white">
           
@@ -455,9 +404,7 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
                   PASE DIGITAL DE ACCESO
                 </h3>
                 <div className="text-[11px] text-slate-500 font-medium">
-                  {passType === 'ALL' && 'Autorización para Entrada y Salida durante Estadía'}
-                  {passType === 'ENTRY' && 'Pase de Entrada / Check-In en Puerta'}
-                  {passType === 'EXIT' && 'Pase de Salida / Check-Out y Entrega'}
+                  Autorización para Entrada y Salida durante Estadía
                 </div>
               </div>
 
