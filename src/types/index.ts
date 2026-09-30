@@ -138,12 +138,8 @@ export interface Huesped {
 }
 
 export type TipoHuesped = 
-  | 'Bloqueo de Dueño'
-  | 'Huésped con Cobro (PG)'
   | 'Huésped sin Cobro (NPG)'
-  | 'Renta / Streamline'
-  | 'Resort Amenity Usage'
-  | 'Mantenimiento / Staff';
+  | 'Resort Amenity Usage';
 
 export type EstadoReservacion = 
   | 'Confirmada'

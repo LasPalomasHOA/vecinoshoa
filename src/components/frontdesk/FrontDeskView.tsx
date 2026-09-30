@@ -195,11 +195,8 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
             className="h-9 px-3 text-xs rounded-lg form-input font-medium cursor-pointer border-slate-200"
           >
             <option value="ALL">Todos los tipos de huéspedes</option>
-            <option value="Bloqueo de Dueño">Bloqueo de Dueño</option>
-            <option value="Huésped con Cobro (PG)">Huésped con Cobro (PG)</option>
             <option value="Huésped sin Cobro (NPG)">Huésped sin Cobro (NPG)</option>
             <option value="Resort Amenity Usage">Resort Amenity Usage</option>
-            <option value="Mantenimiento / Staff">Mantenimiento / Staff</option>
           </select>
 
           {/* Edificio Selector */}

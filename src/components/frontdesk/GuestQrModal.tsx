@@ -360,7 +360,7 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
       <div className="relative w-full max-w-2xl max-h-[94vh] flex flex-col bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden animate-scale-up print:border-none print:shadow-none print:max-w-none print:max-h-none">
         
         {/* Header Modal (Hidden in Print) */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100 bg-gradient-to-r from-teal-900 via-teal-800 to-teal-900 text-white shrink-0 no-print">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-teal-900/10 bg-teal-800 text-white shrink-0 no-print">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center backdrop-blur-xs">
               <QrIcon className="w-4 h-4 text-teal-200" />
@@ -368,11 +368,11 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-sm sm:text-base font-bold text-white">Generador de Pase QR</h2>
-                <span className="px-2 py-0.2 rounded-full text-[9px] font-bold bg-teal-500/30 text-teal-200 border border-teal-400/30">
+                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-teal-700/60 text-teal-200 border border-teal-600/50">
                   Front Desk
                 </span>
               </div>
-              <p className="text-[11px] text-teal-200/80">Pase Digital de Entradas y Salidas de Huéspedes</p>
+              <p className="text-[11px] text-teal-100/80">Pase Digital de Entradas y Salidas de Huéspedes</p>
             </div>
           </div>
           <button
@@ -392,11 +392,6 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
             className="rounded-2xl border-2 border-teal-600/30 bg-white p-4 sm:p-5 shadow-sm relative overflow-hidden print:border-slate-800 print:shadow-none print:p-4"
             style={{ backgroundColor: '#ffffff' }}
           >
-            
-            {/* Watermark Pattern / Icon */}
-            <div className="absolute -right-8 -bottom-8 opacity-[0.03] pointer-events-none">
-              <QrIcon className="w-72 h-72 text-teal-900" />
-            </div>
 
             {/* Pass Top Branding */}
             <div className="flex items-start justify-between border-b border-slate-200/80 pb-3 mb-3.5">

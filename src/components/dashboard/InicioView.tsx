@@ -22,7 +22,8 @@ import {
   ChevronRight,
   Activity,
   Layers,
-  MapPin
+  MapPin,
+  User
 } from 'lucide-react';
 
 interface InicioViewProps {
@@ -101,20 +102,17 @@ export const InicioView: React.FC<InicioViewProps> = ({
   // Stays by Type of Guest
   const guestTypeDistribution = useMemo(() => {
     const counts: Record<string, number> = {
-      'Dueño HOA': 0,
-      'Huésped con Cobro (PG)': 0,
       'Huésped sin Cobro (NPG)': 0,
-      'Renta / Streamline': 0,
-      'Amenidades / Staff': 0
+      'Resort Amenity Usage': 0
     };
 
     periodReservations.forEach(r => {
       const tipo = String(r.tipo_huesped || '');
-      if (tipo.includes('Dueño') || tipo.includes('Bloqueo')) counts['Dueño HOA']++;
-      else if (tipo.includes('Cobro (PG)') || tipo.includes('PG')) counts['Huésped con Cobro (PG)']++;
-      else if (tipo.includes('sin Cobro') || tipo.includes('NPG')) counts['Huésped sin Cobro (NPG)']++;
-      else if (tipo.includes('Renta') || tipo.includes('Streamline')) counts['Renta / Streamline']++;
-      else counts['Amenidades / Staff']++;
+      if (tipo.includes('Amenity') || tipo.includes('amenidades')) {
+        counts['Resort Amenity Usage']++;
+      } else {
+        counts['Huésped sin Cobro (NPG)']++;
+      }
     });
 
     return counts;
@@ -533,7 +531,7 @@ export const InicioView: React.FC<InicioViewProps> = ({
           </div>
         </div>
 
-        {/* Card 3: Llegadas Pendientes */}
+        {/* Card 3: Próximos Check-Ins (KPI) */}
         <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm relative overflow-hidden group hover:border-amber-400 transition-all">
           <div className="flex items-center justify-between">
             <span className="text-xs font-black text-slate-800 uppercase tracking-wider">Próximos Check-Ins</span>
@@ -549,7 +547,11 @@ export const InicioView: React.FC<InicioViewProps> = ({
             <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
             <span>Confirmadas o en proceso de arribo</span>
           </div>
-
+          <div className="mt-1 text-xs text-slate-600 font-semibold">
+            {pendingReservations.length > 0
+              ? `${pendingReservations.reduce((acc, r) => acc + (r.numero_ocupantes || (1 + (r.acompanantes?.length || 0))), 0)} huéspedes en espera de ingreso`
+              : 'Sin arribos pendientes'}
+          </div>
         </div>
 
         {/* Card 4: Solicitudes de Acceso */}
@@ -719,57 +721,103 @@ export const InicioView: React.FC<InicioViewProps> = ({
         </div>
       </div>
 
-      {/* 6. Upcoming Arrivals & Departures Tables */}
+      {/* 6. Dedicated Apartados: Próximos Check-Ins (Llegadas) & Próximas Salidas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        {/* Next Arrivals */}
-        <div className="rounded-2xl bg-white border border-slate-200 p-5 shadow-sm space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
-            <h3 className="text-xs font-black text-emerald-950 flex items-center gap-1.5 uppercase tracking-wider">
-              <CheckCircle2 className="w-4 h-4 text-emerald-700" />
-              <span>Próximas Llegadas (Check-Ins)</span>
-            </h3>
-            <span className="text-xs font-black text-slate-700 bg-slate-100 px-2 py-0.5 rounded">{upcomingArrivals.length} pendientes</span>
+        {/* Next Arrivals (Próximos Check-Ins Apartado) */}
+        <div className="rounded-2xl bg-white border border-slate-200 p-5 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 shadow-2xs">
+                <Clock className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-slate-900 tracking-tight">
+                  Próximos Check-Ins (Llegadas Programadas)
+                </h3>
+                <p className="text-[11px] text-slate-500 font-medium">
+                  Huéspedes con llegada pendiente de ingreso
+                </p>
+              </div>
+            </div>
+            <span className="text-xs font-black text-amber-800 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+              {upcomingArrivals.length} pendientes
+            </span>
           </div>
 
-          <div className="divide-y divide-slate-200">
+          <div className="space-y-2.5">
             {upcomingArrivals.length === 0 ? (
-              <p className="text-xs text-slate-600 py-6 text-center">No hay llegadas pendientes.</p>
+              <div className="py-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                <CheckCircle2 className="w-8 h-8 text-slate-300 mx-auto mb-1.5" />
+                <p className="text-xs text-slate-500 font-semibold">No hay llegadas pendientes en este momento.</p>
+              </div>
             ) : (
               upcomingArrivals.map(res => {
                 const prop = getPropiedadById(res.propiedad_id);
+                const edificio = prop ? edificios.find(e => e.id === prop.edificio_id) : undefined;
                 const huesped = getHuespedById(res.huesped_id);
+                const rawComps = Array.isArray(res.acompanantes) ? res.acompanantes.filter(a => a.id !== 'titular') : [];
+                const occ = rawComps.length > 0 ? (1 + rawComps.length) : (res.numero_ocupantes || 1);
+                const occLabel = occ === 1 ? '1 huésped' : `${occ} huéspedes`;
+                const propName = prop?.nombre || `Unidad ${res.propiedad_id}`;
 
                 return (
-                  <div key={res.id} className="py-2.5 flex items-center justify-between gap-2 text-xs">
-                    <div className="space-y-0.5">
-                      <div className="font-black text-slate-950 text-sm flex items-center gap-2">
-                        <span>{prop?.nombre || `Unidad ${res.propiedad_id}`}</span>
-                        <span className="text-xs font-bold text-slate-700">
-                          {huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Sin nombre'}
+                  <div
+                    key={res.id}
+                    className="p-3.5 rounded-xl bg-slate-50/90 hover:bg-amber-50/50 border border-slate-200 hover:border-amber-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
+                  >
+                    <div className="space-y-1 min-w-0">
+                      {/* Main Title: "X huéspedes al Condominio X" */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-black text-slate-950">
+                          {occLabel} al Condominio {propName}
                         </span>
+                        {edificio?.nombre && (
+                          <span className="text-[10px] font-bold text-teal-800 bg-teal-50 border border-teal-200 px-1.5 py-0.2 rounded">
+                            Torre {edificio.nombre}
+                          </span>
+                        )}
                       </div>
-                      <div className="text-xs text-emerald-900 font-extrabold flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-emerald-700" />
-                        <span>Arribo: {res.fecha_checkin}</span>
-                        <span className="text-slate-600">• Folio #{res.codigo || res.id}</span>
+
+                      {/* Guest Info */}
+                      <div className="text-xs text-slate-700 font-bold flex items-center gap-1.5 flex-wrap">
+                        <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span>Titular: {huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'No especificado'}</span>
+                        {huesped?.telefono && (
+                          <span className="text-slate-500 font-normal">({huesped.telefono})</span>
+                        )}
+                      </div>
+
+                      {/* Sub Badges: Date, Folio, Tipo */}
+                      <div className="text-[11px] text-slate-600 font-medium flex items-center gap-2 flex-wrap pt-0.5">
+                        <span className="inline-flex items-center gap-1 text-emerald-800 font-extrabold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          <Clock className="w-3 h-3 text-emerald-600" />
+                          Check-In: {res.fecha_checkin}
+                        </span>
+                        <span className="text-slate-400">•</span>
+                        <span className="font-mono text-slate-600 font-semibold">Folio #{res.codigo || res.id}</span>
+                        <span className="text-slate-400">•</span>
+                        <span className="text-slate-600 font-semibold">{res.tipo_huesped}</span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1 shrink-0">
+                    {/* Actions */}
+                    <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
                       <button
                         onClick={() => onOpenQrPass(res)}
-                        className="p-2 rounded-lg bg-teal-100 hover:bg-teal-200 text-teal-950 border border-teal-300 transition-colors cursor-pointer font-bold"
-                        title="Generar Pase QR"
+                        className="h-8 px-2.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 transition-colors cursor-pointer font-bold text-xs flex items-center gap-1 shadow-2xs"
+                        title="Generar Pase QR de Acceso"
                       >
-                        <QrCode className="w-4 h-4" />
+                        <QrCode className="w-3.5 h-3.5 text-teal-700" />
+                        <span>Pase QR</span>
                       </button>
                       <button
                         onClick={() => onViewReservationDetail(res)}
-                        className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-colors cursor-pointer font-bold"
-                        title="Ver Detalles"
+                        className="h-8 px-2.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 transition-colors cursor-pointer font-semibold text-xs flex items-center gap-1 shadow-2xs"
+                        title="Ver Detalles de Reservación"
                       >
-                        <Eye className="w-4 h-4" />
+                        <Eye className="w-3.5 h-3.5 text-slate-500" />
+                        <span>Detalles</span>
                       </button>
                     </div>
                   </div>
@@ -779,54 +827,96 @@ export const InicioView: React.FC<InicioViewProps> = ({
           </div>
         </div>
 
-        {/* Next Departures */}
-        <div className="rounded-2xl bg-white border border-slate-200 p-5 shadow-sm space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
-            <h3 className="text-xs font-black text-rose-950 flex items-center gap-1.5 uppercase tracking-wider">
-              <LogOut className="w-4 h-4 text-rose-700" />
-              <span>Próximas Salidas (Check-Outs)</span>
-            </h3>
-            <span className="text-xs font-black text-slate-700 bg-slate-100 px-2 py-0.5 rounded">{upcomingDepartures.length} en casa</span>
+        {/* Next Departures (Próximas Salidas) */}
+        <div className="rounded-2xl bg-white border border-slate-200 p-5 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-700 shadow-2xs">
+                <LogOut className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-slate-900 tracking-tight">
+                  Próximas Salidas (Check-Outs)
+                </h3>
+                <p className="text-[11px] text-slate-500 font-medium">
+                  Huéspedes en casa programados para salida
+                </p>
+              </div>
+            </div>
+            <span className="text-xs font-black text-rose-800 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">
+              {upcomingDepartures.length} en casa
+            </span>
           </div>
 
-          <div className="divide-y divide-slate-200">
+          <div className="space-y-2.5">
             {upcomingDepartures.length === 0 ? (
-              <p className="text-xs text-slate-600 py-6 text-center">No hay salidas programadas en casa.</p>
+              <div className="py-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                <CheckCircle2 className="w-8 h-8 text-slate-300 mx-auto mb-1.5" />
+                <p className="text-xs text-slate-500 font-semibold">No hay salidas programadas para huéspedes en casa.</p>
+              </div>
             ) : (
               upcomingDepartures.map(res => {
                 const prop = getPropiedadById(res.propiedad_id);
+                const edificio = prop ? edificios.find(e => e.id === prop.edificio_id) : undefined;
                 const huesped = getHuespedById(res.huesped_id);
+                const rawComps = Array.isArray(res.acompanantes) ? res.acompanantes.filter(a => a.id !== 'titular') : [];
+                const occ = rawComps.length > 0 ? (1 + rawComps.length) : (res.numero_ocupantes || 1);
+                const occLabel = occ === 1 ? '1 huésped' : `${occ} huéspedes`;
+                const propName = prop?.nombre || `Unidad ${res.propiedad_id}`;
 
                 return (
-                  <div key={res.id} className="py-2.5 flex items-center justify-between gap-2 text-xs">
-                    <div className="space-y-0.5">
-                      <div className="font-black text-slate-950 text-sm flex items-center gap-2">
-                        <span>{prop?.nombre || `Unidad ${res.propiedad_id}`}</span>
-                        <span className="text-xs font-bold text-slate-700">
-                          {huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Sin nombre'}
+                  <div
+                    key={res.id}
+                    className="p-3.5 rounded-xl bg-slate-50/90 hover:bg-rose-50/40 border border-slate-200 hover:border-rose-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
+                  >
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-black text-slate-950">
+                          {occLabel} en Condominio {propName}
                         </span>
+                        {edificio?.nombre && (
+                          <span className="text-[10px] font-bold text-teal-800 bg-teal-50 border border-teal-200 px-1.5 py-0.2 rounded">
+                            Torre {edificio.nombre}
+                          </span>
+                        )}
                       </div>
-                      <div className="text-xs text-rose-900 font-extrabold flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-rose-700" />
-                        <span>Salida: {res.fecha_checkout}</span>
-                        <span className="text-slate-600">• Folio #{res.codigo || res.id}</span>
+
+                      <div className="text-xs text-slate-700 font-bold flex items-center gap-1.5 flex-wrap">
+                        <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span>Titular: {huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'No especificado'}</span>
+                        {huesped?.telefono && (
+                          <span className="text-slate-500 font-normal">({huesped.telefono})</span>
+                        )}
+                      </div>
+
+                      <div className="text-[11px] text-slate-600 font-medium flex items-center gap-2 flex-wrap pt-0.5">
+                        <span className="inline-flex items-center gap-1 text-rose-800 font-extrabold bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                          <Clock className="w-3 h-3 text-rose-600" />
+                          Salida: {res.fecha_checkout}
+                        </span>
+                        <span className="text-slate-400">•</span>
+                        <span className="font-mono text-slate-600 font-semibold">Folio #{res.codigo || res.id}</span>
+                        <span className="text-slate-400">•</span>
+                        <span className="text-slate-600 font-semibold">{res.tipo_huesped}</span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
                       <button
                         onClick={() => onOpenQrPass(res)}
-                        className="p-2 rounded-lg bg-teal-100 hover:bg-teal-200 text-teal-950 border border-teal-300 transition-colors cursor-pointer font-bold"
-                        title="Generar Pase QR"
+                        className="h-8 px-2.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 transition-colors cursor-pointer font-bold text-xs flex items-center gap-1 shadow-2xs"
+                        title="Generar Pase QR de Acceso"
                       >
-                        <QrCode className="w-4 h-4" />
+                        <QrCode className="w-3.5 h-3.5 text-teal-700" />
+                        <span>Pase QR</span>
                       </button>
                       <button
                         onClick={() => onViewReservationDetail(res)}
-                        className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-colors cursor-pointer font-bold"
-                        title="Ver Detalles"
+                        className="h-8 px-2.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 transition-colors cursor-pointer font-semibold text-xs flex items-center gap-1 shadow-2xs"
+                        title="Ver Detalles de Reservación"
                       >
-                        <Eye className="w-4 h-4" />
+                        <Eye className="w-3.5 h-3.5 text-slate-500" />
+                        <span>Detalles</span>
                       </button>
                     </div>
                   </div>

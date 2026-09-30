@@ -2,9 +2,10 @@ import React from 'react';
 
 interface CalendarLegendProps {
   counts?: {
+    npg?: number;
+    amenity?: number;
     dueno?: number;
     pg?: number;
-    npg?: number;
     pendiente?: number;
     checkedIn?: number;
   };
@@ -19,31 +20,21 @@ export const CalendarLegend: React.FC<CalendarLegendProps> = ({ counts }) => {
         {/* Type Indicators (Solid Color Squares) */}
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">
-            <span className="w-3.5 h-3.5 rounded-xs bg-[#5c7c93] shadow-2xs shrink-0" />
-            <span className="text-slate-800 font-bold text-[11px]">Bloqueo de Dueño</span>
-            {counts?.dueno !== undefined && (
-              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 border border-slate-200">
-                {counts.dueno}
-              </span>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="w-3.5 h-3.5 rounded-xs bg-[#2196F3] shadow-2xs shrink-0" />
-            <span className="text-slate-800 font-bold text-[11px]">Huésped con Cobro (PG)</span>
-            {counts?.pg !== undefined && (
-              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-sky-50 text-sky-700 border border-sky-200">
-                {counts.pg}
-              </span>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2">
             <span className="w-3.5 h-3.5 rounded-xs bg-[#00897B] shadow-2xs shrink-0" />
             <span className="text-slate-800 font-bold text-[11px]">Huésped sin Cobro (NPG)</span>
             {counts?.npg !== undefined && (
               <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-teal-50 text-teal-700 border border-teal-200">
                 {counts.npg}
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="w-3.5 h-3.5 rounded-xs bg-[#7c3aed] shadow-2xs shrink-0" />
+            <span className="text-slate-800 font-bold text-[11px]">Resort Amenity Usage</span>
+            {counts?.amenity !== undefined && (
+              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-purple-50 text-purple-700 border border-purple-200">
+                {counts.amenity}
               </span>
             )}
           </div>

@@ -141,9 +141,10 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
 
     let totalNightsBooked = 0;
     const counts = {
+      npg: 0,
+      amenity: 0,
       dueno: 0,
       pg: 0,
-      npg: 0,
       pendiente: 0,
       checkedIn: 0
     };
@@ -151,9 +152,9 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
     let checkInsToday = 0;
 
     monthReservations.forEach(res => {
-      if (res.tipo_huesped === 'Bloqueo de Dueño') counts.dueno++;
-      else if (res.tipo_huesped === 'Huésped con Cobro (PG)') counts.pg++;
-      else if (res.tipo_huesped === 'Huésped sin Cobro (NPG)') counts.npg++;
+      const tipo = String(res.tipo_huesped || '');
+      if (tipo.includes('Amenidad') || tipo.includes('Amenity')) counts.amenity++;
+      else counts.npg++;
       
       if (res.estado === 'Pendiente') counts.pendiente++;
       if (res.estado === 'En Casa (Checked-in)') counts.checkedIn++;
@@ -189,14 +190,10 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
     let bgClass = 'bg-[#00897B] text-white'; // default NPG
     const tipo = res.tipo_huesped || '';
 
-    if (tipo.includes('Dueño') || tipo.includes('Owner')) {
-      bgClass = 'bg-[#5c7c93] text-white';
-    } else if (tipo.includes('con Cobro') || tipo.includes('PG') || tipo.includes('Paying Guest')) {
-      bgClass = 'bg-[#2196F3] text-white';
-    } else if (tipo.includes('sin Cobro') || tipo.includes('NPG') || tipo.includes('Non-paying')) {
-      bgClass = 'bg-[#00897B] text-white';
-    } else if (tipo.includes('Amenidad') || tipo.includes('Amenity')) {
+    if (tipo.includes('Amenidad') || tipo.includes('Amenity')) {
       bgClass = 'bg-[#7c3aed] text-white';
+    } else {
+      bgClass = 'bg-[#00897B] text-white';
     }
 
     // 2. Top accent status border by Estatus (Pendiente vs Entrada Registrada)

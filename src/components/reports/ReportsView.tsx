@@ -414,11 +414,8 @@ export const ReportsView: React.FC = () => {
                 className="font-medium text-slate-800 bg-transparent border-none outline-none cursor-pointer pr-1"
               >
                 <option value="ALL">Todos los Tipos</option>
-                <option value="Non-paying">Non-paying</option>
-                <option value="Paying Guest">Paying Guest</option>
-                <option value="Owner Block">Owner Block</option>
+                <option value="Non-paying">Huésped sin Cobro (NPG)</option>
                 <option value="Resort Amenity Usage">Resort Amenity Usage</option>
-                <option value="Staff / Maint">Staff / Maint</option>
               </select>
             </div>
 

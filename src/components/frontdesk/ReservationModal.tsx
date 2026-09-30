@@ -784,57 +784,19 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
             </div>
           </div>
 
-          {/* Tipo, Condición & Estatus */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Tipo de Huésped
-              </label>
-              <select
-                value={tipoHuesped}
-                onChange={(e) => setTipoHuesped(e.target.value as TipoHuesped)}
-                className="w-full px-3 py-2 rounded-lg form-input text-xs font-medium"
-              >
-                <option value="Bloqueo de Dueño">Bloqueo de Dueño</option>
-                <option value="Huésped con Cobro (PG)">Huésped con Cobro (PG)</option>
-                <option value="Huésped sin Cobro (NPG)">Huésped sin Cobro (NPG)</option>
-                <option value="Renta / Streamline">Renta / Streamline</option>
-                <option value="Resort Amenity Usage">Resort Amenity Usage</option>
-                <option value="Mantenimiento / Staff">Mantenimiento / Staff</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Condición de Pago
-              </label>
-              <select
-                value={pagoTipo}
-                onChange={(e) => setPagoTipo(e.target.value as any)}
-                className="w-full px-3 py-2 rounded-lg form-input text-xs font-medium"
-              >
-                <option value="Sin pago">Sin pago</option>
-                <option value="Con pago">Con pago</option>
-                <option value="Uso de amenidades">Uso de amenidades</option>
-                <option value="Cortesia">Cortesía</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Estatus
-              </label>
-              <select
-                value={estado}
-                onChange={(e) => setEstado(e.target.value as EstadoReservacion)}
-                className="w-full px-3 py-2 rounded-lg form-input text-xs font-semibold"
-              >
-                <option value="Confirmada">Confirmada</option>
-                <option value="En Casa (Checked-in)">En Casa (Checked-in)</option>
-                <option value="Pendiente">Pendiente</option>
-                <option value="Checked-out">Checked-out</option>
-              </select>
-            </div>
+          {/* Tipo de Huésped */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+              Tipo de Huésped
+            </label>
+            <select
+              value={tipoHuesped}
+              onChange={(e) => setTipoHuesped(e.target.value as TipoHuesped)}
+              className="w-full px-3 py-2 rounded-lg form-input text-xs font-medium"
+            >
+              <option value="Huésped sin Cobro (NPG)">Huésped sin Cobro (NPG)</option>
+              <option value="Resort Amenity Usage">Resort Amenity Usage</option>
+            </select>
           </div>
 
           {/* Autos & Vehículo */}
