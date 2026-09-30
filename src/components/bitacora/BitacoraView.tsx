@@ -245,18 +245,18 @@ export const BitacoraView: React.FC = () => {
           <div className="flex items-center gap-2 mb-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-teal-400/20 text-teal-300 border border-teal-400/30">
               <Shield className="w-3.5 h-3.5" />
-              Módulo de Supervisión & Trazabilidad
+              Supervisión • gestion_residencial
             </span>
             <span className="text-xs text-slate-300 font-medium">
-              • {stats.total} eventos registrados
+              • {stats.total} eventos registrados en base de datos
             </span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-            Bitácora de Auditoría & Control
+            Bitácora de Gestión Residencial
           </h1>
           <p className="mt-1.5 text-slate-300 text-xs sm:text-sm leading-relaxed">
-            Monitoreo en tiempo real de todas las creaciones, ediciones, cancelaciones, check-ins y eliminaciones realizadas por los usuarios en la plataforma de Las Palomas HOA.
+            Monitoreo en tiempo real de todas las creaciones, ediciones, cancelaciones, check-ins y eliminaciones realizadas en el módulo de <strong>gestión residencial</strong> (reservaciones, propiedades, solicitudes y usuarios).
           </p>
         </div>
 

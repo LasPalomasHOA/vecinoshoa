@@ -286,6 +286,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } catch {}
       return updated;
     });
+
+    // Guardar permanentemente en la base de datos PostgreSQL
+    api.bitacora.create({
+      usuario_nombre: actorNombre,
+      usuario_email: actorEmail,
+      usuario_rol: actorRol,
+      accion: entry.accion,
+      modulo: entry.modulo,
+      descripcion: entry.descripcion,
+      entidad_nombre: entry.entidad_nombre,
+      detalles: entry.detalles
+    }).catch(err => console.warn('[Bitacora PostgreSQL Sync]:', err.message));
+
   }, [currentUser]);
 
   const agregarNotaBitacora = useCallback((descripcion: string, modulo: BitacoraEntry['modulo'] = 'Sistema') => {
@@ -297,7 +310,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         notas: 'Nota / observación manual registrada desde el panel de Bitácora.'
       }
     });
-    showToast('Nota registrada en la Bitácora de Auditoría', 'success');
+    showToast('Nota registrada en la Bitácora de Auditoría y Base de Datos', 'success');
   }, [registrarEventoBitacora]);
 
   const limpiarBitacora = useCallback(() => {
@@ -334,7 +347,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         propiedadUsuariosData,
         huespedesData,
         reservacionesData,
-        solicitudesData
+        solicitudesData,
+        bitacoraData
       ] = await Promise.all([
         api.edificios.getAll(),
         api.grupos.getAll(),
@@ -343,7 +357,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         api.propiedadUsuarios.getAll(),
         api.huespedes.getAll(),
         api.reservaciones.getAll(),
-        api.solicitudes.getAll()
+        api.solicitudes.getAll(),
+        api.bitacora.getAll().catch(() => [])
       ]);
 
       setEdificios(edificiosData);
@@ -354,7 +369,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       let combinedUsers = [...usuariosData];
       if (!hasSupervisor) {
         combinedUsers.push({
-          id: 99,
+          id: 6,
           email: 'supervisor@laspalomas.com',
           nombre: 'Carlos',
           apellido: 'Méndez',
@@ -375,6 +390,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setHuespedes(huespedesData);
       setReservaciones(reservacionesData);
       setSolicitudes(solicitudesData);
+
+      if (Array.isArray(bitacoraData) && bitacoraData.length > 0) {
+        setBitacora(bitacoraData);
+        try {
+          localStorage.setItem('lp_bitacora_logs', JSON.stringify(bitacoraData));
+        } catch {}
+      }
     } catch (err: any) {
       console.error('Error fetching database records:', err);
       setError(err.message || 'Error al conectar con la base de datos');

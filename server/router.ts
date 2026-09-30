@@ -94,7 +94,8 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
     'huespedes',
     'reservaciones',
     'solicitudes',
-    'solicitudes_acceso'
+    'solicitudes_acceso',
+    'bitacora'
   ];
 
   if (!validResources.includes(resource)) {
@@ -369,6 +370,23 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
           body.procesador_nombre
         );
         sendJson(res, 200, updated);
+        return true;
+      }
+    }
+
+    // -------------------------------------------------------------
+    // 9. BITÁCORA DE AUDITORÍA & CONTROL DE ACCESO
+    // -------------------------------------------------------------
+    if (resource === 'bitacora') {
+      if (method === 'GET') {
+        const logs = await hoaService.getAllBitacora();
+        sendJson(res, 200, logs);
+        return true;
+      }
+      if (method === 'POST') {
+        const body = await parseJsonBody(req);
+        const created = await hoaService.createBitacoraLog(body);
+        sendJson(res, 201, created);
         return true;
       }
     }

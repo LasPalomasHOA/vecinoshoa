@@ -173,7 +173,13 @@ export const solicitudesApi = {
     }),
 };
 
-// 9. Base de Datos Status & Health Check
+// 9. Bitácora de Auditoría API (PostgreSQL DB)
+export const bitacoraApi = {
+  getAll: () => request<any[]>('/bitacora'),
+  create: (data: any) => request<any>('/bitacora', { method: 'POST', body: JSON.stringify(data) }),
+};
+
+// 10. Base de Datos Status & Health Check
 export const healthApi = {
   check: () => request<{
     connected: boolean;
@@ -196,5 +202,6 @@ export const api = {
   huespedes: huespedesApi,
   reservaciones: reservacionesApi,
   solicitudes: solicitudesApi,
+  bitacora: bitacoraApi,
   health: healthApi,
 };

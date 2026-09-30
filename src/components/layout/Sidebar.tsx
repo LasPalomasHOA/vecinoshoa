@@ -86,7 +86,7 @@ export const Sidebar: React.FC = () => {
     },
     {
       id: 'bitacora' as const,
-      label: 'Bitácora & Auditoría',
+      label: 'Bitácora Residencial',
       icon: ShieldCheck,
       badge: bitacora.length > 0 ? `${bitacora.length}` : undefined,
       badgeCount: bitacora.length > 0 ? bitacora.length : undefined,
