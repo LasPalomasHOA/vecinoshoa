@@ -16,7 +16,8 @@ import {
   Phone, 
   Plus, 
   Users,
-  QrCode
+  QrCode,
+  Waves
 } from 'lucide-react';
 
 interface FrontDeskViewProps {
@@ -379,15 +380,34 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
                         </div>
                         
                         {/* Acompañantes Badge with Tooltip */}
-                        {Array.isArray(res.acompanantes) && res.acompanantes.length > 0 && (
-                          <div 
-                            className="inline-flex items-center gap-1 text-[9px] text-teal-800 bg-teal-50 border border-teal-200 px-1.5 py-0.2 rounded font-semibold mt-0.5 cursor-help"
-                            title={`Acompañantes: ${res.acompanantes.map(a => `${a.nombre_completo} (${a.tipo})`).join(', ')}`}
-                          >
-                            <Users className="w-2.5 h-2.5 text-teal-600" />
-                            <span>+{res.acompanantes.length} {res.acompanantes.length === 1 ? 'acompañante' : 'acompañantes'}</span>
-                          </div>
-                        )}
+                        {(() => {
+                          const roomComps = Array.isArray(res.acompanantes) ? res.acompanantes.filter(a => a.id !== 'titular') : [];
+                          const amenityComps = Array.isArray(res.acompanantes_amenidades) ? res.acompanantes_amenidades : [];
+
+                          return (
+                            <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                              {roomComps.length > 0 && (
+                                <div 
+                                  className="inline-flex items-center gap-1 text-[9px] text-teal-800 bg-teal-50 border border-teal-200 px-1.5 py-0.2 rounded font-semibold cursor-help"
+                                  title={`Acompañantes de Habitación: ${roomComps.map(a => `${a.nombre_completo} (${a.tipo})`).join(', ')}`}
+                                >
+                                  <Users className="w-2.5 h-2.5 text-teal-600" />
+                                  <span>+{roomComps.length} {roomComps.length === 1 ? 'acomp.' : 'acomps.'}</span>
+                                </div>
+                              )}
+
+                              {amenityComps.length > 0 && (
+                                <div 
+                                  className="inline-flex items-center gap-1 text-[9px] text-sky-800 bg-sky-50 border border-sky-200 px-1.5 py-0.2 rounded font-semibold cursor-help"
+                                  title={`Solo Amenidades: ${amenityComps.map(a => a.nombre_completo).join(', ')}`}
+                                >
+                                  <Waves className="w-2.5 h-2.5 text-sky-600" />
+                                  <span>+{amenityComps.length} {amenityComps.length === 1 ? 'amenidad' : 'amenidades'}</span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
 
                         {huesped?.telefono && (
                           <div className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
