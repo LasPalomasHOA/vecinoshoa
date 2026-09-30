@@ -26,7 +26,7 @@ export const BuildingsManagerModal: React.FC<BuildingsManagerModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
       <div className="relative w-full max-w-lg bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden animate-scale-up">
-        
+
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50/80">
           <div className="flex items-center gap-2.5">
@@ -48,7 +48,7 @@ export const BuildingsManagerModal: React.FC<BuildingsManagerModalProps> = ({
 
         {/* Content */}
         <div className="p-6 space-y-4">
-          
+
           <form onSubmit={handleAdd} className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
             <label className="block text-xs font-bold text-slate-700">
               Agregar una nueva torre / edificio
@@ -58,7 +58,7 @@ export const BuildingsManagerModal: React.FC<BuildingsManagerModalProps> = ({
                 type="text"
                 value={newNombre}
                 onChange={(e) => setNewNombre(e.target.value)}
-                placeholder="ej. K - Marbella o Torre Nueva"
+                placeholder="ej. Torre Nueva"
                 className="flex-1 px-3 py-2 rounded-lg form-input text-xs"
               />
               <button
@@ -75,7 +75,7 @@ export const BuildingsManagerModal: React.FC<BuildingsManagerModalProps> = ({
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
               Torres Registradas ({edificios.length})
             </h3>
-            
+
             <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1">
               {edificios.map(ed => {
                 const count = propiedades.filter(p => p.edificio_id === ed.id).length;
