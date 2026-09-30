@@ -18,7 +18,7 @@ import {
   Clock, 
   User, 
   Eye, 
-  MessageSquarePlus, 
+  FileSpreadsheet, 
   X,
   Calendar,
   Layers
@@ -28,7 +28,6 @@ export const BitacoraView: React.FC = () => {
   const { 
     bitacora, 
     searchQuery: globalSearch, 
-    agregarNotaBitacora, 
     limpiarBitacora,
     usuarios 
   } = useApp();
@@ -45,9 +44,6 @@ export const BitacoraView: React.FC = () => {
   // Modals state
   const [selectedEntry, setSelectedEntry] = useState<BitacoraEntry | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
-  const [noteContent, setNoteContent] = useState('');
-  const [noteModule, setNoteModule] = useState<ModuloBitacora>('Sistema');
 
   // Combined search term
   const effectiveSearch = (localSearch || globalSearch).toLowerCase().trim();
@@ -108,49 +104,172 @@ export const BitacoraView: React.FC = () => {
     const ediciones = bitacora.filter(b => b.accion === 'EDICIÓN' || b.accion === 'CAMBIO_ESTATUS').length;
     const eliminaciones = bitacora.filter(b => b.accion === 'ELIMINACIÓN').length;
     const checkins = bitacora.filter(b => b.accion === 'CHECK-IN' || b.accion === 'CHECK-OUT').length;
-    const supervisorNotes = bitacora.filter(b => b.accion === 'NOTA_SUPERVISOR').length;
 
-    return { total, creaciones, ediciones, eliminaciones, checkins, supervisorNotes };
+    return { total, creaciones, ediciones, eliminaciones, checkins };
   }, [bitacora]);
 
-  // Handle Export to CSV
-  const handleExportCSV = () => {
+  // Handle Export to Excel
+  const handleExportExcel = () => {
     if (filteredBitacora.length === 0) return;
 
-    const headers = ['ID', 'Fecha y Hora', 'Usuario', 'Email', 'Rol', 'Acción', 'Módulo', 'Descripción', 'Entidad Afectada'];
-    const rows = filteredBitacora.map(entry => [
-      entry.id,
-      new Date(entry.timestamp).toLocaleString('es-MX'),
-      `"${entry.usuario_nombre.replace(/"/g, '""')}"`,
-      entry.usuario_email,
-      entry.usuario_rol,
-      entry.accion,
-      entry.modulo,
-      `"${entry.descripcion.replace(/"/g, '""')}"`,
-      `"${(entry.entidad_nombre || '').replace(/"/g, '""')}"`
-    ]);
+    const title = 'Bitácora de Auditoría y Control – Gestión Residencial';
+    const subtitle = 'Las Palomas Seaside Golf Community';
+    const exportDate = new Date().toLocaleDateString('es-MX', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
 
-    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
+    let tableRowsHtml = '';
+    filteredBitacora.forEach((entry, index) => {
+      const cellClass = index % 2 === 0 ? 'td-odd' : 'td-even';
+      const formattedDate = new Date(entry.timestamp).toLocaleString('es-MX', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+
+      tableRowsHtml += `
+        <tr>
+          <td class="${cellClass}" style="mso-number-format:'\\@'; font-weight: bold;">${entry.id}</td>
+          <td class="${cellClass}" style="mso-number-format:'\\@';">${formattedDate}</td>
+          <td class="${cellClass}">${entry.usuario_nombre}</td>
+          <td class="${cellClass}">${entry.usuario_email}</td>
+          <td class="${cellClass}">${entry.usuario_rol}</td>
+          <td class="${cellClass}" style="font-weight: bold;">${entry.accion}</td>
+          <td class="${cellClass}">${entry.modulo}</td>
+          <td class="${cellClass}">${entry.entidad_nombre || 'N/A'}</td>
+          <td class="${cellClass}">${entry.descripcion}</td>
+        </tr>
+      `;
+    });
+
+    const excelHtml = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+          <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+          <!--[if gte mso 9]>
+          <xml>
+            <x:ExcelWorkbook>
+              <x:ExcelWorksheets>
+                <x:ExcelWorksheet>
+                  <x:Name>Bitacora Auditoria</x:Name>
+                  <x:WorksheetOptions>
+                    <x:DisplayGridlines/>
+                  </x:WorksheetOptions>
+                </x:ExcelWorksheet>
+              </x:ExcelWorksheets>
+            </x:ExcelWorkbook>
+          </xml>
+          <![endif]-->
+          <style>
+            body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10pt; }
+            table { border-collapse: collapse; width: 100%; }
+            .report-title { font-size: 14pt; font-weight: bold; text-align: center; color: #0f172a; padding: 6px; }
+            .report-subtitle { font-size: 11pt; font-weight: bold; text-align: center; color: #0d9488; padding: 2px; }
+            .report-dates { font-size: 9pt; text-align: center; color: #64748b; padding: 2px; }
+            .th-cell {
+              background-color: #0f766e;
+              color: #ffffff;
+              font-weight: bold;
+              font-size: 10pt;
+              text-align: left;
+              padding: 8px 10px;
+              border: 1pt solid #0d9488;
+            }
+            .td-odd {
+              background-color: #F0FDFA;
+              color: #0f172a;
+              font-size: 9pt;
+              padding: 6px 10px;
+              border-bottom: 0.5pt solid #E2E8F0;
+              vertical-align: middle;
+            }
+            .td-even {
+              background-color: #FFFFFF;
+              color: #0f172a;
+              font-size: 9pt;
+              padding: 6px 10px;
+              border-bottom: 0.5pt solid #E2E8F0;
+              vertical-align: middle;
+            }
+          </style>
+        </head>
+        <body>
+          <table>
+            <colgroup>
+              <col width="120" />
+              <col width="140" />
+              <col width="160" />
+              <col width="180" />
+              <col width="120" />
+              <col width="120" />
+              <col width="130" />
+              <col width="180" />
+              <col width="380" />
+            </colgroup>
+            <tr>
+              <td colspan="9" class="report-title">${title}</td>
+            </tr>
+            <tr>
+              <td colspan="9" class="report-subtitle">${subtitle}</td>
+            </tr>
+            <tr>
+              <td colspan="9" class="report-dates">Generado el: ${exportDate} | Registros: ${filteredBitacora.length}</td>
+            </tr>
+            <tr>
+              <td colspan="9" style="height: 12px;"></td>
+            </tr>
+            <thead>
+              <tr>
+                <th class="th-cell">ID Evento</th>
+                <th class="th-cell">Fecha y Hora</th>
+                <th class="th-cell">Usuario</th>
+                <th class="th-cell">Correo</th>
+                <th class="th-cell">Rol</th>
+                <th class="th-cell">Acción</th>
+                <th class="th-cell">Módulo</th>
+                <th class="th-cell">Elemento / Unidad</th>
+                <th class="th-cell">Descripción de Auditoría</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRowsHtml}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="9" style="height: 10px;"></td>
+              </tr>
+              <tr>
+                <td colspan="5" style="font-size: 9pt; color: #64748b; font-style: italic; padding: 6px; border-top: 1pt solid #cbd5e1;">Total de eventos exportados: ${filteredBitacora.length}</td>
+                <td colspan="4" style="font-size: 9pt; color: #64748b; text-align: right; font-style: italic; padding: 6px; border-top: 1pt solid #cbd5e1;">Las Palomas HOA — Sistema de Gestión Residencial</td>
+              </tr>
+            </tfoot>
+          </table>
+        </body>
+      </html>
+    `;
+
+    const blob = new Blob(['\uFEFF', excelHtml], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `bitacora_auditoria_laspalomas_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.href = url;
+    const dateStr = new Date().toISOString().slice(0, 10);
+    link.download = `Bitacora_Gestion_Residencial_LasPalomas_${dateStr}.xls`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const handleOpenDetail = (entry: BitacoraEntry) => {
     setSelectedEntry(entry);
     setIsDetailOpen(true);
-  };
-
-  const handleSaveSupervisorNote = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!noteContent.trim()) return;
-    agregarNotaBitacora(noteContent, noteModule);
-    setNoteContent('');
-    setIsNoteModalOpen(false);
   };
 
   const getActionBadge = (accion: BitacoraEntry['accion']) => {
@@ -262,27 +381,19 @@ export const BitacoraView: React.FC = () => {
         {/* Action Buttons */}
         <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
           <button
-            onClick={() => setIsNoteModalOpen(true)}
-            className="px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-2 cursor-pointer"
-          >
-            <MessageSquarePlus className="w-4 h-4" />
-            <span>Nota de Supervisor</span>
-          </button>
-
-          <button
-            onClick={handleExportCSV}
+            onClick={handleExportExcel}
             disabled={filteredBitacora.length === 0}
-            className="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-200/90 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
-            title="Descargar reporte en formato CSV"
+            className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            title="Descargar reporte oficial en formato Excel (.xls)"
           >
-            <Download className="w-4 h-4" />
-            <span>Exportar CSV</span>
+            <FileSpreadsheet className="w-4 h-4" />
+            <span>Exportar a Excel</span>
           </button>
 
           <button
             onClick={limpiarBitacora}
             className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200/90 transition-all cursor-pointer"
-            title="Recargar registros"
+            title="Recargar registros de la base de datos"
           >
             <RotateCcw className="w-4 h-4" />
           </button>
@@ -346,8 +457,8 @@ export const BitacoraView: React.FC = () => {
               <KeyRound className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-2xl font-black text-indigo-800 mt-1.5">{stats.checkins + stats.supervisorNotes}</p>
-          <p className="text-[11px] text-slate-500 font-medium mt-0.5">Check-In/Out & Notas</p>
+          <p className="text-2xl font-black text-indigo-800 mt-1.5">{stats.checkins}</p>
+          <p className="text-[11px] text-slate-500 font-medium mt-0.5">Check-In / Check-Out</p>
         </div>
 
       </div>
@@ -385,8 +496,8 @@ export const BitacoraView: React.FC = () => {
               { id: 'EDICIÓN', label: 'Ediciones' },
               { id: 'ELIMINACIÓN', label: 'Eliminaciones' },
               { id: 'CHECK-IN', label: 'Check-In' },
-              { id: 'CAMBIO_ESTATUS', label: 'Estatus' },
-              { id: 'NOTA_SUPERVISOR', label: 'Notas' }
+              { id: 'CHECK-OUT', label: 'Check-Out' },
+              { id: 'CAMBIO_ESTATUS', label: 'Estatus' }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -702,84 +813,6 @@ export const BitacoraView: React.FC = () => {
               </div>
             );
           })}
-        </div>
-      )}
-
-      {/* MODAL: Nueva Nota de Supervisor */}
-      {isNoteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 text-left">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2 text-slate-900 font-bold text-base">
-                <Shield className="w-5 h-5 text-teal-600" />
-                <span>Registrar Nota de Auditoría</span>
-              </div>
-              <button
-                onClick={() => setIsNoteModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveSupervisorNote} className="space-y-4 mt-4">
-              
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">
-                  Módulo / Área de Inspección
-                </label>
-                <select
-                  value={noteModule}
-                  onChange={(e) => setNoteModule(e.target.value as ModuloBitacora)}
-                  className="w-full h-9 px-3 text-xs rounded-xl form-input border-slate-200 font-medium cursor-pointer"
-                >
-                  <option value="Sistema">Sistema & Seguridad General</option>
-                  <option value="Reservaciones">Front Desk & Reservaciones</option>
-                  <option value="Propiedades">Condominios & Torres</option>
-                  <option value="Usuarios">Residentes & Personal</option>
-                  <option value="Solicitudes de Acceso">Solicitudes & Pases de Trabajo</option>
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">
-                  Observación / Nota del Supervisor
-                </label>
-                <textarea
-                  rows={4}
-                  value={noteContent}
-                  onChange={(e) => setNoteContent(e.target.value)}
-                  placeholder="Ej: Se realizó conteo de brazaletes de temporada en caseta de seguridad y se verificaron los marbetes vehiculares sin incidencias."
-                  required
-                  className="w-full p-3 text-xs rounded-xl form-input border-slate-200 resize-none"
-                />
-              </div>
-
-              <div className="p-3 rounded-lg bg-teal-50 border border-teal-200 text-teal-900 text-xs flex items-center gap-2">
-                <Shield className="w-4 h-4 text-teal-700 shrink-0" />
-                <p>
-                  Esta nota se registrará con la firma digital de <strong>{currentUser?.nombre} {currentUser?.apellido}</strong> ({currentUser?.rol}).
-                </p>
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsNoteModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-600/20 cursor-pointer"
-                >
-                  Guardar en Bitácora
-                </button>
-              </div>
-
-            </form>
-          </div>
         </div>
       )}
 
