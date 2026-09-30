@@ -162,6 +162,13 @@ export interface Acompanante {
   entregado_por?: string;
 }
 
+export interface AcompananteAmenidad {
+  id: string;
+  nombre_completo: string;
+  brazalete_entregado: boolean;
+  fecha_entrega?: string;
+}
+
 export interface Reservacion {
   id: number;
   codigo?: string; // ej. "2569009" o "SL:973438"
@@ -179,6 +186,7 @@ export interface Reservacion {
   balance?: number;
   estado: EstadoReservacion;
   acompanantes?: Acompanante[];
+  acompanantes_amenidades?: AcompananteAmenidad[];
   titular_brazalete_entregado?: boolean;
   titular_fecha_entrega?: string;
   created_at?: string;

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Reservacion, Acompanante } from '../../types';
+import { Reservacion, Acompanante, AcompananteAmenidad } from '../../types';
 import { 
   X, 
   User, 
@@ -15,7 +15,8 @@ import {
   Check,
   Clock,
   Edit3,
-  QrCode
+  QrCode,
+  Waves
 } from 'lucide-react';
 
 interface ReservationDetailModalProps {
@@ -36,7 +37,7 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
   onOpenQrPass
 }) => {
   const { 
-    reservaciones,
+    reservaciones, 
     getPropiedadById, 
     getHuespedById, 
     getOwnerByPropiedadId, 
@@ -71,6 +72,11 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
 
   const totalOccupants = 1 + acompList.length;
   const deliveredCount = (titularDelivered ? 1 : 0) + acompList.filter(a => a.brazalete_entregado).length;
+
+  // Parse amenidades
+  const rawAmenidades = Array.isArray(currentReservation.acompanantes_amenidades) ? currentReservation.acompanantes_amenidades : [];
+  const totalAmenidades = rawAmenidades.length;
+  const deliveredAmenidadesCount = rawAmenidades.filter(a => a.brazalete_entregado).length;
 
   // Handler for individual delivery toggle (instantly persists and updates live view)
   const handleToggleDelivery = async (targetId: string, currentStatus: boolean, personName: string) => {
@@ -168,6 +174,64 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
       );
     } catch (err: any) {
       showToast('Error al actualizar brazaletes', 'error');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleToggleAmenidadDelivery = async (targetId: string, currentStatus: boolean, personName: string) => {
+    try {
+      setIsUpdating(true);
+      const nextStatus = !currentStatus;
+      const now = new Date().toISOString();
+
+      const updatedAmenidades = rawAmenidades.map(a => {
+        if (a.id === targetId) {
+          return {
+            ...a,
+            brazalete_entregado: nextStatus,
+            fecha_entrega: nextStatus ? now : undefined
+          };
+        }
+        return a;
+      });
+
+      await updateReservacion(currentReservation.id, {
+        acompanantes_amenidades: updatedAmenidades
+      });
+
+      showToast(
+        `Brazalete amenidad de ${personName}: ${nextStatus ? 'Entregado' : 'Pendiente'}`, 
+        nextStatus ? 'success' : 'info'
+      );
+    } catch (err: any) {
+      showToast('Error al actualizar brazalete de amenidad', 'error');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleToggleAllAmenidades = async (deliver: boolean) => {
+    try {
+      setIsUpdating(true);
+      const now = new Date().toISOString();
+
+      const updatedAmenidades = rawAmenidades.map(a => ({
+        ...a,
+        brazalete_entregado: deliver,
+        fecha_entrega: deliver ? (a.fecha_entrega || now) : undefined
+      }));
+
+      await updateReservacion(currentReservation.id, {
+        acompanantes_amenidades: updatedAmenidades
+      });
+
+      showToast(
+        deliver ? 'Brazaletes de amenidades entregados' : 'Brazaletes de amenidades pendientes', 
+        deliver ? 'success' : 'info'
+      );
+    } catch (err: any) {
+      showToast('Error al actualizar brazaletes de amenidades', 'error');
     } finally {
       setIsUpdating(false);
     }
@@ -333,7 +397,7 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
                 >
                   <div>
                     <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                      <span className="text-xs">{acomp.nombre_completo}</span>
+                      <span className="text-xs">{acomp.nombre_completo || `Acompañante ${idx + 1} (Por registrar)`}</span>
                       <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 font-semibold border border-slate-200">
                         {acomp.tipo}
                       </span>
@@ -349,7 +413,7 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
                     onClick={() => handleToggleDelivery(
                       acomp.id, 
                       acomp.brazalete_entregado, 
-                      acomp.nombre_completo
+                      acomp.nombre_completo || `Acompañante ${idx + 1}`
                     )}
                     className={`px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-all active:scale-95 ${
                       acomp.brazalete_entregado 
@@ -373,6 +437,89 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Separador Visual y Lista de Acompañantes de Solo Amenidades */}
+          <div className="p-3 rounded-xl bg-gradient-to-b from-sky-50/60 to-slate-50 border border-sky-200 space-y-2">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-1.5">
+                <Waves className="w-4 h-4 text-sky-700" />
+                <span className="text-xs font-bold text-slate-900">Acompañantes de Solo Uso de Amenidades</span>
+              </div>
+              
+              {rawAmenidades.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    deliveredAmenidadesCount === totalAmenidades 
+                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' 
+                      : 'bg-amber-100 text-amber-800 border border-amber-300'
+                  }`}>
+                    {deliveredAmenidadesCount} / {totalAmenidades} Brazaletes Entregados
+                  </span>
+
+                  <button
+                    type="button"
+                    disabled={isUpdating}
+                    onClick={() => handleToggleAllAmenidades(deliveredAmenidadesCount !== totalAmenidades)}
+                    className="text-[10px] text-sky-700 hover:text-sky-900 font-bold hover:underline cursor-pointer"
+                  >
+                    {deliveredAmenidadesCount === totalAmenidades ? 'Desmarcar todos' : '✓ Entregar a todos'}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {rawAmenidades.length === 0 ? (
+              <div className="p-2.5 text-center rounded-lg border border-dashed border-sky-200 bg-white/70 text-slate-500 text-[11px]">
+                <span>Sin acompañantes de solo amenidades registrados en esta reservación.</span>
+              </div>
+            ) : (
+              <div className="space-y-1.5 max-h-40 overflow-y-auto pr-0.5">
+                {rawAmenidades.map((acomp, idx) => (
+                  <div 
+                    key={acomp.id || idx} 
+                    className="flex items-center justify-between px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs hover:border-sky-300 transition-colors shadow-2xs"
+                  >
+                    <div>
+                      <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                        <span className="text-xs">{acomp.nombre_completo || `Acompañante ${idx + 1} (Por registrar)`}</span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-sky-50 text-sky-700 font-semibold border border-sky-200">
+                          Amenidades
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={isUpdating}
+                      onClick={() => handleToggleAmenidadDelivery(
+                        acomp.id, 
+                        acomp.brazalete_entregado, 
+                        acomp.nombre_completo || `Acompañante ${idx + 1}`
+                      )}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-all active:scale-95 ${
+                        acomp.brazalete_entregado 
+                          ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 shadow-2xs' 
+                          : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 shadow-2xs'
+                      }`}
+                      title="Haz clic para alternar entrega de brazalete de amenidad"
+                    >
+                      {acomp.brazalete_entregado ? (
+                        <>
+                          <Check className="w-3 h-3 text-emerald-600 stroke-[3]" />
+                          <span>Brazalete Entregado</span>
+                        </>
+                      ) : (
+                        <>
+                          <Clock className="w-3 h-3 text-amber-600" />
+                          <span>Pendiente</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Brazaletes & Vehículo Highlight Strip */}

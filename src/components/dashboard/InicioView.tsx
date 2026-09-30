@@ -586,9 +586,9 @@ export const InicioView: React.FC<InicioViewProps> = ({
             <div>
               <h2 className="text-base font-black text-slate-950 flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-teal-800" />
-                <span>Ocupación por Torres (Torres A - J)</span>
+                <span>Ocupación por Torres</span>
               </h2>
-              <p className="text-xs text-slate-600 font-medium">Estado de condominios ocupados vs disponibles en vivo</p>
+
             </div>
             <button
               onClick={() => onNavigateTab('properties')}

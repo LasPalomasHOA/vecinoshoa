@@ -9,6 +9,7 @@ import {
   Reservacion, 
   SolicitudAcceso,
   Acompanante,
+  AcompananteAmenidad,
   BitacoraEntry
 } from '../types';
 import { api } from '../services/api';
@@ -73,7 +74,8 @@ interface AppContextType {
     brazaletes?: string, 
     vehiculo?: string, 
     acompanantes?: Acompanante[], 
-    titularBrazaleteEntregado?: boolean
+    titularBrazaleteEntregado?: boolean,
+    acompanantes_amenidades?: AcompananteAmenidad[]
   ) => Promise<void>;
   checkOutReservacion: (id: number) => Promise<void>;
   deleteReservacion: (id: number) => Promise<void>;
@@ -699,7 +701,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     brazaletes?: string, 
     vehiculo?: string,
     acompanantes?: Acompanante[],
-    titularBrazaleteEntregado?: boolean
+    titularBrazaleteEntregado?: boolean,
+    acompanantes_amenidades?: AcompananteAmenidad[]
   ) => {
     try {
       const current = reservaciones.find(r => r.id === id);
@@ -716,6 +719,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       if (titularBrazaleteEntregado !== undefined) {
         payload.titular_brazalete_entregado = titularBrazaleteEntregado;
+      }
+      if (acompanantes_amenidades !== undefined) {
+        payload.acompanantes_amenidades = acompanantes_amenidades;
       }
 
       const updated = await api.reservaciones.update(id, payload);

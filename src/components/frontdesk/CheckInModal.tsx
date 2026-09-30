@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Reservacion, Acompanante } from '../../types';
-import { CheckCircle2, X, Tag, Car, Key, Users, Check, Clock, QrCode } from 'lucide-react';
+import { Reservacion, Acompanante, AcompananteAmenidad } from '../../types';
+import { CheckCircle2, X, Tag, Car, Key, Users, Check, Clock, QrCode, Waves } from 'lucide-react';
 
 interface CheckInModalProps {
   isOpen: boolean;
@@ -24,6 +24,7 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({
   const [vehiculoInfo, setVehiculoInfo] = useState('');
   const [titularEntregado, setTitularEntregado] = useState(true);
   const [acompanantesList, setAcompanantesList] = useState<Acompanante[]>([]);
+  const [amenidadesList, setAmenidadesList] = useState<AcompananteAmenidad[]>([]);
   const [openQrAfterCheckIn, setOpenQrAfterCheckIn] = useState(true);
 
   useEffect(() => {
@@ -41,6 +42,9 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({
           : (currentReservation.titular_brazalete_entregado ?? true)
       );
       setAcompanantesList(compList);
+
+      const rawAmenidades = Array.isArray(currentReservation.acompanantes_amenidades) ? currentReservation.acompanantes_amenidades : [];
+      setAmenidadesList(rawAmenidades);
     }
   }, [currentReservation, isOpen]);
 
@@ -51,6 +55,17 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({
 
   const totalPeople = 1 + acompanantesList.length;
   const deliveredCount = (titularEntregado ? 1 : 0) + acompanantesList.filter(a => a.brazalete_entregado).length;
+
+  const totalAmenidades = amenidadesList.length;
+  const deliveredAmenidadesCount = amenidadesList.filter(a => a.brazalete_entregado).length;
+
+  const handleUpdateAcompName = (id: string, name: string) => {
+    setAcompanantesList(prev => prev.map(a => a.id === id ? { ...a, nombre_completo: name } : a));
+  };
+
+  const handleUpdateAmenidadName = (id: string, name: string) => {
+    setAmenidadesList(prev => prev.map(a => a.id === id ? { ...a, nombre_completo: name } : a));
+  };
 
   const handleToggleAcompananteBrazalete = (id: string) => {
     setAcompanantesList(prev => prev.map(a => {
@@ -70,6 +85,29 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({
     setTitularEntregado(deliver);
     const now = new Date().toISOString();
     setAcompanantesList(prev => prev.map(a => ({
+      ...a,
+      brazalete_entregado: deliver,
+      fecha_entrega: deliver ? (a.fecha_entrega || now) : undefined
+    })));
+  };
+
+  const handleToggleAmenidadBrazalete = (id: string) => {
+    setAmenidadesList(prev => prev.map(a => {
+      if (a.id === id) {
+        const nextState = !a.brazalete_entregado;
+        return {
+          ...a,
+          brazalete_entregado: nextState,
+          fecha_entrega: nextState ? new Date().toISOString() : undefined
+        };
+      }
+      return a;
+    }));
+  };
+
+  const handleMarkAllAmenidadesDelivered = (deliver: boolean) => {
+    const now = new Date().toISOString();
+    setAmenidadesList(prev => prev.map(a => ({
       ...a,
       brazalete_entregado: deliver,
       fecha_entrega: deliver ? (a.fecha_entrega || now) : undefined
@@ -97,7 +135,8 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({
       finalBrazaleteNote,
       vehiculoInfo,
       finalAcompList,
-      titularEntregado
+      titularEntregado,
+      amenidadesList
     );
     onClose();
 
@@ -109,6 +148,7 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({
           brazaletes: finalBrazaleteNote,
           vehiculo_info: vehiculoInfo,
           acompanantes: finalAcompList,
+          acompanantes_amenidades: amenidadesList,
           titular_brazalete_entregado: titularEntregado
         });
       }, 100);
@@ -231,24 +271,30 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({
               </div>
 
               {/* Acompañantes items */}
-              {acompanantesList.map((acomp) => (
-                <div key={acomp.id} className="flex items-center justify-between p-2.5 bg-white border border-slate-200 rounded-xl">
-                  <div>
-                    <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                      <span>{acomp.nombre_completo || 'Acompañante'}</span>
-                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 font-semibold border border-slate-200">
+              {acompanantesList.map((acomp, idx) => (
+                <div key={acomp.id} className="flex items-center justify-between gap-2.5 p-2.5 bg-white border border-slate-200 rounded-xl hover:border-slate-300 transition-colors">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="text"
+                        value={acomp.nombre_completo}
+                        onChange={(e) => handleUpdateAcompName(acomp.id, e.target.value)}
+                        placeholder={`Acompañante ${idx + 1} (Escribir nombre)`}
+                        className="w-full text-xs font-bold text-slate-900 border-b border-dashed border-slate-300 hover:border-teal-500 focus:border-teal-600 focus:outline-hidden bg-transparent px-1 py-0.5 rounded-sm"
+                      />
+                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 font-semibold border border-slate-200 shrink-0">
                         {acomp.tipo}
                       </span>
                     </div>
                     {acomp.telefono && (
-                      <span className="text-[10px] text-slate-500">{acomp.telefono}</span>
+                      <span className="text-[10px] text-slate-500 px-1">{acomp.telefono}</span>
                     )}
                   </div>
 
                   <button
                     type="button"
                     onClick={() => handleToggleAcompananteBrazalete(acomp.id)}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0 ${
                       acomp.brazalete_entregado 
                         ? 'bg-emerald-600 text-white shadow-xs' 
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-300'
@@ -271,6 +317,88 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({
 
             </div>
           </div>
+
+          {/* Separador Visual y Lista de Entrega de Brazaletes para Acompañantes de Amenidades */}
+          {amenidadesList.length > 0 && (
+            <div className="p-4 rounded-xl bg-sky-50/50 border border-sky-200 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Waves className="w-4 h-4 text-sky-700" />
+                  <span className="text-xs font-bold text-slate-900">Acompañantes de Solo Uso de Amenidades</span>
+                </div>
+                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                  deliveredAmenidadesCount === totalAmenidades 
+                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' 
+                    : 'bg-amber-100 text-amber-800 border border-amber-300'
+                }`}>
+                  {deliveredAmenidadesCount} / {totalAmenidades} Entregados
+                </span>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="flex items-center justify-end gap-2 text-[11px]">
+                <button
+                  type="button"
+                  onClick={() => handleMarkAllAmenidadesDelivered(true)}
+                  className="text-sky-700 hover:text-sky-900 font-bold hover:underline cursor-pointer"
+                >
+                  ✓ Entregar a todos
+                </button>
+                <span className="text-slate-300">|</span>
+                <button
+                  type="button"
+                  onClick={() => handleMarkAllAmenidadesDelivered(false)}
+                  className="text-slate-500 hover:text-slate-700 hover:underline cursor-pointer"
+                >
+                  Desmarcar todos
+                </button>
+              </div>
+
+              {/* Amenity Occupants list */}
+              <div className="space-y-2 pt-1">
+                {amenidadesList.map((acomp, idx) => (
+                  <div key={acomp.id} className="flex items-center justify-between gap-2.5 p-2.5 bg-white border border-slate-200 rounded-xl hover:border-slate-300 transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="text"
+                          value={acomp.nombre_completo}
+                          onChange={(e) => handleUpdateAmenidadName(acomp.id, e.target.value)}
+                          placeholder={`Acompañante Amenidad ${idx + 1} (Escribir nombre)`}
+                          className="w-full text-xs font-bold text-slate-900 border-b border-dashed border-slate-300 hover:border-sky-500 focus:border-sky-600 focus:outline-hidden bg-transparent px-1 py-0.5 rounded-sm"
+                        />
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-sky-50 text-sky-700 font-semibold border border-sky-200 shrink-0">
+                          Amenidades
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleToggleAmenidadBrazalete(acomp.id)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0 ${
+                        acomp.brazalete_entregado 
+                          ? 'bg-emerald-600 text-white shadow-xs' 
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-300'
+                      }`}
+                    >
+                      {acomp.brazalete_entregado ? (
+                        <>
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Entregado</span>
+                        </>
+                      ) : (
+                        <>
+                          <Clock className="w-3.5 h-3.5 text-amber-600" />
+                          <span>Pendiente</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Color o Notas de Brazaletes */}
           <div>

@@ -23,7 +23,8 @@ import {
   LogOut,
   Sparkles,
   Loader2,
-  AlertTriangle
+  AlertTriangle,
+  Waves
 } from 'lucide-react';
 
 interface GuestQrModalProps {
@@ -118,6 +119,10 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
     ? currentReservation.acompanantes.filter(a => a.id !== 'titular') 
     : [];
   const totalOccupants = 1 + acompList.length;
+
+  const rawAmenidades = Array.isArray(currentReservation.acompanantes_amenidades) 
+    ? currentReservation.acompanantes_amenidades 
+    : [];
 
   // Helper to generate a Canvas Blob from the full Pass Card
   const generatePassCanvas = async (): Promise<HTMLCanvasElement | null> => {
@@ -539,8 +544,30 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
                       className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-slate-50 border border-slate-200 text-[10px] text-slate-700 font-medium"
                     >
                       <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
-                      {a.nombre_completo}
+                      {a.nombre_completo || `Acompañante ${idx + 1}`}
                       <span className="text-[9px] text-slate-400">({a.tipo})</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Amenity-Only Guests Mini List if any */}
+            {rawAmenidades.length > 0 && (
+              <div className="mt-2 pt-2 border-t border-slate-200/80">
+                <div className="text-[9px] font-bold text-sky-700 uppercase tracking-wider mb-1 flex items-center gap-1">
+                  <Waves className="w-2.5 h-2.5" />
+                  <span>Acompañantes de Solo Uso de Amenidades ({rawAmenidades.length})</span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {rawAmenidades.map((a, idx) => (
+                    <span 
+                      key={a.id || idx}
+                      className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-sky-50 border border-sky-200 text-[10px] text-sky-800 font-medium"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-sky-500" />
+                      {a.nombre_completo || `Acompañante ${idx + 1}`}
+                      <span className="text-[9px] text-sky-600 font-semibold">({a.brazalete_entregado ? 'Brazalete Entregado' : 'Pendiente'})</span>
                     </span>
                   ))}
                 </div>

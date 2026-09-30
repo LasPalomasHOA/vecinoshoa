@@ -526,6 +526,7 @@ export async function getAllReservaciones(): Promise<Reservacion[]> {
       numero_ocupantes, numero_autos, notas, brazaletes, vehiculo_info, 
       CAST(balance AS FLOAT) as balance, estado, 
       COALESCE(acompanantes, '[]'::jsonb) AS acompanantes,
+      COALESCE(acompanantes_amenidades, '[]'::jsonb) AS acompanantes_amenidades,
       created_at, updated_at
     FROM ${T.reservaciones()}
     ORDER BY fecha_checkin DESC, id DESC;
@@ -542,6 +543,7 @@ export async function getReservacionById(id: number): Promise<Reservacion | null
       numero_ocupantes, numero_autos, notas, brazaletes, vehiculo_info, 
       CAST(balance AS FLOAT) as balance, estado, 
       COALESCE(acompanantes, '[]'::jsonb) AS acompanantes,
+      COALESCE(acompanantes_amenidades, '[]'::jsonb) AS acompanantes_amenidades,
       created_at, updated_at
     FROM ${T.reservaciones()}
     WHERE id = $1;
@@ -565,14 +567,15 @@ export async function createReservacion(
 
   const generatedCode = data.codigo || `RES-${Math.floor(100000 + Math.random() * 900000)}`;
   const acompanantesJson = JSON.stringify(data.acompanantes || []);
+  const acompanantesAmenidadesJson = JSON.stringify(data.acompanantes_amenidades || []);
 
   const res = await query<Reservacion>(`
     INSERT INTO ${T.reservaciones()} (
       codigo, propiedad_id, huesped_id, tipo_huesped, 
       fecha_checkin, fecha_checkout, numero_ocupantes, numero_autos, 
-      notas, brazaletes, vehiculo_info, balance, estado, acompanantes
+      notas, brazaletes, vehiculo_info, balance, estado, acompanantes, acompanantes_amenidades
     )
-    VALUES ($1, $2, $3, $4, $5::date, $6::date, $7, $8, $9, $10, $11, $12, $13, $14::jsonb)
+    VALUES ($1, $2, $3, $4, $5::date, $6::date, $7, $8, $9, $10, $11, $12, $13, $14::jsonb, $15::jsonb)
     RETURNING 
       id, codigo, propiedad_id, huesped_id, tipo_huesped, 
       TO_CHAR(fecha_checkin, 'YYYY-MM-DD') AS fecha_checkin, 
@@ -580,6 +583,7 @@ export async function createReservacion(
       numero_ocupantes, numero_autos, notas, brazaletes, vehiculo_info, 
       CAST(balance AS FLOAT) as balance, estado, 
       COALESCE(acompanantes, '[]'::jsonb) AS acompanantes,
+      COALESCE(acompanantes_amenidades, '[]'::jsonb) AS acompanantes_amenidades,
       created_at, updated_at;
   `, [
     generatedCode,
@@ -595,7 +599,8 @@ export async function createReservacion(
     data.vehiculo_info || null,
     data.balance || 0,
     data.estado || 'Confirmada',
-    acompanantesJson
+    acompanantesJson,
+    acompanantesAmenidadesJson
   ]);
 
   return res.rows[0];
@@ -637,6 +642,10 @@ export async function updateReservacion(id: number, data: Partial<Reservacion>):
     fields.push(`acompanantes = $${idx++}::jsonb`);
     values.push(JSON.stringify(data.acompanantes || []));
   }
+  if (data.acompanantes_amenidades !== undefined) {
+    fields.push(`acompanantes_amenidades = $${idx++}::jsonb`);
+    values.push(JSON.stringify(data.acompanantes_amenidades || []));
+  }
 
   values.push(id);
   const res = await query<Reservacion>(`
@@ -650,6 +659,7 @@ export async function updateReservacion(id: number, data: Partial<Reservacion>):
       numero_ocupantes, numero_autos, notas, brazaletes, vehiculo_info, 
       CAST(balance AS FLOAT) as balance, estado, 
       COALESCE(acompanantes, '[]'::jsonb) AS acompanantes,
+      COALESCE(acompanantes_amenidades, '[]'::jsonb) AS acompanantes_amenidades,
       created_at, updated_at;
   `, values);
 
