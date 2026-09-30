@@ -170,12 +170,13 @@ INSERT INTO gestion_residencial.grupos_propiedad (id, nombre, fechas_cobro, inte
   (3, 'PREMIUM RESIDENCES', true, true, true)
 ON CONFLICT (nombre) DO NOTHING;
 
--- Usuarios de Prueba (Dueños y Administradores)
+-- Usuarios de Prueba (Dueños, Administradores y Supervisores)
 INSERT INTO gestion_residencial.usuarios (id, email, nombre, apellido, rol, telefono, idioma, ciudad, estado, codigo_postal, status) VALUES 
   (1, 'roberto.garza@gmail.com', 'Roberto', 'Garza', 'Dueño', '638-102-3344', 'es', 'Puerto Peñasco', 'Sonora', '83550', 'Active'),
   (2, 'sarah.miller@cox.net', 'Sarah', 'Miller', 'Dueño', '480-555-0192', 'en', 'Phoenix', 'Arizona', '85001', 'Active'),
   (3, 'carlos.mendoza@laspalomas.com', 'Carlos', 'Mendoza', 'Dueño', '662-441-9988', 'es', 'Hermosillo', 'Sonora', '83000', 'Active'),
-  (4, 'admin@laspalomas.com', 'Admin', 'HOA Manager', 'Administrador', '638-382-0000', 'es', 'Puerto Peñasco', 'Sonora', '83550', 'Active')
+  (4, 'admin@laspalomas.com', 'Francisco', 'Amado', 'Administrador', '638-382-0000', 'es', 'Puerto Peñasco', 'Sonora', '83550', 'Active'),
+  (5, 'supervisor@laspalomas.com', 'Carlos', 'Méndez', 'Supervisor', '638-382-9900', 'es', 'Puerto Peñasco', 'Sonora', '83550', 'Active')
 ON CONFLICT (email) DO NOTHING;
 
 -- Propiedades Iniciales

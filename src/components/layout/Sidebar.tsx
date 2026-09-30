@@ -13,7 +13,9 @@ import {
   ChevronLeft,
   ChevronRight,
   LayoutDashboard,
-  KeyRound
+  KeyRound,
+  ShieldCheck,
+  ClipboardList
 } from 'lucide-react';
 
 import logoImg from '../../assets/logoDashboard.png';
@@ -26,6 +28,7 @@ export const Sidebar: React.FC = () => {
     reservaciones,
     solicitudes,
     propiedades,
+    bitacora,
     resetToDefaults,
     isSidebarCollapsed,
     toggleSidebar
@@ -80,6 +83,14 @@ export const Sidebar: React.FC = () => {
       id: 'reports' as const,
       label: 'Reportes de Entradas',
       icon: FileSpreadsheet,
+    },
+    {
+      id: 'bitacora' as const,
+      label: 'Bitácora & Auditoría',
+      icon: ShieldCheck,
+      badge: bitacora.length > 0 ? `${bitacora.length}` : undefined,
+      badgeCount: bitacora.length > 0 ? bitacora.length : undefined,
+      badgeColor: 'bg-emerald-100 text-emerald-800 font-bold'
     }
   ];
 

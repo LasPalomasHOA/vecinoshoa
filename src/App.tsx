@@ -14,6 +14,7 @@ import { PropertiesView } from './components/properties/PropertiesView';
 import { UsersView } from './components/users/UsersView';
 import { RequestsView } from './components/requests/RequestsView';
 import { ReportsView } from './components/reports/ReportsView';
+import { BitacoraView } from './components/bitacora/BitacoraView';
 
 // Modals
 import { ReservationModal } from './components/frontdesk/ReservationModal';
@@ -191,6 +192,10 @@ export const App: React.FC = () => {
 
           {activeTab === 'reports' && (
             <ReportsView />
+          )}
+
+          {activeTab === 'bitacora' && (
+            <BitacoraView />
           )}
 
         </main>

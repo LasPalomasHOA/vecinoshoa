@@ -3,6 +3,7 @@ export type RolUsuario =
   | 'Miembro del Consejo'
   | 'Comité de Vigilancia'
   | 'Administrador'
+  | 'Supervisor'
   | 'Contabilidad'
   | 'Recepcionista'
   | 'Guardia de Seguridad'
@@ -15,6 +16,50 @@ export type RolUsuario =
   | 'No definido';
 
 export type UserStatus = 'Active' | 'Inactive' | 'Suspended';
+
+export type TipoAccionBitacora = 
+  | 'CREACIÓN'
+  | 'EDICIÓN'
+  | 'ELIMINACIÓN'
+  | 'CHECK-IN'
+  | 'CHECK-OUT'
+  | 'CAMBIO_ESTATUS'
+  | 'ACCESO_SISTEMA'
+  | 'CONFIGURACIÓN'
+  | 'NOTA_SUPERVISOR';
+
+export type ModuloBitacora = 
+  | 'Reservaciones'
+  | 'Propiedades'
+  | 'Usuarios'
+  | 'Torres'
+  | 'Solicitudes de Acceso'
+  | 'Grupos de Cobro'
+  | 'Autenticación'
+  | 'Sistema';
+
+export interface BitacoraEntry {
+  id: string;
+  timestamp: string; // ISO string
+  usuario_id?: number;
+  usuario_nombre: string;
+  usuario_email: string;
+  usuario_rol: RolUsuario | string;
+  accion: TipoAccionBitacora;
+  modulo: ModuloBitacora;
+  descripcion: string;
+  entidad_id?: string | number;
+  entidad_nombre?: string;
+  detalles?: {
+    previo?: any;
+    nuevo?: any;
+    cambios?: string[];
+    notas?: string;
+    ip?: string;
+    dispositivo?: string;
+    [key: string]: any;
+  };
+}
 
 export interface Edificio {
   id: number;

@@ -57,6 +57,7 @@ export const UsersView: React.FC<UsersViewProps> = ({
   const rolesList: RolUsuario[] = [
     'Dueño',
     'Administrador',
+    'Supervisor',
     'Recepcionista',
     'Guardia de Seguridad',
     'Supervisor de Mantenimiento',

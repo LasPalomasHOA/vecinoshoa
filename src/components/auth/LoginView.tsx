@@ -158,8 +158,54 @@ export const LoginView: React.FC = () => {
               Iniciar Sesión
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 mt-1.5">
-              Ingresa al panel administrativo y de control de Las Palomas HOA.
+              Ingresa al panel administrativo y de supervisión de Las Palomas HOA.
             </p>
+          </div>
+
+          {/* Quick Demo Profile Selector */}
+          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/90 space-y-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+              Acceso Rápido por Perfil:
+            </span>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('admin@laspalomas.com');
+                  setPassword('admin123');
+                  setErrorMessage(null);
+                }}
+                className={`p-2 rounded-lg text-left border transition-all cursor-pointer ${
+                  email === 'admin@laspalomas.com'
+                    ? 'bg-teal-600 text-white border-teal-700 shadow-xs'
+                    : 'bg-white text-slate-700 border-slate-200 hover:border-teal-300'
+                }`}
+              >
+                <p className="text-xs font-bold leading-tight">👤 Administrador</p>
+                <p className={`text-[10px] mt-0.5 truncate ${email === 'admin@laspalomas.com' ? 'text-teal-100' : 'text-slate-500'}`}>
+                  Francisco Amado
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('supervisor@laspalomas.com');
+                  setPassword('supervisor123');
+                  setErrorMessage(null);
+                }}
+                className={`p-2 rounded-lg text-left border transition-all cursor-pointer ${
+                  email === 'supervisor@laspalomas.com'
+                    ? 'bg-teal-600 text-white border-teal-700 shadow-xs'
+                    : 'bg-white text-slate-700 border-slate-200 hover:border-teal-300'
+                }`}
+              >
+                <p className="text-xs font-bold leading-tight">🛡️ Supervisor</p>
+                <p className={`text-[10px] mt-0.5 truncate ${email === 'supervisor@laspalomas.com' ? 'text-teal-100' : 'text-slate-500'}`}>
+                  Carlos Méndez
+                </p>
+              </button>
+            </div>
           </div>
 
           {/* Error Banner */}

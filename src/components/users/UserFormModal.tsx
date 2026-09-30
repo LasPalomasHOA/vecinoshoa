@@ -82,6 +82,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
   const rolesList: RolUsuario[] = [
     'Dueño',
     'Administrador',
+    'Supervisor',
     'Recepcionista',
     'Guardia de Seguridad',
     'Supervisor de Mantenimiento',

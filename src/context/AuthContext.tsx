@@ -7,10 +7,12 @@ export interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string, rememberMe?: boolean) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
+  switchUserRole: (role: 'Administrador' | 'Supervisor') => void;
+  presetUsers: Usuario[];
 }
 
-// Usuario único del sistema
-export const DEFAULT_USER: Usuario = {
+// Usuarios predeterminados del sistema
+export const DEFAULT_ADMIN_USER: Usuario = {
   id: 1,
   email: 'admin@laspalomas.com',
   nombre: 'Francisco',
@@ -24,6 +26,24 @@ export const DEFAULT_USER: Usuario = {
   status: 'Active',
   created_at: '2026-01-01T08:00:00Z',
 };
+
+export const DEFAULT_SUPERVISOR_USER: Usuario = {
+  id: 2,
+  email: 'supervisor@laspalomas.com',
+  nombre: 'Carlos',
+  apellido: 'Méndez',
+  rol: 'Supervisor',
+  telefono: '+52 638 382 9900',
+  idioma: 'Español',
+  ciudad: 'Puerto Peñasco',
+  estado_geo: 'Sonora',
+  codigo_postal: '83550',
+  status: 'Active',
+  created_at: '2026-01-15T09:00:00Z',
+};
+
+export const PRESET_USERS = [DEFAULT_ADMIN_USER, DEFAULT_SUPERVISOR_USER];
+export const DEFAULT_USER = DEFAULT_ADMIN_USER;
 
 const AUTH_STORAGE_KEY = 'lp_auth_session';
 
@@ -62,17 +82,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: false, error: 'Por favor ingresa tu contraseña.' };
     }
 
-    // Usuario único del sistema
-    const userToSet: Usuario = {
-      ...DEFAULT_USER,
-      email: cleanEmail || DEFAULT_USER.email,
-    };
+    // Seleccionar usuario correspondiente o crear sesión
+    let userToSet: Usuario;
+    if (cleanEmail.includes('supervisor')) {
+      userToSet = {
+        ...DEFAULT_SUPERVISOR_USER,
+        email: cleanEmail,
+      };
+    } else {
+      userToSet = {
+        ...DEFAULT_ADMIN_USER,
+        email: cleanEmail || DEFAULT_ADMIN_USER.email,
+      };
+    }
 
     setCurrentUser(userToSet);
     const storage = rememberMe ? localStorage : sessionStorage;
     storage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userToSet));
     setIsLoading(false);
     return { success: true };
+  };
+
+  const switchUserRole = (role: 'Administrador' | 'Supervisor') => {
+    const targetUser = role === 'Supervisor' ? DEFAULT_SUPERVISOR_USER : DEFAULT_ADMIN_USER;
+    setCurrentUser(targetUser);
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(targetUser));
   };
 
   const logout = () => {
@@ -88,7 +122,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: !!currentUser,
         isLoading,
         login,
-        logout
+        logout,
+        switchUserRole,
+        presetUsers: PRESET_USERS
       }}
     >
       {children}
