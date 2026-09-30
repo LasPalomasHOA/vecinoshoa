@@ -130,9 +130,6 @@ export interface PropiedadUsuario {
 export interface Huesped {
   id: number;
   nombres: string;
-  apellidos: string;
-  telefono?: string;
-  email?: string;
   created_at?: string;
   updated_at?: string;
 }

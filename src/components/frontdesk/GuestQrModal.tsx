@@ -82,7 +82,7 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
       folio: currentReservation.codigo || `RES-${currentReservation.id}`,
       id: currentReservation.id,
       condo: prop?.nombre || `Unidad ${currentReservation.propiedad_id}`,
-      titular: huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Huésped',
+      titular: huesped?.nombres || 'Huésped',
       tipo_pase: 'Entrada & Salida',
       checkin: currentReservation.fecha_checkin,
       checkout: currentReservation.fecha_checkout,
@@ -140,7 +140,7 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
     const text = `🌴 *PASE DE ACCESO - LAS PALOMAS RESORT*\n` +
       `📌 *Folio:* ${currentReservation.codigo || currentReservation.id}\n` +
       `🏢 *Condominio:* ${prop?.nombre || currentReservation.propiedad_id}${edificioLabel ? ` (${edificioLabel})` : ''}\n` +
-      `👤 *Huésped Titular:* ${huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Huésped'}\n` +
+      `👤 *Huésped Titular:* ${huesped?.nombres || 'Huésped'}\n` +
       `📅 *Estadía:* ${currentReservation.fecha_checkin} al ${currentReservation.fecha_checkout}\n` +
       `🎟️ *Tipo de Pase:* Entrada y Salida (Estadía Completa)\n` +
       `👥 *Ocupantes:* ${totalOccupants} personas\n` +
@@ -189,14 +189,13 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
         return;
       }
 
-      const phone = huesped?.telefono?.replace(/[^0-9]/g, '') || '';
       const message = encodeURIComponent(
         `🌴 *PASE DE ACCESO DIGITAL - LAS PALOMAS RESORT*\n\n` +
         `Hola ${huesped?.nombres || ''}, te enviamos tu Pase de Acceso para el Condominio ${prop?.nombre || ''}.\n` +
         `Folio: #${currentReservation.codigo || currentReservation.id}\n` +
         `Estadía: ${currentReservation.fecha_checkin} al ${currentReservation.fecha_checkout}`
       );
-      const waUrl = phone ? `https://wa.me/${phone}?text=${message}` : `https://wa.me/?text=${message}`;
+      const waUrl = `https://wa.me/?text=${message}`;
 
       // Convert canvas to Blob
       canvas.toBlob(async (blob) => {
@@ -213,7 +212,7 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
             await navigator.share({
               files: [file],
               title: `Pase de Acceso - Condominio ${prop?.nombre || ''}`,
-              text: `Pase de Acceso para ${huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Huésped'}`
+              text: `Pase de Acceso para ${huesped?.nombres || 'Huésped'}`
             });
             showToast('Pase compartido exitosamente', 'success');
             return;
@@ -470,13 +469,8 @@ export const GuestQrModal: React.FC<GuestQrModalProps> = ({
                   <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Huésped Titular</div>
                   <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5 mt-0.5">
                     <User className="w-3.5 h-3.5 text-slate-600 shrink-0" />
-                    <span>{huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'No especificado'}</span>
+                    <span>{huesped?.nombres || 'No especificado'}</span>
                   </div>
-                  {huesped?.telefono && (
-                    <div className="text-[11px] text-slate-500 mt-0.5 ml-5">
-                      Tel: {huesped.telefono}
-                    </div>
-                  )}
                 </div>
 
                 {/* Dates & Validity */}

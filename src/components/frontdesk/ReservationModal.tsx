@@ -43,13 +43,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
   } = useApp();
 
   const [propiedadId, setPropiedadId] = useState<number>(propiedades[0]?.id || 101);
-  const [huespedId, setHuespedId] = useState<number>(huespedes[0]?.id || 1);
-  const [isNewHuesped, setIsNewHuesped] = useState<boolean>(false);
-  
-  const [newHuespedNombre, setNewHuespedNombre] = useState('');
-  const [newHuespedApellido, setNewHuespedApellido] = useState('');
-  const [newHuespedTelefono, setNewHuespedTelefono] = useState('');
-  const [newHuespedEmail, setNewHuespedEmail] = useState('');
+  const [titularNombre, setTitularNombre] = useState<string>('');
 
   const [codigo, setCodigo] = useState('');
   const [tipoHuesped, setTipoHuesped] = useState<TipoHuesped>('Huésped sin Cobro (NPG)');
@@ -71,8 +65,13 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
   useEffect(() => {
     if (reservationToEdit) {
       setPropiedadId(reservationToEdit.propiedad_id);
-      setHuespedId(reservationToEdit.huesped_id);
-      setIsNewHuesped(false);
+      
+      const rawList = Array.isArray(reservationToEdit.acompanantes) ? reservationToEdit.acompanantes : [];
+      const titularObj = rawList.find(a => a.id === 'titular');
+      const currentGuest = getHuespedById(reservationToEdit.huesped_id);
+      const initialName = titularObj?.nombre_completo || currentGuest?.nombres || '';
+      setTitularNombre(initialName);
+
       setCodigo(reservationToEdit.codigo || '');
       setTipoHuesped(reservationToEdit.tipo_huesped);
       setFechaCheckin(reservationToEdit.fecha_checkin);
@@ -85,11 +84,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
       setEstado(reservationToEdit.estado);
       setNotas(reservationToEdit.notas || '');
 
-      // Load acompanantes
-      const rawList = Array.isArray(reservationToEdit.acompanantes) ? reservationToEdit.acompanantes : [];
-      const titularObj = rawList.find(a => a.id === 'titular');
       const compList = rawList.filter(a => a.id !== 'titular');
-
       setAcompanantes(compList);
       setTitularBrazaleteEntregado(
         titularObj 
@@ -105,6 +100,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
         ? initialData.propiedadId
         : (propiedades[0]?.id || 101);
       setPropiedadId(Number(defaultProp));
+      setTitularNombre('');
       setCodigo(`RES-${Math.floor(100000 + Math.random() * 900000)}`);
       setTipoHuesped('Huésped sin Cobro (NPG)');
       
@@ -128,12 +124,11 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
       setPagoTipo('Sin pago');
       setEstado('Confirmada');
       setNotas('');
-      setIsNewHuesped(false);
       setAcompanantes([]);
       setTitularBrazaleteEntregado(false);
       setAcompanantesAmenidades([]);
     }
-  }, [reservationToEdit, isOpen, initialData, propiedades]);
+  }, [reservationToEdit, isOpen, initialData, propiedades, getHuespedById]);
 
   const nightsCount = useMemo(() => {
     if (!fechaCheckin || !fechaCheckout) return 0;
@@ -260,14 +255,11 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
         nombre_completo: a.nombre_completo.trim()
       }));
 
-    const titularGuest = huespedes.find(h => h.id === Number(huespedId));
-    const titularName = isNewHuesped 
-      ? `${newHuespedNombre.trim()} ${newHuespedApellido.trim()}`.trim()
-      : (titularGuest ? `${titularGuest.nombres} ${titularGuest.apellidos}` : 'Huésped Titular');
+    const finalTitularName = titularNombre.trim() || 'Huésped Titular';
 
     const titularItem: Acompanante = {
       id: 'titular',
-      nombre_completo: titularName || 'Huésped Titular',
+      nombre_completo: finalTitularName,
       tipo: 'Adulto',
       brazalete_entregado: titularBrazaleteEntregado,
       fecha_entrega: titularBrazaleteEntregado ? new Date().toISOString() : undefined
@@ -281,39 +273,34 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
     const brazaletesSummary = `${deliveredCount}/${finalOccupantsCount} entregados`;
 
     if (reservationToEdit) {
-      updateReservacion(reservationToEdit.id, {
-        propiedad_id: Number(propiedadId),
-        huesped_id: Number(huespedId),
-        codigo: codigo.trim() || undefined,
-        tipo_huesped: tipoHuesped,
-        fecha_checkin: fechaCheckin,
-        fecha_checkout: fechaCheckout,
-        numero_ocupantes: finalOccupantsCount,
-        numero_autos: Number(numeroAutos) || 0,
-        brazaletes: brazaletes.trim() || brazaletesSummary,
-        vehiculo_info: vehiculoInfo.trim() || undefined,
-        pago_tipo: pagoTipo,
-        estado,
-        notas: notas.trim() || undefined,
-        acompanantes: finalAcompanantes,
-        acompanantes_amenidades: cleanAmenidades,
-        titular_brazalete_entregado: titularBrazaleteEntregado,
-        titular_fecha_entrega: titularBrazaleteEntregado ? (reservationToEdit.titular_fecha_entrega || new Date().toISOString()) : undefined
-      });
+      updateReservacion(
+        reservationToEdit.id, 
+        {
+          propiedad_id: Number(propiedadId),
+          huesped_id: reservationToEdit.huesped_id,
+          codigo: codigo.trim() || undefined,
+          tipo_huesped: tipoHuesped,
+          fecha_checkin: fechaCheckin,
+          fecha_checkout: fechaCheckout,
+          numero_ocupantes: finalOccupantsCount,
+          numero_autos: Number(numeroAutos) || 0,
+          brazaletes: brazaletes.trim() || brazaletesSummary,
+          vehiculo_info: vehiculoInfo.trim() || undefined,
+          pago_tipo: pagoTipo,
+          estado,
+          notas: notas.trim() || undefined,
+          acompanantes: finalAcompanantes,
+          acompanantes_amenidades: cleanAmenidades,
+          titular_brazalete_entregado: titularBrazaleteEntregado,
+          titular_fecha_entrega: titularBrazaleteEntregado ? (reservationToEdit.titular_fecha_entrega || new Date().toISOString()) : undefined
+        }, 
+        { nombres: finalTitularName }
+      );
     } else {
-      const huespedData = isNewHuesped
-        ? {
-            nombres: newHuespedNombre.trim() || 'Nuevo',
-            apellidos: newHuespedApellido.trim() || 'Huésped',
-            telefono: newHuespedTelefono.trim() || undefined,
-            email: newHuespedEmail.trim() || undefined
-          }
-        : undefined;
-
       addReservacion(
         {
           propiedad_id: Number(propiedadId) || propiedades[0]?.id || 101,
-          huesped_id: isNewHuesped ? 0 : Number(huespedId) || 1,
+          huesped_id: 0,
           codigo: codigo.trim() || undefined,
           tipo_huesped: tipoHuesped,
           fecha_checkin: fechaCheckin,
@@ -330,7 +317,9 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
           titular_brazalete_entregado: titularBrazaleteEntregado,
           titular_fecha_entrega: titularBrazaleteEntregado ? new Date().toISOString() : undefined
         },
-        huespedData
+        {
+          nombres: finalTitularName
+        }
       );
     }
     onClose();
@@ -398,81 +387,21 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
             </div>
           </div>
 
-          {/* Guest Selector (Titular) */}
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-teal-700" /> Huésped Titular (Responsable)
-              </span>
-              {!reservationToEdit && (
-                <button
-                  type="button"
-                  onClick={() => setIsNewHuesped(!isNewHuesped)}
-                  className="text-xs text-teal-700 hover:underline font-bold"
-                >
-                  {isNewHuesped ? '← Seleccionar existente' : '+ Registrar nuevo huésped'}
-                </button>
-              )}
+          {/* Huésped Titular (Responsable) */}
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/90 space-y-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-teal-700" /> Huésped Titular (Responsable) *
+              </label>
+              <input
+                type="text"
+                required
+                value={titularNombre}
+                onChange={(e) => setTitularNombre(e.target.value)}
+                placeholder="Nombre completo del titular (ej. Alejandro Vázquez Morales)"
+                className="w-full px-3 py-2 rounded-lg form-input text-xs font-bold text-slate-900"
+              />
             </div>
-
-            {isNewHuesped ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">Nombres *</label>
-                  <input
-                    type="text"
-                    required
-                    value={newHuespedNombre}
-                    onChange={(e) => setNewHuespedNombre(e.target.value)}
-                    placeholder="ej. Carlos"
-                    className="w-full px-3 py-2 rounded-lg form-input text-xs"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">Apellidos *</label>
-                  <input
-                    type="text"
-                    required
-                    value={newHuespedApellido}
-                    onChange={(e) => setNewHuespedApellido(e.target.value)}
-                    placeholder="ej. Hernandez"
-                    className="w-full px-3 py-2 rounded-lg form-input text-xs"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">Teléfono</label>
-                  <input
-                    type="text"
-                    value={newHuespedTelefono}
-                    onChange={(e) => setNewHuespedTelefono(e.target.value)}
-                    placeholder="+52 662 000 0000"
-                    className="w-full px-3 py-2 rounded-lg form-input text-xs"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">Email</label>
-                  <input
-                    type="email"
-                    value={newHuespedEmail}
-                    onChange={(e) => setNewHuespedEmail(e.target.value)}
-                    placeholder="correo@ejemplo.com"
-                    className="w-full px-3 py-2 rounded-lg form-input text-xs"
-                  />
-                </div>
-              </div>
-            ) : (
-              <select
-                value={huespedId}
-                onChange={(e) => setHuespedId(Number(e.target.value))}
-                className="w-full px-3 py-2 rounded-lg form-input text-xs font-semibold"
-              >
-                {huespedes.map(h => (
-                  <option key={h.id} value={h.id}>
-                    {h.nombres} {h.apellidos} {h.telefono ? `(${h.telefono})` : ''}
-                  </option>
-                ))}
-              </select>
-            )}
 
             {/* Titular Wristband Delivery Status */}
             <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between">
@@ -849,7 +778,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
               <div>
                 <span className="font-bold text-rose-950 block">Fechas No Disponibles (Superposición de Reservaciones):</span>
                 <span className="text-rose-800 text-[11px] leading-relaxed">
-                  Este condominio ya se encuentra reservado del <strong>{conflictReservation.fecha_checkin}</strong> al <strong>{conflictReservation.fecha_checkout}</strong> por <strong>{conflictGuest ? `${conflictGuest.nombres} ${conflictGuest.apellidos}` : 'otro huésped'}</strong> (Folio #{conflictReservation.codigo || conflictReservation.id}). No se permiten sobreventas.
+                  Este condominio ya se encuentra reservado del <strong>{conflictReservation.fecha_checkin}</strong> al <strong>{conflictReservation.fecha_checkout}</strong> por <strong>{conflictGuest?.nombres || 'otro huésped'}</strong> (Folio #{conflictReservation.codigo || conflictReservation.id}). No se permiten sobreventas.
                 </span>
               </div>
             </div>

@@ -491,29 +491,26 @@ async function deletePropiedadUsuario(id) {
 }
 async function getAllHuespedes() {
   const res = await query(`
-    SELECT id, nombres, apellidos, telefono, email, created_at, updated_at
+    SELECT id, nombres, created_at, updated_at
     FROM ${T.huespedes()}
-    ORDER BY nombres ASC, apellidos ASC;
+    ORDER BY nombres ASC;
   `);
   return res.rows;
 }
 async function getHuespedById(id) {
   return queryOne(`
-    SELECT id, nombres, apellidos, telefono, email, created_at, updated_at
+    SELECT id, nombres, created_at, updated_at
     FROM ${T.huespedes()}
     WHERE id = $1;
   `, [id]);
 }
 async function createHuesped(data) {
   const res = await query(`
-    INSERT INTO ${T.huespedes()} (nombres, apellidos, telefono, email)
-    VALUES ($1, $2, $3, $4)
-    RETURNING id, nombres, apellidos, telefono, email, created_at, updated_at;
+    INSERT INTO ${T.huespedes()} (nombres)
+    VALUES ($1)
+    RETURNING id, nombres, created_at, updated_at;
   `, [
-    data.nombres.trim(),
-    data.apellidos.trim(),
-    data.telefono || null,
-    data.email ? data.email.trim().toLowerCase() : null
+    (data.nombres || '').trim()
   ]);
   return res.rows[0];
 }
@@ -525,24 +522,12 @@ async function updateHuesped(id, data) {
     fields.push(`nombres = $${idx++}`);
     values.push(data.nombres.trim());
   }
-  if (data.apellidos !== void 0) {
-    fields.push(`apellidos = $${idx++}`);
-    values.push(data.apellidos.trim());
-  }
-  if (data.telefono !== void 0) {
-    fields.push(`telefono = $${idx++}`);
-    values.push(data.telefono);
-  }
-  if (data.email !== void 0) {
-    fields.push(`email = $${idx++}`);
-    values.push(data.email.trim().toLowerCase());
-  }
   values.push(id);
   const res = await query(`
     UPDATE ${T.huespedes()}
     SET ${fields.join(", ")}
     WHERE id = $${idx}
-    RETURNING id, nombres, apellidos, telefono, email, created_at, updated_at;
+    RETURNING id, nombres, created_at, updated_at;
   `, values);
   return res.rows[0] || null;
 }

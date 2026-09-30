@@ -697,7 +697,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
                           const widthPct = (nightsInMonth / totalDays) * 100;
 
                           const huesped = getHuespedById(res.huesped_id);
-                          const guestName = huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Huésped';
+                          const guestName = huesped?.nombres || 'Huésped';
                           const acompList = Array.isArray(res.acompanantes) ? res.acompanantes.filter(a => a.id !== 'titular') : [];
                           const acompNames = acompList.length > 0 ? ` | Acompañantes Habitación: ${acompList.map((a, i) => a.nombre_completo || `Acompañante ${i + 1}`).join(', ')}` : '';
                           const amenityList = Array.isArray(res.acompanantes_amenidades) ? res.acompanantes_amenidades : [];

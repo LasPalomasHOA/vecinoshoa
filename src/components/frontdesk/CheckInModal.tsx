@@ -122,7 +122,7 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({
 
     const titularItem: Acompanante = {
       id: 'titular',
-      nombre_completo: huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Huésped Titular',
+      nombre_completo: huesped?.nombres || 'Huésped Titular',
       tipo: 'Adulto',
       brazalete_entregado: titularEntregado,
       fecha_entrega: titularEntregado ? new Date().toISOString() : undefined
@@ -185,7 +185,7 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({
           <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5 text-xs">
             <div className="flex justify-between">
               <span className="text-slate-500 font-medium">Huésped Titular:</span>
-              <span className="font-bold text-slate-900">{huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'N/A'}</span>
+              <span className="font-bold text-slate-900">{huesped?.nombres || 'N/A'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500 font-medium">Periodo de Estadía:</span>
@@ -239,12 +239,12 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({
               <div className="flex items-center justify-between p-2.5 bg-white border border-slate-200 rounded-xl">
                 <div>
                   <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                    <span>{huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Huésped Titular'}</span>
+                    <span>{huesped?.nombres || 'Huésped Titular'}</span>
                     <span className="text-[10px] px-1.5 py-0.2 rounded bg-teal-50 text-teal-700 font-semibold border border-teal-200">
                       Titular
                     </span>
                   </div>
-                  <span className="text-[10px] text-slate-500">{huesped?.telefono || 'Contacto principal'}</span>
+                  <span className="text-[10px] text-slate-500">Huésped principal</span>
                 </div>
 
                 <button

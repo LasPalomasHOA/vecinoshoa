@@ -23,7 +23,7 @@ async function main() {
         r.codigo,
         r.propiedad_id,
         p.nombre AS propiedad_nombre,
-        h.nombres || ' ' || h.apellidos AS huesped_nombre,
+        h.nombres AS huesped_nombre,
         r.tipo_huesped,
         TO_CHAR(r.fecha_checkin, 'YYYY-MM-DD') AS fecha_checkin,
         TO_CHAR(r.fecha_checkout, 'YYYY-MM-DD') AS fecha_checkout,

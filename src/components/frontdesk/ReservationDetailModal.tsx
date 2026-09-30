@@ -89,7 +89,7 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
       if (targetId === 'titular') {
         const titularItem: Acompanante = {
           id: 'titular',
-          nombre_completo: huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Titular',
+          nombre_completo: huesped?.nombres || 'Titular',
           tipo: 'Adulto',
           brazalete_entregado: nextStatus,
           fecha_entrega: nextStatus ? now : undefined
@@ -109,7 +109,7 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
 
         const titularItem: Acompanante = {
           id: 'titular',
-          nombre_completo: huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Titular',
+          nombre_completo: huesped?.nombres || 'Titular',
           tipo: 'Adulto',
           brazalete_entregado: titularDelivered,
           fecha_entrega: titularDelivered ? (titularInAcomp?.fecha_entrega || now) : undefined
@@ -146,7 +146,7 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
 
       const titularItem: Acompanante = {
         id: 'titular',
-        nombre_completo: huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Titular',
+        nombre_completo: huesped?.nombres || 'Titular',
         tipo: 'Adulto',
         brazalete_entregado: deliver,
         fecha_entrega: deliver ? now : undefined
@@ -277,18 +277,8 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
               </div>
               <div>
                 <p className="text-xs font-bold text-slate-900">
-                  {huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'No especificado'}
+                  {huesped?.nombres || 'No especificado'}
                 </p>
-                {huesped?.telefono && (
-                  <p className="text-[11px] text-slate-600 flex items-center gap-1 mt-0.5">
-                    <Phone className="w-2.5 h-2.5 text-slate-400" /> {huesped.telefono}
-                  </p>
-                )}
-                {huesped?.email && (
-                  <p className="text-[11px] text-slate-600 flex items-center gap-1 mt-0.5">
-                    <Mail className="w-2.5 h-2.5 text-slate-400" /> {huesped.email}
-                  </p>
-                )}
               </div>
               <div className="pt-1.5 border-t border-slate-200 flex justify-between text-[11px]">
                 <span className="text-slate-500">Tipo:</span>
@@ -352,12 +342,12 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
               <div className="flex items-center justify-between px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs hover:border-teal-300 transition-colors shadow-2xs">
                 <div>
                   <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                    <span className="text-xs">{huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Huésped Titular'}</span>
+                    <span className="text-xs">{huesped?.nombres || 'Huésped Titular'}</span>
                     <span className="text-[9px] px-1.5 py-0.2 rounded bg-teal-50 text-teal-700 font-semibold border border-teal-200">
                       Titular
                     </span>
                   </div>
-                  <span className="text-[10px] text-slate-500">{huesped?.telefono || 'Contacto principal'}</span>
+                  <span className="text-[10px] text-slate-500">Huésped principal</span>
                 </div>
 
                 <button
@@ -366,7 +356,7 @@ export const ReservationDetailModal: React.FC<ReservationDetailModalProps> = ({
                   onClick={() => handleToggleDelivery(
                     'titular', 
                     titularDelivered, 
-                    huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Titular'
+                    huesped?.nombres || 'Titular'
                   )}
                   className={`px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-all active:scale-95 ${
                     titularDelivered 

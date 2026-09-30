@@ -89,7 +89,7 @@ export const ReportsView: React.FC = () => {
         const huesped = getHuespedById(res.huesped_id);
         const matchCode = `${res.codigo || res.id}`.toLowerCase().includes(q);
         const matchProp = prop?.nombre.toLowerCase().includes(q);
-        const matchGuest = huesped ? `${huesped.nombres} ${huesped.apellidos}` : false;
+        const matchGuest = huesped?.nombres || false;
         const matchNotes = res.notas?.toLowerCase().includes(q);
         if (!matchCode && !matchProp && (!matchGuest || !matchGuest.toLowerCase().includes(q)) && !matchNotes) return false;
       }
@@ -124,7 +124,7 @@ export const ReportsView: React.FC = () => {
     filteredReservations.forEach((res, index) => {
       const prop = getPropiedadById(res.propiedad_id);
       const huesped = getHuespedById(res.huesped_id);
-      const guestName = huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Huésped';
+      const guestName = huesped?.nombres || 'Huésped';
       const cellClass = index % 2 === 0 ? 'td-odd' : 'td-even';
       
       const rawComps = Array.isArray(res.acompanantes) ? res.acompanantes.filter(a => a.id !== 'titular') : [];
@@ -158,7 +158,7 @@ export const ReportsView: React.FC = () => {
           <td class="${cellClass}" style="mso-number-format:'\\@';">${formatReportDate(res.fecha_checkin)}</td>
           <td class="${cellClass}" style="mso-number-format:'\\@';">${formatReportDate(res.fecha_checkout)}</td>
           <td class="${cellClass}">${guestText}</td>
-          <td class="${cellClass}">${huesped?.email || 'info@laspalomashoa.mx'}</td>
+          <td class="${cellClass}">-</td>
           <td class="${cellClass}">${tipoHtml}</td>
           <td class="${cellClass}">${res.estado === 'En Casa (Checked-in)' ? 'En Casa' : res.estado}</td>
           <td class="${cellClass}" style="text-align: right; mso-number-format:'\\$#,##0.00';">$${res.balance !== undefined ? res.balance.toFixed(2) : '0.00'}</td>
@@ -542,7 +542,7 @@ export const ReportsView: React.FC = () => {
                   filteredReservations.map((res, index) => {
                     const prop = getPropiedadById(res.propiedad_id);
                     const huesped = getHuespedById(res.huesped_id);
-                    const guestName = huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Huésped';
+                    const guestName = huesped?.nombres || 'Huésped';
                     
                     // Alternating background: Light ice-blue tint vs pure white
                     const isEvenRow = index % 2 === 1;
@@ -640,8 +640,8 @@ export const ReportsView: React.FC = () => {
                         </td>
 
                         {/* Correo de huésped */}
-                        <td className="py-2 px-2.5 whitespace-nowrap">
-                          {huesped?.email || 'info@laspalomashoa.mx'}
+                        <td className="py-2 px-2.5 whitespace-nowrap text-slate-500">
+                          -
                         </td>
 
                         {/* Tipo */}

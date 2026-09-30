@@ -67,8 +67,8 @@ interface AppContextType {
   updateUsuario: (id: number, usuario: Partial<Usuario>) => Promise<void>;
   deleteUsuario: (id: number) => Promise<void>;
   
-  addReservacion: (reservacion: Omit<Reservacion, 'id'>, huespedData?: Omit<Huesped, 'id'>) => Promise<void>;
-  updateReservacion: (id: number, reservacion: Partial<Reservacion>) => Promise<void>;
+  addReservacion: (reservacion: Omit<Reservacion, 'id'>, huespedData?: Partial<Huesped>) => Promise<void>;
+  updateReservacion: (id: number, reservacion: Partial<Reservacion>, huespedData?: Partial<Huesped>) => Promise<void>;
   checkInReservacion: (
     id: number, 
     brazaletes?: string, 
@@ -605,14 +605,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const addReservacion = async (
     resData: Omit<Reservacion, 'id'>, 
-    huespedData?: Omit<Huesped, 'id'>
+    huespedData?: Partial<Huesped>
   ) => {
     try {
       const overlap = checkReservationOverlap(resData.propiedad_id, resData.fecha_checkin, resData.fecha_checkout);
       if (overlap) {
         const prop = propiedades.find(p => p.id === resData.propiedad_id);
         const overlapGuest = huespedes.find(h => h.id === overlap.huesped_id);
-        const guestName = overlapGuest ? `${overlapGuest.nombres} ${overlapGuest.apellidos}` : 'otro huésped';
+        const guestName = overlapGuest?.nombres?.trim() || 'otro huésped';
         showToast(`Conflicto de fechas en ${prop?.nombre || 'la propiedad'}: ya reservada por ${guestName} (${overlap.fecha_checkin} al ${overlap.fecha_checkout})`, 'error');
         throw new Error('Conflicto de superposición de fechas');
       }
@@ -620,13 +620,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       let targetHuespedId = resData.huesped_id;
       let huespedName = '';
       if (huespedData && huespedData.nombres) {
-        const newHuesped = await api.huespedes.create(huespedData);
+        const newHuesped = await api.huespedes.create({
+          nombres: huespedData.nombres.trim()
+        });
         setHuespedes(prev => [newHuesped, ...prev]);
         targetHuespedId = newHuesped.id;
-        huespedName = `${newHuesped.nombres} ${newHuesped.apellidos}`;
+        huespedName = newHuesped.nombres.trim();
       } else {
         const existingH = huespedes.find(h => h.id === targetHuespedId);
-        if (existingH) huespedName = `${existingH.nombres} ${existingH.apellidos}`;
+        if (existingH) huespedName = existingH.nombres.trim();
       }
 
       const generatedCode = `RES-${Math.floor(100000 + Math.random() * 900000)}`;
@@ -659,7 +661,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const updateReservacion = async (id: number, resData: Partial<Reservacion>) => {
+  const updateReservacion = async (
+    id: number, 
+    resData: Partial<Reservacion>,
+    huespedData?: Partial<Huesped>
+  ) => {
     try {
       const current = reservaciones.find(r => r.id === id);
       if (current) {
@@ -671,6 +677,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (overlap) {
           showToast(`Superposición detectada en fechas ${checkin} al ${checkout}`, 'error');
           throw new Error('Conflicto de superposición de fechas');
+        }
+      }
+
+      // Update guest name if provided
+      if (huespedData && huespedData.nombres && current?.huesped_id) {
+        try {
+          const updatedGuest = await api.huespedes.update(current.huesped_id, {
+            nombres: huespedData.nombres.trim()
+          });
+          if (updatedGuest) {
+            setHuespedes(prev => prev.map(h => h.id === updatedGuest.id ? updatedGuest : h));
+          }
+        } catch (e) {
+          console.warn('Error updating guest record:', e);
         }
       }
 
@@ -730,7 +750,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       registrarEventoBitacora({
         accion: 'CHECK-IN',
         modulo: 'Reservaciones',
-        descripcion: `Completó Check-In de #${current?.codigo || id} (${prop?.nombre || 'Unidad'}) para ${guest ? `${guest.nombres} ${guest.apellidos}` : 'Huésped'}. Brazaletes: "${brazaletes || 'Asignados'}", Vehículo: "${vehiculo || 'Sin vehículo'}".`,
+        descripcion: `Completó Check-In de #${current?.codigo || id} (${prop?.nombre || 'Unidad'}) para ${guest?.nombres || 'Huésped'}. Brazaletes: "${brazaletes || 'Asignados'}", Vehículo: "${vehiculo || 'Sin vehículo'}".`,
         entidad_id: id,
         entidad_nombre: current?.codigo,
         detalles: {

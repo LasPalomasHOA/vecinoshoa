@@ -83,13 +83,10 @@ CREATE TABLE IF NOT EXISTS gestion_residencial.propiedad_usuarios (
     UNIQUE(propiedad_id, usuario_id)
 );
 
--- 6. Huéspedes (Solo datos de contacto esenciales)
+-- 6. Huéspedes (Directorio de Titulares)
 CREATE TABLE IF NOT EXISTS gestion_residencial.huespedes (
     id SERIAL PRIMARY KEY,
-    nombres VARCHAR(100) NOT NULL,
-    apellidos VARCHAR(100) NOT NULL,
-    telefono VARCHAR(25),
-    email VARCHAR(150),
+    nombres VARCHAR(200) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -196,10 +193,10 @@ INSERT INTO gestion_residencial.propiedad_usuarios (propiedad_id, usuario_id, ti
 ON CONFLICT (propiedad_id, usuario_id) DO NOTHING;
 
 -- Huéspedes
-INSERT INTO gestion_residencial.huespedes (id, nombres, apellidos, telefono, email) VALUES 
-  (1, 'Alejandro', 'Vázquez Morales', '662-300-4411', 'alejandro.vazquez@gmail.com'),
-  (2, 'Michael', 'Johnson', '602-555-8833', 'mjohnson@aztech.com'),
-  (3, 'Daniela', 'Fernández', '638-111-2299', 'daniela.f@outlook.com')
+INSERT INTO gestion_residencial.huespedes (id, nombres) VALUES 
+  (1, 'Alejandro Vázquez Morales'),
+  (2, 'Michael Johnson'),
+  (3, 'Daniela Fernández')
 ON CONFLICT (id) DO NOTHING;
 
 -- Reservaciones Iniciales

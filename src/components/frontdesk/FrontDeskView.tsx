@@ -58,7 +58,7 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
       const q = searchQuery.toLowerCase();
       const matchCode = res.codigo?.toLowerCase().includes(q) || `${res.id}`.includes(q);
       const matchProp = prop?.nombre.toLowerCase().includes(q);
-      const matchHuesped = huesped ? `${huesped.nombres} ${huesped.apellidos}`.toLowerCase().includes(q) : false;
+      const matchHuesped = huesped?.nombres ? huesped.nombres.toLowerCase().includes(q) : false;
       const matchAcompanantes = Array.isArray(res.acompanantes) 
         ? res.acompanantes.some(a => a.nombre_completo.toLowerCase().includes(q))
         : false;
@@ -373,7 +373,7 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
                       {/* Guest */}
                       <td className="py-2.5 px-2.5 align-middle whitespace-nowrap">
                         <div className="font-bold text-slate-900 text-xs truncate max-w-[130px]">
-                          {huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'Sin nombre'}
+                          {huesped?.nombres || 'Sin nombre'}
                         </div>
                         
                         {/* Acompañantes Badge with Tooltip */}
@@ -405,13 +405,6 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
                             </div>
                           );
                         })()}
-
-                        {huesped?.telefono && (
-                          <div className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
-                            <Phone className="w-2.5 h-2.5 text-slate-400" />
-                            <span>{huesped.telefono}</span>
-                          </div>
-                        )}
                       </td>
 
                       {/* Tipo & Pago */}

@@ -436,31 +436,28 @@ export async function deletePropiedadUsuario(id: number): Promise<{ success: boo
 
 export async function getAllHuespedes(): Promise<Huesped[]> {
   const res = await query<Huesped>(`
-    SELECT id, nombres, apellidos, telefono, email, created_at, updated_at
+    SELECT id, nombres, created_at, updated_at
     FROM ${T.huespedes()}
-    ORDER BY nombres ASC, apellidos ASC;
+    ORDER BY nombres ASC;
   `);
   return res.rows;
 }
 
 export async function getHuespedById(id: number): Promise<Huesped | null> {
   return queryOne<Huesped>(`
-    SELECT id, nombres, apellidos, telefono, email, created_at, updated_at
+    SELECT id, nombres, created_at, updated_at
     FROM ${T.huespedes()}
     WHERE id = $1;
   `, [id]);
 }
 
-export async function createHuesped(data: Omit<Huesped, 'id'>): Promise<Huesped> {
+export async function createHuesped(data: Partial<Huesped> & { nombres: string }): Promise<Huesped> {
   const res = await query<Huesped>(`
-    INSERT INTO ${T.huespedes()} (nombres, apellidos, telefono, email)
-    VALUES ($1, $2, $3, $4)
-    RETURNING id, nombres, apellidos, telefono, email, created_at, updated_at;
+    INSERT INTO ${T.huespedes()} (nombres)
+    VALUES ($1)
+    RETURNING id, nombres, created_at, updated_at;
   `, [
-    data.nombres.trim(),
-    data.apellidos.trim(),
-    data.telefono || null,
-    data.email ? data.email.trim().toLowerCase() : null
+    data.nombres.trim()
   ]);
   return res.rows[0];
 }
@@ -471,16 +468,13 @@ export async function updateHuesped(id: number, data: Partial<Huesped>): Promise
   let idx = 1;
 
   if (data.nombres !== undefined) { fields.push(`nombres = $${idx++}`); values.push(data.nombres.trim()); }
-  if (data.apellidos !== undefined) { fields.push(`apellidos = $${idx++}`); values.push(data.apellidos.trim()); }
-  if (data.telefono !== undefined) { fields.push(`telefono = $${idx++}`); values.push(data.telefono); }
-  if (data.email !== undefined) { fields.push(`email = $${idx++}`); values.push(data.email.trim().toLowerCase()); }
 
   values.push(id);
   const res = await query<Huesped>(`
     UPDATE ${T.huespedes()}
     SET ${fields.join(', ')}
     WHERE id = $${idx}
-    RETURNING id, nombres, apellidos, telefono, email, created_at, updated_at;
+    RETURNING id, nombres, created_at, updated_at;
   `, values);
   return res.rows[0] || null;
 }
@@ -757,7 +751,7 @@ export async function getAllBitacora(): Promise<any[]> {
         r.codigo,
         r.propiedad_id,
         p.nombre AS propiedad_nombre,
-        COALESCE(h.nombres || ' ' || h.apellidos, 'Huésped Registrado') AS huesped_nombre,
+        COALESCE(h.nombres, 'Huésped Registrado') AS huesped_nombre,
         r.tipo_huesped,
         TO_CHAR(r.fecha_checkin, 'YYYY-MM-DD') AS fecha_checkin,
         TO_CHAR(r.fecha_checkout, 'YYYY-MM-DD') AS fecha_checkout,

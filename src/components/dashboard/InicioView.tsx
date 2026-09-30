@@ -782,10 +782,7 @@ export const InicioView: React.FC<InicioViewProps> = ({
                       {/* Guest Info */}
                       <div className="text-xs text-slate-700 font-bold flex items-center gap-1.5 flex-wrap">
                         <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <span>Titular: {huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'No especificado'}</span>
-                        {huesped?.telefono && (
-                          <span className="text-slate-500 font-normal">({huesped.telefono})</span>
-                        )}
+                        <span>Titular: {huesped?.nombres || 'No especificado'}</span>
                       </div>
 
                       {/* Sub Badges: Date, Folio, Tipo */}
@@ -883,10 +880,7 @@ export const InicioView: React.FC<InicioViewProps> = ({
 
                       <div className="text-xs text-slate-700 font-bold flex items-center gap-1.5 flex-wrap">
                         <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <span>Titular: {huesped ? `${huesped.nombres} ${huesped.apellidos}` : 'No especificado'}</span>
-                        {huesped?.telefono && (
-                          <span className="text-slate-500 font-normal">({huesped.telefono})</span>
-                        )}
+                        <span>Titular: {huesped?.nombres || 'No especificado'}</span>
                       </div>
 
                       <div className="text-[11px] text-slate-600 font-medium flex items-center gap-2 flex-wrap pt-0.5">
