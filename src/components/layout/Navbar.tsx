@@ -71,26 +71,14 @@ export const Navbar: React.FC = () => {
         </div>
 
         {currentUser && (
-          <div className="flex items-center gap-1.5">
-            <div className="flex items-center gap-2 h-9 px-3 rounded-lg bg-slate-100/90 border border-slate-200/80 text-xs">
-              <span className={`w-2 h-2 rounded-full ring-2 shrink-0 ${currentUser.rol === 'Supervisor' ? 'bg-amber-500 ring-amber-200' : 'bg-emerald-500 ring-emerald-200'}`} />
-              <span className="font-bold text-slate-800 truncate max-w-[110px]">{currentUser.nombre}</span>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-semibold border shrink-0 hidden sm:inline ${
-                currentUser.rol === 'Supervisor' ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-teal-50 text-teal-700 border-teal-200'
-              }`}>
-                {currentUser.rol}
-              </span>
-            </div>
-
-            {/* Quick Switch Role Pill */}
-            <button
-              onClick={() => switchUserRole(currentUser.rol === 'Supervisor' ? 'Administrador' : 'Supervisor')}
-              title={`Cambiar a ${currentUser.rol === 'Supervisor' ? 'Administrador (Francisco Amado)' : 'Supervisor (Carlos Méndez)'}`}
-              className="h-9 px-2.5 rounded-lg bg-white hover:bg-teal-50 border border-slate-200/90 hover:border-teal-300 text-[11px] font-bold text-teal-800 transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
-            >
-              <span className="hidden md:inline">Cambiar a:</span>
-              <span className="underline">{currentUser.rol === 'Supervisor' ? 'Admin' : 'Supervisor'}</span>
-            </button>
+          <div className="flex items-center gap-2 h-9 px-3 rounded-lg bg-slate-100/90 border border-slate-200/80 text-xs">
+            <span className={`w-2 h-2 rounded-full ring-2 shrink-0 ${currentUser.rol === 'Supervisor' ? 'bg-amber-500 ring-amber-200' : 'bg-emerald-500 ring-emerald-200'}`} />
+            <span className="font-bold text-slate-800 truncate max-w-[120px]">{currentUser.nombre}</span>
+            <span className={`text-[10px] px-2 py-0.5 rounded-md font-semibold border shrink-0 hidden sm:inline ${
+              currentUser.rol === 'Supervisor' ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-teal-50 text-teal-700 border-teal-200'
+            }`}>
+              {currentUser.rol}
+            </span>
           </div>
         )}
       </div>

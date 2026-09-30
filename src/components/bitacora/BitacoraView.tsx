@@ -32,7 +32,7 @@ export const BitacoraView: React.FC = () => {
     limpiarBitacora,
     usuarios 
   } = useApp();
-  const { currentUser, switchUserRole } = useAuth();
+  const { currentUser } = useAuth();
 
   // Local filter states
   const [localSearch, setLocalSearch] = useState('');
@@ -239,33 +239,31 @@ export const BitacoraView: React.FC = () => {
   return (
     <div className="space-y-6 text-left">
       
-      {/* Top Banner & Header */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-teal-950 text-white p-6 sm:p-7 rounded-2xl shadow-md relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-5">
-        <div className="relative z-10 max-w-2xl">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-teal-400/20 text-teal-300 border border-teal-400/30">
+      {/* Top Header Card */}
+      <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-teal-50 text-teal-700 border border-teal-200">
               <Shield className="w-3.5 h-3.5" />
-              Supervisión • gestion_residencial
+              Auditoría & Trazabilidad
             </span>
-            <span className="text-xs text-slate-300 font-medium">
-              • {stats.total} eventos registrados en base de datos
+            <span className="text-xs text-slate-400 font-medium">
+              • {stats.total} eventos registrados
             </span>
           </div>
-
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
             Bitácora de Gestión Residencial
           </h1>
-          <p className="mt-1.5 text-slate-300 text-xs sm:text-sm leading-relaxed">
-            Monitoreo en tiempo real de todas las creaciones, ediciones, cancelaciones, check-ins y eliminaciones realizadas en el módulo de <strong>gestión residencial</strong> (reservaciones, propiedades, solicitudes y usuarios).
+          <p className="text-xs sm:text-sm text-slate-500 leading-relaxed max-w-2xl">
+            Historial de eventos y cambios en condominios, reservaciones, solicitudes de acceso y usuarios.
           </p>
         </div>
 
         {/* Action Buttons */}
-        <div className="relative z-10 flex flex-wrap items-center gap-2.5 shrink-0">
-          
+        <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
           <button
             onClick={() => setIsNoteModalOpen(true)}
-            className="px-4 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs shadow-md shadow-teal-500/20 transition-all flex items-center gap-2 cursor-pointer"
+            className="px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-2 cursor-pointer"
           >
             <MessageSquarePlus className="w-4 h-4" />
             <span>Nota de Supervisor</span>
@@ -274,8 +272,8 @@ export const BitacoraView: React.FC = () => {
           <button
             onClick={handleExportCSV}
             disabled={filteredBitacora.length === 0}
-            className="px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/15 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
-            title="Descargar reporte en formato Excel/CSV"
+            className="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-200/90 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            title="Descargar reporte en formato CSV"
           >
             <Download className="w-4 h-4" />
             <span>Exportar CSV</span>
@@ -283,54 +281,10 @@ export const BitacoraView: React.FC = () => {
 
           <button
             onClick={limpiarBitacora}
-            className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white border border-white/15 transition-all cursor-pointer"
-            title="Restablecer registros demo de bitácora"
+            className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200/90 transition-all cursor-pointer"
+            title="Recargar registros"
           >
             <RotateCcw className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Ambient Glows */}
-        <div className="absolute top-0 right-0 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-      </div>
-
-      {/* Role Switcher Assistant Callout */}
-      <div className="p-3.5 rounded-xl bg-gradient-to-r from-teal-50 via-sky-50 to-emerald-50 border border-teal-200/80 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-teal-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
-            🛡️
-          </div>
-          <div>
-            <p className="text-xs font-bold text-teal-950">
-              Sesión Actual: <span className="underline">{currentUser?.nombre} {currentUser?.apellido}</span> ({currentUser?.rol})
-            </p>
-            <p className="text-[11px] text-teal-800">
-              Prueba cambiar entre el usuario <strong>Supervisor (Carlos Méndez)</strong> y <strong>Administrador (Francisco Amado)</strong> para validar la trazabilidad.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => switchUserRole('Supervisor')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              currentUser?.rol === 'Supervisor'
-                ? 'bg-teal-700 text-white shadow-xs'
-                : 'bg-white text-slate-700 border border-slate-200 hover:bg-teal-50'
-            }`}
-          >
-            🛡️ Actuar como Supervisor
-          </button>
-          <button
-            onClick={() => switchUserRole('Administrador')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              currentUser?.rol === 'Administrador'
-                ? 'bg-teal-700 text-white shadow-xs'
-                : 'bg-white text-slate-700 border border-slate-200 hover:bg-teal-50'
-            }`}
-          >
-            👤 Actuar como Administrador
           </button>
         </div>
       </div>
@@ -341,51 +295,59 @@ export const BitacoraView: React.FC = () => {
         {/* Total Events */}
         <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Eventos</span>
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Eventos</span>
             <ClipboardList className="w-4 h-4 text-slate-400" />
           </div>
-          <p className="text-2xl font-black text-slate-900 mt-2">{stats.total}</p>
-          <p className="text-[11px] text-slate-500 font-medium mt-0.5">En la bitácora activa</p>
+          <p className="text-2xl font-black text-slate-900 mt-1.5">{stats.total}</p>
+          <p className="text-[11px] text-slate-500 font-medium mt-0.5">En bitácora activa</p>
         </div>
 
         {/* Creaciones */}
-        <div className="p-4 rounded-xl bg-emerald-50/50 border border-emerald-200/80 shadow-2xs">
+        <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Creaciones</span>
-            <PlusCircle className="w-4 h-4 text-emerald-600" />
+            <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">Creaciones</span>
+            <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <PlusCircle className="w-4 h-4" />
+            </div>
           </div>
-          <p className="text-2xl font-black text-emerald-900 mt-2">{stats.creaciones}</p>
-          <p className="text-[11px] text-emerald-700 font-medium mt-0.5">Nuevos registros</p>
+          <p className="text-2xl font-black text-emerald-800 mt-1.5">{stats.creaciones}</p>
+          <p className="text-[11px] text-slate-500 font-medium mt-0.5">Nuevos registros</p>
         </div>
 
         {/* Ediciones */}
-        <div className="p-4 rounded-xl bg-teal-50/50 border border-teal-200/80 shadow-2xs">
+        <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-teal-800 uppercase tracking-wider">Ediciones</span>
-            <Edit3 className="w-4 h-4 text-teal-600" />
+            <span className="text-[11px] font-bold text-teal-700 uppercase tracking-wider">Ediciones</span>
+            <div className="w-7 h-7 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center">
+              <Edit3 className="w-4 h-4" />
+            </div>
           </div>
-          <p className="text-2xl font-black text-teal-900 mt-2">{stats.ediciones}</p>
-          <p className="text-[11px] text-teal-700 font-medium mt-0.5">Cambios de estado/datos</p>
+          <p className="text-2xl font-black text-teal-800 mt-1.5">{stats.ediciones}</p>
+          <p className="text-[11px] text-slate-500 font-medium mt-0.5">Modificaciones</p>
         </div>
 
         {/* Eliminaciones */}
-        <div className="p-4 rounded-xl bg-rose-50/50 border border-rose-200/80 shadow-2xs">
+        <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-rose-800 uppercase tracking-wider">Eliminaciones</span>
-            <Trash2 className="w-4 h-4 text-rose-600" />
+            <span className="text-[11px] font-bold text-rose-700 uppercase tracking-wider">Eliminaciones</span>
+            <div className="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+              <Trash2 className="w-4 h-4" />
+            </div>
           </div>
-          <p className="text-2xl font-black text-rose-900 mt-2">{stats.eliminaciones}</p>
-          <p className="text-[11px] text-rose-700 font-medium mt-0.5">Bajas supervisadas</p>
+          <p className="text-2xl font-black text-rose-800 mt-1.5">{stats.eliminaciones}</p>
+          <p className="text-[11px] text-slate-500 font-medium mt-0.5">Bajas realizadas</p>
         </div>
 
-        {/* Check-ins & Accesos */}
-        <div className="p-4 rounded-xl bg-indigo-50/50 border border-indigo-200/80 shadow-2xs col-span-2 sm:col-span-1">
+        {/* Operaciones */}
+        <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs col-span-2 sm:col-span-1">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-indigo-800 uppercase tracking-wider">Operaciones</span>
-            <KeyRound className="w-4 h-4 text-indigo-600" />
+            <span className="text-[11px] font-bold text-indigo-700 uppercase tracking-wider">Operaciones</span>
+            <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <KeyRound className="w-4 h-4" />
+            </div>
           </div>
-          <p className="text-2xl font-black text-indigo-900 mt-2">{stats.checkins + stats.supervisorNotes}</p>
-          <p className="text-[11px] text-indigo-700 font-medium mt-0.5">Check-In / Out & Notas</p>
+          <p className="text-2xl font-black text-indigo-800 mt-1.5">{stats.checkins + stats.supervisorNotes}</p>
+          <p className="text-[11px] text-slate-500 font-medium mt-0.5">Check-In/Out & Notas</p>
         </div>
 
       </div>
