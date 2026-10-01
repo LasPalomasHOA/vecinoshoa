@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback, memo } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Reservacion, Propiedad } from '../../types';
+import { Reservacion, Propiedad, Huesped, Edificio } from '../../types';
 import { compareCondoNames } from '../../utils/sortUtils';
 import { CalendarLegend } from './CalendarLegend';
 import { 
@@ -53,6 +53,280 @@ interface DayInfo {
   globalIndex: number;
 }
 
+const ROW_HEIGHT = 44; // px per condo row
+const OVERSCAN = 6;    // Number of extra virtual rows above/below visible viewport
+
+const MONTH_NAMES = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+];
+
+const formatReadableDate = (dateStr?: string) => {
+  if (!dateStr) return '';
+  const parts = dateStr.split('-');
+  if (parts.length < 3) return dateStr;
+  const day = parts[2];
+  const monthIdx = parseInt(parts[1], 10) - 1;
+  return `${day} ${MONTH_NAMES[monthIdx]?.slice(0, 3)}`;
+};
+
+const getReservationColor = (res: Reservacion) => {
+  // 1. Solid background color by Tipo de Huésped
+  let bgClass = 'bg-[#00897B] text-white'; // default NPG
+  const tipo = res.tipo_huesped || '';
+
+  if (tipo.includes('Amenidad') || tipo.includes('Amenity')) {
+    bgClass = 'bg-[#7c3aed] text-white';
+  } else {
+    bgClass = 'bg-[#00897B] text-white';
+  }
+
+  // 2. Top accent status border by Estatus (Pendiente vs Entrada Registrada)
+  let statusBorder = 'border-t-[3.5px] border-[#F4511E]'; // default Pendiente (Naranja)
+  if (res.estado === 'En Casa (Checked-in)') {
+    statusBorder = 'border-t-[3.5px] border-[#8BC34A]'; // Entrada Registrada (Verde Lima)
+  } else if (res.estado === 'Checked-out') {
+    statusBorder = 'border-t-[3.5px] border-slate-300/80';
+  }
+
+  return `${bgClass} ${statusBorder}`;
+};
+
+// ==============================================================================
+// MEMOIZED HIGH-PERFORMANCE CONDO ROW
+// ==============================================================================
+
+interface CondoRowProps {
+  prop: Propiedad;
+  edificioNombre: string;
+  daysInView: DayInfo[];
+  dayColWidth: number;
+  condoColWidth: number;
+  reservations: Reservacion[];
+  dateToIndexMap: Map<string, number>;
+  huespedMap: Map<number, Huesped>;
+  isSelectedProp: boolean;
+  selectionStartDate: string | null;
+  selectionHoverDate: string | null;
+  selectionNights: number;
+  selectionConflict: boolean;
+  onCellClick: (propId: number, dateStr: string) => void;
+  onCellMouseEnter: (propId: number, dateStr: string) => void;
+  onSelectReservation: (res: Reservacion) => void;
+  onNewReservation: (propId?: number) => void;
+}
+
+const CondoRow: React.FC<CondoRowProps> = memo(({
+  prop,
+  edificioNombre,
+  daysInView,
+  dayColWidth,
+  condoColWidth,
+  reservations,
+  dateToIndexMap,
+  huespedMap,
+  isSelectedProp,
+  selectionStartDate,
+  selectionHoverDate,
+  selectionNights,
+  selectionConflict,
+  onCellClick,
+  onCellMouseEnter,
+  onSelectReservation,
+  onNewReservation
+}) => {
+  const totalDays = daysInView.length;
+  const viewStartStr = daysInView[0]?.dateStr || '';
+  const viewEndStr = daysInView[totalDays - 1]?.dateStr || '';
+
+  // Calculate selection range boundaries
+  let selectionMin = '';
+  let selectionMax = '';
+  if (isSelectedProp && selectionStartDate) {
+    const hoverOrStart = selectionHoverDate || selectionStartDate;
+    selectionMin = selectionStartDate <= hoverOrStart ? selectionStartDate : hoverOrStart;
+    selectionMax = selectionStartDate >= hoverOrStart ? selectionStartDate : hoverOrStart;
+  }
+
+  return (
+    <div
+      className={`grid items-center relative transition-colors group border-b border-slate-100/90 ${
+        isSelectedProp ? 'bg-teal-50/50' : 'hover:bg-slate-50/70'
+      }`}
+      style={{
+        height: `${ROW_HEIGHT}px`,
+        gridTemplateColumns: `${condoColWidth}px repeat(${totalDays}, ${dayColWidth}px)`
+      }}
+    >
+      {/* Sticky Condo column (Solid background, no heavy blur filters) */}
+      <div 
+        className={`sticky left-0 z-20 px-3.5 py-1.5 border-r border-slate-200 flex items-center justify-between transition-colors shadow-xs ${
+          isSelectedProp
+            ? 'bg-teal-50 text-teal-950 font-bold'
+            : 'bg-white group-hover:bg-slate-50'
+        }`}
+        style={{ width: `${condoColWidth}px`, height: `${ROW_HEIGHT}px` }}
+      >
+        <div className="min-w-0 pr-1">
+          <span className="font-extrabold text-xs text-slate-900 block truncate">
+            {prop.nombre}
+          </span>
+          <span className="text-[10px] text-slate-500 font-medium truncate block">
+            Torre {edificioNombre.replace('Torre ', '')}
+          </span>
+        </div>
+        <button
+          onClick={() => onNewReservation(prop.id)}
+          title={`Crear nueva reservación en ${prop.nombre}`}
+          className="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-teal-100 text-teal-700 transition-all active:scale-95 cursor-pointer"
+        >
+          <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+        </button>
+      </div>
+
+      {/* Day Grid & Reservation bars across Visible Months */}
+      <div 
+        className="relative h-full items-center grid"
+        style={{
+          gridColumn: `2 / span ${totalDays}`,
+          gridTemplateColumns: `repeat(${totalDays}, ${dayColWidth}px)`
+        }}
+      >
+        {/* Day clickable slots */}
+        {daysInView.map((day) => {
+          const isInSelection = isSelectedProp && selectionMin && day.dateStr >= selectionMin && day.dateStr <= selectionMax;
+
+          return (
+            <div
+              key={day.dateStr}
+              onClick={() => onCellClick(prop.id, day.dateStr)}
+              onMouseEnter={() => {
+                if (isSelectedProp) {
+                  onCellMouseEnter(prop.id, day.dateStr);
+                }
+              }}
+              className={`h-full border-r border-slate-100/90 cursor-pointer transition-all relative select-none flex items-center justify-center ${
+                day.isFirstDayOfMonth && day.globalIndex > 0 ? 'border-l-2 border-slate-300 ' : ''
+              } ${
+                isInSelection
+                  ? 'bg-teal-100/60'
+                  : day.isToday
+                  ? 'bg-teal-50/60'
+                  : day.isWeekend
+                  ? 'bg-slate-50/60 hover:bg-teal-100/40'
+                  : 'hover:bg-teal-50/60'
+              }`}
+              title={
+                isSelectedProp
+                  ? `Click para finalizar reservación el ${day.dateStr}`
+                  : `Click para iniciar reservación en ${prop.nombre} el ${day.dateStr}`
+              }
+            />
+          );
+        })}
+
+        {/* Interactive Range Selection Preview Bar */}
+        {isSelectedProp && selectionStartDate && (
+          (() => {
+            const d1 = selectionStartDate;
+            const d2 = selectionHoverDate || selectionStartDate;
+            const checkinStr = d1 <= d2 ? d1 : d2;
+            const checkoutStr = d1 <= d2 ? d2 : d1;
+
+            if (checkoutStr < viewStartStr || checkinStr > viewEndStr) {
+              return null;
+            }
+
+            let startIdx = dateToIndexMap.get(checkinStr) ?? 0;
+            let endIdx = dateToIndexMap.get(checkoutStr) ?? totalDays;
+
+            const nightsInView = Math.max(1, endIdx - startIdx);
+            const leftPct = (startIdx / totalDays) * 100;
+            const widthPct = (nightsInView / totalDays) * 100;
+
+            return (
+              <div
+                style={{
+                  left: `calc(${leftPct}% + 1px)`,
+                  width: `calc(${widthPct}% - 2px)`,
+                }}
+                className={`absolute inset-y-1 z-20 rounded-lg border-2 border-dashed flex items-center justify-center px-2 pointer-events-none transition-all ${
+                  selectionConflict
+                    ? 'border-rose-500 bg-rose-500/20 text-rose-900'
+                    : 'border-teal-700/70 bg-teal-800/15 text-teal-950 font-bold'
+                }`}
+              >
+                <span className="text-[10px] font-black truncate whitespace-nowrap">
+                  {selectionConflict
+                    ? `Ocupado (${selectionNights}n)`
+                    : `${selectionNights} ${selectionNights === 1 ? 'noche' : 'noches'} (${formatReadableDate(checkinStr)} → ${formatReadableDate(checkoutStr)})`}
+                </span>
+              </div>
+            );
+          })()
+        )}
+
+        {/* Existing Reservation Bars */}
+        {reservations.map((res) => {
+          // Check if reservation overlaps visible range
+          if (res.fecha_checkout <= viewStartStr || res.fecha_checkin > viewEndStr) {
+            return null;
+          }
+
+          let startIdx = dateToIndexMap.get(res.fecha_checkin);
+          if (startIdx === undefined) {
+            startIdx = res.fecha_checkin < viewStartStr ? 0 : totalDays;
+          }
+
+          let endIdx = dateToIndexMap.get(res.fecha_checkout);
+          if (endIdx === undefined) {
+            endIdx = res.fecha_checkout > viewEndStr ? totalDays : 0;
+          }
+
+          const nightsInView = Math.max(1, endIdx - startIdx);
+          const leftPct = (startIdx / totalDays) * 100;
+          const widthPct = (nightsInView / totalDays) * 100;
+
+          const huesped = huespedMap.get(res.huesped_id);
+          const guestName = huesped?.nombres || 'Huésped';
+          const acompList = Array.isArray(res.acompanantes) ? res.acompanantes.filter(a => a.id !== 'titular') : [];
+          const acompNames = acompList.length > 0 ? ` | Acompañantes Habitación: ${acompList.map((a, i) => a.nombre_completo || `Acompañante ${i + 1}`).join(', ')}` : '';
+          const amenityList = Array.isArray(res.acompanantes_amenidades) ? res.acompanantes_amenidades : [];
+          const amenityNames = amenityList.length > 0 ? ` | Solo Amenidades: ${amenityList.map((a, i) => a.nombre_completo || `Acompañante ${i + 1}`).join(', ')}` : '';
+
+          return (
+            <div
+              key={res.id}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelectReservation(res);
+              }}
+              style={{
+                left: `calc(${leftPct}% + 1px)`,
+                width: `calc(${widthPct}% - 2px)`,
+              }}
+              className={`absolute inset-y-1 z-10 rounded-lg px-2.5 flex items-center cursor-pointer transition-all hover:brightness-110 hover:shadow-md hover:z-20 overflow-hidden select-none ${getReservationColor(res)}`}
+              title={`${res.tipo_huesped} | Titular: ${guestName}${acompNames}${amenityNames} | (${res.fecha_checkin} al ${res.fecha_checkout}) | Estado: ${res.estado} | Brazaletes: ${res.brazaletes || 'N/A'}`}
+            >
+              <span className="text-[10px] font-extrabold truncate whitespace-nowrap drop-shadow-xs pointer-events-none">
+                {guestName} {acompList.length > 0 ? `(+${acompList.length})` : res.numero_ocupantes > 1 ? `(+${res.numero_ocupantes - 1})` : ''}
+                {amenityList.length > 0 ? ` [🏊+${amenityList.length}]` : ''}
+              </span>
+            </div>
+          );
+        })}
+
+      </div>
+    </div>
+  );
+});
+
+CondoRow.displayName = 'CondoRow';
+
+// ==============================================================================
+// MAIN CALENDAR TIMELINE COMPONENT (VIRTUALIZED & OPTIMIZED)
+// ==============================================================================
+
 export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
   onSelectReservation,
   onNewReservation
@@ -61,7 +335,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
     propiedades, 
     reservaciones, 
     edificios, 
-    getHuespedById,
+    huespedes,
     getEdificioById,
     checkReservationOverlap
   } = useApp();
@@ -77,8 +351,10 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
 
   // Interactive 2-day selection state
   const [selection, setSelection] = useState<SelectionState | null>(null);
-  const [hoveredDateStr, setHoveredDateStr] = useState<string | null>(null);
-  const [hoveredPropId, setHoveredPropId] = useState<number | null>(null);
+
+  // Virtual scrolling state
+  const [scrollTop, setScrollTop] = useState(0);
+  const viewportHeight = 620;
 
   // Dual Scroll Synchronization Refs
   const topScrollRef = useRef<HTMLDivElement>(null);
@@ -87,11 +363,6 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
   const isSyncingBottom = useRef<boolean>(false);
 
   const condoColWidth = 150; // px
-
-  const monthNames = [
-    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-  ];
 
   // Cancel selection on Escape key
   useEffect(() => {
@@ -122,7 +393,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
       months.push({
         monthIndex: mIdx,
         year: yr,
-        name: monthNames[mIdx],
+        name: MONTH_NAMES[mIdx],
         daysCount: daysInThisMonth,
         startIndex: currentOffset
       });
@@ -141,7 +412,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
           isWeekend,
           isToday: dateStr === '2026-09-23',
           monthIndex: mIdx,
-          monthName: monthNames[mIdx],
+          monthName: MONTH_NAMES[mIdx],
           year: yr,
           isFirstDayOfMonth: d === 1,
           isLastDayOfMonth: d === daysInThisMonth,
@@ -155,12 +426,54 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
     return { daysInView: days, monthsInView: months };
   }, [currentYear, currentMonth, viewMode]);
 
+  // Fast O(1) Map: dateStr -> Column Index
+  const dateToIndexMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (let i = 0; i < daysInView.length; i++) {
+      map.set(daysInView[i].dateStr, i);
+    }
+    return map;
+  }, [daysInView]);
+
+  // Fast O(1) Map: Huesped ID -> Huesped
+  const huespedMap = useMemo(() => {
+    const map = new Map<number, Huesped>();
+    for (let i = 0; i < huespedes.length; i++) {
+      map.set(huespedes[i].id, huespedes[i]);
+    }
+    return map;
+  }, [huespedes]);
+
+  // Fast O(1) Map: Edificio ID -> Edificio
+  const edificioMap = useMemo(() => {
+    const map = new Map<number, Edificio>();
+    for (let i = 0; i < edificios.length; i++) {
+      map.set(edificios[i].id, edificios[i]);
+    }
+    return map;
+  }, [edificios]);
+
+  // Fast O(1) Map: Propiedad ID -> Reservaciones
+  const reservationsByPropId = useMemo(() => {
+    const map = new Map<number, Reservacion[]>();
+    for (let i = 0; i < reservaciones.length; i++) {
+      const r = reservaciones[i];
+      const list = map.get(r.propiedad_id);
+      if (list) {
+        list.push(r);
+      } else {
+        map.set(r.propiedad_id, [r]);
+      }
+    }
+    return map;
+  }, [reservaciones]);
+
   // Total width of the timeline grid
   const totalGridWidth = useMemo(() => {
     return condoColWidth + (daysInView.length * dayColWidth);
   }, [daysInView.length, dayColWidth]);
 
-  // Synchronized horizontal scrolling between Top Scrollbar and Main Grid
+  // Synchronized horizontal scrolling
   const handleTopScroll = useCallback(() => {
     if (isSyncingTop.current) {
       isSyncingTop.current = false;
@@ -172,14 +485,17 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
     }
   }, []);
 
-  const handleTableScroll = useCallback(() => {
+  const handleTableScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    setScrollTop(target.scrollTop);
+
     if (isSyncingBottom.current) {
       isSyncingBottom.current = false;
       return;
     }
-    if (topScrollRef.current && tableScrollRef.current) {
+    if (topScrollRef.current) {
       isSyncingTop.current = true;
-      topScrollRef.current.scrollLeft = tableScrollRef.current.scrollLeft;
+      topScrollRef.current.scrollLeft = target.scrollLeft;
     }
   }, []);
 
@@ -286,14 +602,14 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
         if (localSearch) {
           const q = localSearch.toLowerCase();
           const matchProp = prop.nombre.toLowerCase().includes(q);
-          const ed = getEdificioById(prop.edificio_id);
+          const ed = edificioMap.get(prop.edificio_id);
           const matchEd = ed?.nombre.toLowerCase().includes(q);
           if (!matchProp && !matchEd) return false;
         }
         return true;
       })
       .sort((a, b) => compareCondoNames(a.nombre, b.nombre));
-  }, [propiedades, selectedEdificioId, localSearch, getEdificioById]);
+  }, [propiedades, selectedEdificioId, localSearch, edificioMap]);
 
   // Statistics for the visible range (3 months or 1 month)
   const rangeStats = useMemo(() => {
@@ -312,12 +628,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
     const viewStart = new Date(firstDateStr + 'T00:00:00');
     const viewEnd = new Date(lastDateStr + 'T23:59:59');
 
-    const visibleReservations = reservaciones.filter(res => {
-      const cin = new Date(res.fecha_checkin + 'T12:00:00');
-      const cout = new Date(res.fecha_checkout + 'T12:00:00');
-      return cin <= viewEnd && cout >= viewStart;
-    });
-
+    let visibleCount = 0;
     let totalNightsBooked = 0;
     const counts = {
       npg: 0,
@@ -330,7 +641,13 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
 
     let checkInsToday = 0;
 
-    visibleReservations.forEach(res => {
+    for (let i = 0; i < reservaciones.length; i++) {
+      const res = reservaciones[i];
+      if (res.fecha_checkout <= firstDateStr || res.fecha_checkin > lastDateStr) {
+        continue;
+      }
+
+      visibleCount++;
       const tipo = String(res.tipo_huesped || '');
       if (tipo.includes('Amenidad') || tipo.includes('Amenity')) counts.amenity++;
       else counts.npg++;
@@ -348,7 +665,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
       const effectiveEnd = cout > viewEnd ? viewEnd : cout;
       const nights = Math.max(0, Math.round((effectiveEnd.getTime() - effectiveStart.getTime()) / (1000 * 60 * 60 * 24)));
       totalNightsBooked += nights;
-    });
+    }
 
     const totalAvailableRoomNights = filteredProperties.length * daysInView.length;
     const occupancyRate = totalAvailableRoomNights > 0 
@@ -356,7 +673,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
       : 0;
 
     return {
-      totalReservations: visibleReservations.length,
+      totalReservations: visibleCount,
       totalNightsBooked,
       occupancyRate,
       checkInsToday,
@@ -364,30 +681,8 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
     };
   }, [reservaciones, daysInView, filteredProperties]);
 
-  const getReservationColor = (res: Reservacion) => {
-    // 1. Solid background color by Tipo de Huésped
-    let bgClass = 'bg-[#00897B] text-white'; // default NPG
-    const tipo = res.tipo_huesped || '';
-
-    if (tipo.includes('Amenidad') || tipo.includes('Amenity')) {
-      bgClass = 'bg-[#7c3aed] text-white';
-    } else {
-      bgClass = 'bg-[#00897B] text-white';
-    }
-
-    // 2. Top accent status border by Estatus (Pendiente vs Entrada Registrada)
-    let statusBorder = 'border-t-[3.5px] border-[#F4511E]'; // default Pendiente (Naranja)
-    if (res.estado === 'En Casa (Checked-in)') {
-      statusBorder = 'border-t-[3.5px] border-[#8BC34A]'; // Entrada Registrada (Verde Lima)
-    } else if (res.estado === 'Checked-out') {
-      statusBorder = 'border-t-[3.5px] border-slate-300/80';
-    }
-
-    return `${bgClass} ${statusBorder}`;
-  };
-
-  // Helper for cell clicks
-  const handleCellClick = (propId: number, dateStr: string) => {
+  // Helper for cell clicks (2-step selection)
+  const handleCellClick = useCallback((propId: number, dateStr: string) => {
     if (!selection || selection.propiedadId !== propId) {
       // 1st click: Start date selection
       setSelection({
@@ -416,22 +711,20 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
       setSelection(null);
       onNewReservation(propId, checkin, checkout);
     }
-  };
+  }, [selection, onNewReservation]);
 
-  // Helper for hovering over cells during selection
-  const handleCellMouseEnter = (propId: number, dateStr: string) => {
-    setHoveredDateStr(dateStr);
-    setHoveredPropId(propId);
+  // Helper for hovering over cells during active selection
+  const handleCellMouseEnter = useCallback((propId: number, dateStr: string) => {
     if (selection && selection.propiedadId === propId) {
       setSelection(prev => (prev ? { ...prev, hoverDate: dateStr } : null));
     }
-  };
+  }, [selection]);
 
   // Compute active preview range data
   const selectionPreview = useMemo(() => {
     if (!selection) return null;
     const prop = propiedades.find(p => p.id === selection.propiedadId);
-    const ed = prop ? getEdificioById(prop.edificio_id) : undefined;
+    const ed = prop ? edificioMap.get(prop.edificio_id) : undefined;
     
     const d1 = selection.startDate;
     const d2 = selection.hoverDate || selection.startDate;
@@ -468,28 +761,29 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
       conflict,
       isSameDay: checkin === checkout
     };
-  }, [selection, propiedades, getEdificioById, checkReservationOverlap]);
-
-  // Format date readable
-  const formatReadableDate = (dateStr?: string) => {
-    if (!dateStr) return '';
-    const parts = dateStr.split('-');
-    if (parts.length < 3) return dateStr;
-    const day = parts[2];
-    const monthIdx = parseInt(parts[1], 10) - 1;
-    return `${day} ${monthNames[monthIdx]?.slice(0, 3)}`;
-  };
+  }, [selection, propiedades, edificioMap, checkReservationOverlap]);
 
   // Helper for distinct month header badge colors
   const getMonthAccentBg = (monthIdx: number) => {
     const palettes = [
-      'bg-teal-50/90 text-teal-900 border-teal-200/90',
-      'bg-sky-50/90 text-sky-900 border-sky-200/90',
-      'bg-emerald-50/90 text-emerald-900 border-emerald-200/90',
-      'bg-indigo-50/90 text-indigo-900 border-indigo-200/90'
+      'bg-teal-50 text-teal-900 border-teal-200',
+      'bg-sky-50 text-sky-900 border-sky-200',
+      'bg-emerald-50 text-emerald-900 border-emerald-200',
+      'bg-indigo-50 text-indigo-900 border-indigo-200'
     ];
     return palettes[monthIdx % palettes.length];
   };
+
+  // ============================================================================
+  // VIRTUALIZED ROW COMPUTATION (WINDOWING)
+  // ============================================================================
+  const totalRowCount = filteredProperties.length;
+  const startIndex = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - OVERSCAN);
+  const endIndex = Math.min(totalRowCount, Math.ceil((scrollTop + viewportHeight) / ROW_HEIGHT) + OVERSCAN);
+  const visibleProperties = filteredProperties.slice(startIndex, endIndex);
+
+  const topSpacerHeight = startIndex * ROW_HEIGHT;
+  const bottomSpacerHeight = Math.max(0, (totalRowCount - endIndex) * ROW_HEIGHT);
 
   return (
     <div className="space-y-4 relative">
@@ -507,7 +801,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
               <span className="text-[11px] text-teal-600 font-semibold truncate">
                 {viewMode === '3months' 
                   ? `${monthsInView.map(m => m.name.slice(0, 3)).join(' - ')}`
-                  : monthNames[currentMonth]}
+                  : MONTH_NAMES[currentMonth]}
               </span>
             </div>
           </div>
@@ -587,7 +881,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
               <span className="font-extrabold text-xs text-slate-900 tracking-wide uppercase whitespace-nowrap">
                 {viewMode === '3months' 
                   ? `${monthsInView[0]?.name.slice(0, 3)} - ${monthsInView[monthsInView.length - 1]?.name.slice(0, 3)} ${monthsInView[0]?.year}`
-                  : `${monthNames[currentMonth]} ${currentYear}`}
+                  : `${MONTH_NAMES[currentMonth]} ${currentYear}`}
               </span>
             </div>
 
@@ -703,13 +997,8 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
       />
 
       {/* TIMELINE CONTAINER WITH DEDICATED TOP SCROLLBAR */}
-      <div 
-        className="rounded-xl glass-panel overflow-hidden border border-slate-200/90 shadow-sm"
-        onMouseLeave={() => {
-          setHoveredDateStr(null);
-          setHoveredPropId(null);
-        }}
-      >
+      <div className="rounded-xl glass-panel overflow-hidden border border-slate-200/90 shadow-sm">
+        
         {/* SYNCHRONIZED TOP SCROLLBAR TRACK */}
         <div 
           ref={topScrollRef}
@@ -720,7 +1009,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
           <div style={{ width: `${totalGridWidth}px`, height: '1px' }} />
         </div>
 
-        {/* MAIN TIMELINE GANTT GRID CONTAINER (Bottom horizontal scrollbar hidden) */}
+        {/* MAIN TIMELINE GANTT GRID CONTAINER (VIRTUALIZED) */}
         <div 
           ref={tableScrollRef}
           onScroll={handleTableScroll}
@@ -733,14 +1022,14 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
               
               {/* TIER 1: Month Super-Header */}
               <div 
-                className="grid text-center border-b border-slate-200 select-none"
+                className="grid text-center border-b border-slate-200 select-none bg-slate-50"
                 style={{
                   gridTemplateColumns: `${condoColWidth}px repeat(${daysInView.length}, ${dayColWidth}px)`
                 }}
               >
                 {/* Pinned Condo Header Corner */}
                 <div 
-                  className="sticky left-0 z-40 bg-slate-50/95 backdrop-blur-md px-3.5 py-1.5 font-extrabold text-[11px] text-slate-700 border-r border-slate-200 flex items-center justify-between"
+                  className="sticky left-0 z-40 bg-slate-100 px-3.5 py-1.5 font-extrabold text-[11px] text-slate-700 border-r border-slate-200 flex items-center justify-between"
                   style={{ width: `${condoColWidth}px` }}
                 >
                   <span className="tracking-wider uppercase">PERIODO</span>
@@ -777,14 +1066,14 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
 
               {/* TIER 2: Day Columns Header */}
               <div 
-                className="grid text-center glass-header border-b border-slate-200 select-none"
+                className="grid text-center glass-header border-b border-slate-200 select-none bg-white"
                 style={{
                   gridTemplateColumns: `${condoColWidth}px repeat(${daysInView.length}, ${dayColWidth}px)`
                 }}
               >
                 {/* Pinned Condo column header */}
                 <div 
-                  className="sticky left-0 z-40 bg-white/95 backdrop-blur-md px-3.5 py-2 font-bold text-xs text-slate-800 border-r border-slate-200 flex items-center justify-between shadow-xs"
+                  className="sticky left-0 z-40 bg-slate-50 px-3.5 py-2 font-bold text-xs text-slate-800 border-r border-slate-200 flex items-center justify-between shadow-xs"
                   style={{ width: `${condoColWidth}px` }}
                 >
                   <span>UNIDAD</span>
@@ -794,248 +1083,79 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
                 </div>
 
                 {/* Day columns */}
-                {daysInView.map((day) => {
-                  const isHoveredCol = hoveredDateStr === day.dateStr;
-
-                  return (
-                    <div
-                      key={day.dateStr}
-                      className={`py-1.5 px-0.5 text-[11px] border-r transition-colors select-none ${
-                        day.isFirstDayOfMonth && day.globalIndex > 0 ? 'border-l-2 border-slate-300 ' : ''
-                      } ${
-                        day.isToday
-                          ? 'bg-teal-600 text-white font-black shadow-sm ring-1 ring-teal-500 border-r-teal-600'
-                          : day.isWeekend
-                          ? isHoveredCol ? 'bg-teal-100/70 text-slate-900 font-bold border-r-slate-200' : 'bg-slate-100/70 text-slate-600 font-semibold border-r-slate-200/80'
-                          : isHoveredCol ? 'bg-teal-100/60 text-slate-900 font-bold border-r-slate-200' : 'text-slate-600 font-semibold border-r-slate-200/80'
-                      }`}
-                    >
-                      <div className={`text-[9px] uppercase tracking-tighter ${day.isToday ? 'text-teal-100' : 'text-slate-400'}`}>
-                        {day.dayOfWeek}
-                      </div>
-                      <div className={`text-xs mt-0.5 ${day.isToday ? 'text-white font-black' : 'text-slate-800'}`}>
-                        {day.dayNumber}
-                      </div>
+                {daysInView.map((day) => (
+                  <div
+                    key={day.dateStr}
+                    className={`py-1.5 px-0.5 text-[11px] border-r border-slate-200/80 transition-colors select-none ${
+                      day.isFirstDayOfMonth && day.globalIndex > 0 ? 'border-l-2 border-slate-300 ' : ''
+                    } ${
+                      day.isToday
+                        ? 'bg-teal-600 text-white font-black shadow-sm ring-1 ring-teal-500 border-r-teal-600'
+                        : day.isWeekend
+                        ? 'bg-slate-100/80 text-slate-600 font-semibold'
+                        : 'text-slate-600 font-semibold bg-white'
+                    }`}
+                  >
+                    <div className={`text-[9px] uppercase tracking-tighter ${day.isToday ? 'text-teal-100' : 'text-slate-400'}`}>
+                      {day.dayOfWeek}
                     </div>
-                  );
-                })}
+                    <div className={`text-xs mt-0.5 ${day.isToday ? 'text-white font-black' : 'text-slate-800'}`}>
+                      {day.dayNumber}
+                    </div>
+                  </div>
+                ))}
               </div>
 
             </div>
 
-            {/* PROPERTY ROWS */}
-            <div className="divide-y divide-slate-100/90 bg-white/60">
+            {/* VIRTUALIZED PROPERTY ROWS */}
+            <div className="bg-white">
               {filteredProperties.length === 0 ? (
                 <div className="py-16 text-center text-slate-400 font-medium">
                   No hay unidades registradas con estos filtros.
                 </div>
               ) : (
-                filteredProperties.map((prop) => {
-                  const ed = getEdificioById(prop.edificio_id);
-                  const propReservations = reservaciones.filter(r => r.propiedad_id === prop.id);
-                  const isSelectedProp = selection?.propiedadId === prop.id;
-                  const isHoveredRow = hoveredPropId === prop.id;
+                <>
+                  {/* Top Virtual Spacer */}
+                  {topSpacerHeight > 0 && (
+                    <div style={{ height: `${topSpacerHeight}px` }} />
+                  )}
 
-                  return (
-                    <div
-                      key={prop.id}
-                      className={`grid items-center relative transition-colors group ${
-                        isSelectedProp
-                          ? 'bg-teal-50/50'
-                          : isHoveredRow
-                          ? 'bg-teal-50/20'
-                          : 'hover:bg-slate-50/70'
-                      }`}
-                      style={{
-                        gridTemplateColumns: `${condoColWidth}px repeat(${daysInView.length}, ${dayColWidth}px)`
-                      }}
-                    >
-                      {/* Sticky Condo column */}
-                      <div 
-                        className={`sticky left-0 z-20 px-3.5 py-2 border-r border-slate-200 flex items-center justify-between transition-colors shadow-xs ${
-                          isSelectedProp
-                            ? 'bg-teal-100/90 backdrop-blur-md text-teal-950 font-bold'
-                            : isHoveredRow
-                            ? 'bg-slate-50/95 backdrop-blur-md'
-                            : 'bg-white/95 backdrop-blur-md'
-                        }`}
-                        style={{ width: `${condoColWidth}px` }}
-                      >
-                        <div className="min-w-0 pr-1">
-                          <span className="font-extrabold text-xs text-slate-900 block truncate">
-                            {prop.nombre}
-                          </span>
-                          <span className="text-[10px] text-slate-500 font-medium truncate block">
-                            Torre {ed?.nombre.replace('Torre ', '')}
-                          </span>
-                        </div>
-                        <button
-                          onClick={() => onNewReservation(prop.id)}
-                          title={`Crear nueva reservación en ${prop.nombre}`}
-                          className="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-teal-100 text-teal-700 transition-all active:scale-95 cursor-pointer"
-                        >
-                          <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                        </button>
-                      </div>
+                  {/* Visible Virtual Rows */}
+                  {visibleProperties.map((prop) => {
+                    const ed = edificioMap.get(prop.edificio_id);
+                    const propReservations = reservationsByPropId.get(prop.id) || [];
+                    const isSelectedProp = selection?.propiedadId === prop.id;
 
-                      {/* Day Grid & Reservation bars across 3 Months */}
-                      <div 
-                        className="relative h-11 items-center grid"
-                        style={{
-                          gridColumn: `2 / span ${daysInView.length}`,
-                          gridTemplateColumns: `repeat(${daysInView.length}, ${dayColWidth}px)`
-                        }}
-                      >
-                        
-                        {/* Day clickable slots */}
-                        {daysInView.map((day) => {
-                          let isInRange = false;
-                          if (isSelectedProp && selection) {
-                            const minD = selection.startDate <= (selection.hoverDate || selection.startDate) ? selection.startDate : (selection.hoverDate || selection.startDate);
-                            const maxD = selection.startDate >= (selection.hoverDate || selection.startDate) ? selection.startDate : (selection.hoverDate || selection.startDate);
-                            isInRange = day.dateStr >= minD && day.dateStr <= maxD;
-                          }
+                    return (
+                      <CondoRow
+                        key={prop.id}
+                        prop={prop}
+                        edificioNombre={ed?.nombre || ''}
+                        daysInView={daysInView}
+                        dayColWidth={dayColWidth}
+                        condoColWidth={condoColWidth}
+                        reservations={propReservations}
+                        dateToIndexMap={dateToIndexMap}
+                        huespedMap={huespedMap}
+                        isSelectedProp={isSelectedProp}
+                        selectionStartDate={selection?.startDate || null}
+                        selectionHoverDate={selection?.hoverDate || null}
+                        selectionNights={selectionPreview?.nights || 1}
+                        selectionConflict={!!selectionPreview?.conflict}
+                        onCellClick={handleCellClick}
+                        onCellMouseEnter={handleCellMouseEnter}
+                        onSelectReservation={onSelectReservation}
+                        onNewReservation={onNewReservation}
+                      />
+                    );
+                  })}
 
-                          const isHoveredCol = hoveredDateStr === day.dateStr;
-
-                          return (
-                            <div
-                              key={day.dateStr}
-                              onClick={() => handleCellClick(prop.id, day.dateStr)}
-                              onMouseEnter={() => handleCellMouseEnter(prop.id, day.dateStr)}
-                              className={`h-full border-r cursor-pointer transition-all relative select-none flex items-center justify-center ${
-                                day.isFirstDayOfMonth && day.globalIndex > 0 ? 'border-l-2 border-slate-300 ' : ''
-                              } ${
-                                isInRange
-                                  ? 'bg-teal-50/50'
-                                  : day.isToday
-                                  ? 'bg-teal-50/60 border-r-slate-100/90'
-                                  : day.isWeekend
-                                  ? isHoveredCol ? 'bg-teal-100/40 border-r-slate-200' : 'bg-slate-50/50 border-r-slate-100/90'
-                                  : isHoveredCol ? 'bg-teal-50/50 border-r-slate-200' : 'hover:bg-teal-100/30 border-r-slate-100/90'
-                              }`}
-                              title={
-                                selection && selection.propiedadId === prop.id
-                                  ? `Click para finalizar reservación el ${day.dateStr}`
-                                  : `Click para iniciar reservación en ${prop.nombre} el ${day.dateStr}`
-                              }
-                            >
-                              {/* Dot indicator on hover if empty */}
-                              {isHoveredRow && isHoveredCol && !isSelectedProp && (
-                                <span className="w-1.5 h-1.5 rounded-full bg-teal-500/50 pointer-events-none" />
-                              )}
-                            </div>
-                          );
-                        })}
-
-                        {/* Interactive Range Selection Preview Bar spanning across months */}
-                        {isSelectedProp && selection && (
-                          (() => {
-                            const d1 = selection.startDate;
-                            const d2 = selection.hoverDate || selection.startDate;
-                            const checkinStr = d1 <= d2 ? d1 : d2;
-                            const checkoutStr = d1 <= d2 ? d2 : d1;
-                            
-                            const totalDays = daysInView.length;
-                            const firstDate = daysInView[0].dateStr;
-                            const lastDate = daysInView[totalDays - 1].dateStr;
-
-                            if (checkoutStr < firstDate || checkinStr > lastDate) {
-                              return null;
-                            }
-
-                            let startIdx = daysInView.findIndex(d => d.dateStr === checkinStr);
-                            if (startIdx === -1) startIdx = 0;
-
-                            let endIdx = daysInView.findIndex(d => d.dateStr === checkoutStr);
-                            if (endIdx === -1) endIdx = totalDays;
-
-                            const nightsInView = Math.max(1, endIdx - startIdx);
-                            const leftPct = (startIdx / totalDays) * 100;
-                            const widthPct = (nightsInView / totalDays) * 100;
-                            const hasConflict = !!selectionPreview?.conflict;
-
-                            return (
-                              <div
-                                style={{
-                                  left: `calc(${leftPct}% + 1px)`,
-                                  width: `calc(${widthPct}% - 2px)`,
-                                }}
-                                className={`absolute inset-y-1 z-20 rounded-lg border-2 border-dashed flex items-center justify-center px-2 pointer-events-none transition-all ${
-                                  hasConflict
-                                    ? 'border-rose-500 bg-rose-500/20 text-rose-900'
-                                    : 'border-teal-700/70 bg-teal-800/15 text-teal-950 font-bold'
-                                }`}
-                              >
-                                <span className="text-[10px] font-black truncate whitespace-nowrap">
-                                  {hasConflict
-                                    ? `Ocupado (${selectionPreview?.nights}n)`
-                                    : `${selectionPreview?.nights} ${selectionPreview?.nights === 1 ? 'noche' : 'noches'} (${formatReadableDate(checkinStr)} → ${formatReadableDate(checkoutStr)})`}
-                                </span>
-                              </div>
-                            );
-                          })()
-                        )}
-
-                        {/* Existing Reservation Bars spanning nights across multi-month view */}
-                        {propReservations.map((res) => {
-                          const totalDays = daysInView.length;
-                          const viewStartStr = daysInView[0].dateStr;
-                          const viewEndStr = daysInView[totalDays - 1].dateStr;
-
-                          // Check if reservation overlaps visible 3-month range
-                          if (res.fecha_checkout <= viewStartStr || res.fecha_checkin > viewEndStr) {
-                            return null;
-                          }
-
-                          let startIdx = daysInView.findIndex(d => d.dateStr === res.fecha_checkin);
-                          if (startIdx === -1) {
-                            startIdx = 0; // Started prior to visible start
-                          }
-
-                          let endIdx = daysInView.findIndex(d => d.dateStr === res.fecha_checkout);
-                          if (endIdx === -1) {
-                            endIdx = totalDays; // Ends after visible range
-                          }
-
-                          const nightsInView = Math.max(1, endIdx - startIdx);
-                          const leftPct = (startIdx / totalDays) * 100;
-                          const widthPct = (nightsInView / totalDays) * 100;
-
-                          const huesped = getHuespedById(res.huesped_id);
-                          const guestName = huesped?.nombres || 'Huésped';
-                          const acompList = Array.isArray(res.acompanantes) ? res.acompanantes.filter(a => a.id !== 'titular') : [];
-                          const acompNames = acompList.length > 0 ? ` | Acompañantes Habitación: ${acompList.map((a, i) => a.nombre_completo || `Acompañante ${i + 1}`).join(', ')}` : '';
-                          const amenityList = Array.isArray(res.acompanantes_amenidades) ? res.acompanantes_amenidades : [];
-                          const amenityNames = amenityList.length > 0 ? ` | Solo Amenidades: ${amenityList.map((a, i) => a.nombre_completo || `Acompañante ${i + 1}`).join(', ')}` : '';
-
-                          return (
-                            <div
-                              key={res.id}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onSelectReservation(res);
-                              }}
-                              style={{
-                                left: `calc(${leftPct}% + 1px)`,
-                                width: `calc(${widthPct}% - 2px)`,
-                              }}
-                              className={`absolute inset-y-1 z-10 rounded-lg px-2.5 flex items-center cursor-pointer transition-all hover:brightness-110 hover:shadow-md hover:z-20 overflow-hidden ${getReservationColor(res)}`}
-                              title={`${res.tipo_huesped} | Titular: ${guestName}${acompNames}${amenityNames} | (${res.fecha_checkin} al ${res.fecha_checkout}) | Estado: ${res.estado} | Brazaletes: ${res.brazaletes || 'N/A'}`}
-                            >
-                              <span className="text-[10px] font-extrabold truncate whitespace-nowrap drop-shadow-xs">
-                                {guestName} {acompList.length > 0 ? `(+${acompList.length})` : res.numero_ocupantes > 1 ? `(+${res.numero_ocupantes - 1})` : ''}
-                                {amenityList.length > 0 ? ` [🏊+${amenityList.length}]` : ''}
-                              </span>
-                            </div>
-                          );
-                        })}
-
-                      </div>
-
-                    </div>
-                  );
-                })
+                  {/* Bottom Virtual Spacer */}
+                  {bottomSpacerHeight > 0 && (
+                    <div style={{ height: `${bottomSpacerHeight}px` }} />
+                  )}
+                </>
               )}
             </div>
 
@@ -1046,7 +1166,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
       {/* Floating Glass Ribbon when date selection is in progress */}
       {selection && selectionPreview && (
         <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 glass-floating rounded-xl p-4 shadow-2xl flex flex-wrap items-center justify-between gap-4 max-w-2xl w-[92%] animate-slide-up border ${
-          selectionPreview.conflict ? 'border-rose-500/50 bg-rose-50/90' : 'border-teal-500/40'
+          selectionPreview.conflict ? 'border-rose-500/50 bg-rose-50/95' : 'border-teal-500/40 bg-white/95'
         }`}>
           
           <div className="flex items-center gap-3">
