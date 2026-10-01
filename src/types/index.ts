@@ -109,9 +109,8 @@ export interface Propiedad {
   medidor_agua?: string;
   medidor_electricidad?: string;
   empresa_manejadora?: string;
-  moneda: string; // "USD" | "MXN"
   estado: 'Active' | 'Inactive';
-  cuota_hoa?: number;
+  copropietarios?: string; // ej. "Yvonne Marie Koehler, Jack Koehler, Tyler Koehler"
   risa?: string;
   notas?: string;
   created_at?: string;
@@ -176,7 +175,6 @@ export interface Reservacion {
   brazaletes?: string; // ej. "4 entregados" o resumen
   vehiculo_info?: string; // ej. "Corbatin 38516 Ford F150 Blue AJM5429"
   pago_tipo?: 'Con pago' | 'Sin pago' | 'Uso de amenidades' | 'Cortesia';
-  balance?: number;
   estado: EstadoReservacion;
   acompanantes?: Acompanante[];
   acompanantes_amenidades?: AcompananteAmenidad[];

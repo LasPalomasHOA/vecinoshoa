@@ -37,8 +37,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
   const [medidorAgua, setMedidorAgua] = useState('');
   const [medidorElectricidad, setMedidorElectricidad] = useState('');
   const [empresaManejadora, setEmpresaManejadora] = useState('Las Palomas Rental Pool');
-  const [moneda, setMoneda] = useState('USD');
-  const [cuotaHoa, setCuotaHoa] = useState<number>(420);
+  const [copropietarios, setCopropietarios] = useState('');
   const [estado, setEstado] = useState<'Active' | 'Inactive'>('Active');
   const [notas, setNotas] = useState('');
   const [ownerId, setOwnerId] = useState<number>(0);
@@ -59,8 +58,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
       setMedidorAgua(propertyToEdit.medidor_agua || '');
       setMedidorElectricidad(propertyToEdit.medidor_electricidad || '');
       setEmpresaManejadora(propertyToEdit.empresa_manejadora || '');
-      setMoneda(propertyToEdit.moneda);
-      setCuotaHoa(propertyToEdit.cuota_hoa !== undefined && propertyToEdit.cuota_hoa !== null ? propertyToEdit.cuota_hoa : 0);
+      setCopropietarios(propertyToEdit.copropietarios || '');
       setEstado(propertyToEdit.estado);
       setNotas(propertyToEdit.notas || '');
 
@@ -81,8 +79,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
       setMedidorAgua('');
       setMedidorElectricidad('');
       setEmpresaManejadora('Las Palomas Rental Pool');
-      setMoneda('USD');
-      setCuotaHoa(420);
+      setCopropietarios('');
       setEstado('Active');
       setNotas('');
       setOwnerId(0);
@@ -103,14 +100,13 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
       tipo_cuarto: tipoCuarto,
       dormitorios,
       banos,
-      capacidad_personas: capacidadPersonas,
+      capacidad_personas: capacityFix(capacidadPersonas),
       max_carros: maxCarros,
       id_impuesto: idImpuesto,
       medidor_agua: medidorAgua,
       medidor_electricidad: medidorElectricidad,
       empresa_manejadora: empresaManejadora,
-      moneda,
-      cuota_hoa: cuotaHoa,
+      copropietarios: copropietarios.trim() || undefined,
       estado,
       notas
     };
@@ -122,6 +118,10 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
     }
     onClose();
   };
+
+  function capacityFix(val: number) {
+    return val;
+  }
 
   const ownersList = usuarios.filter(u => u.rol === 'Dueño' || u.rol === 'Administrador');
 
@@ -220,6 +220,21 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
             </div>
           </div>
 
+          {/* Copropietarios (Co-owners) */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+              <span>Copropietarios (Co-owners adicionales)</span>
+              <span className="text-[10px] text-slate-400 font-normal">Separados por coma</span>
+            </label>
+            <input
+              type="text"
+              value={copropietarios}
+              onChange={(e) => setCopropietarios(e.target.value)}
+              placeholder="ej. Yvonne Marie Koehler, Jack Koehler, Michael Koehler"
+              className="w-full px-3 py-2 rounded-lg form-input text-xs text-slate-800"
+            />
+          </div>
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div>
               <label className="block text-[11px] font-semibold text-slate-600 mb-1">Dormitorios</label>
@@ -306,28 +321,20 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-0.5">
+            <div className="pt-0.5">
               <div>
                 <label className="block text-[11px] font-semibold text-slate-600 mb-1">Empresa Manejadora</label>
                 <input
                   type="text"
                   value={empresaManejadora}
                   onChange={(e) => setEmpresaManejadora(e.target.value)}
-                  placeholder="Las Palomas Rental Pool / Direct"
+                  placeholder="Las Palomas Rental Pool"
                   className="w-full px-3 py-1.5 rounded-lg form-input text-xs"
-                />
-              </div>
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Cuota HOA Mensual ($ USD)</label>
-                <input
-                  type="number"
-                  value={cuotaHoa}
-                  onChange={(e) => setCuotaHoa(Number(e.target.value))}
-                  className="w-full px-3 py-1.5 rounded-lg form-input text-xs font-mono text-teal-800 font-bold"
                 />
               </div>
             </div>
           </div>
+
 
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1">

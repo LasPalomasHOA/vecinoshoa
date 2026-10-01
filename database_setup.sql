@@ -63,14 +63,18 @@ CREATE TABLE IF NOT EXISTS gestion_residencial.propiedades (
     medidor_agua VARCHAR(60),
     medidor_electricidad VARCHAR(60),
     empresa_manejadora VARCHAR(120),
-    moneda VARCHAR(5) DEFAULT 'USD',
     estado VARCHAR(20) DEFAULT 'Active',
-    cuota_hoa NUMERIC(10, 2) DEFAULT 0.00,
+    copropietarios TEXT,
     notas TEXT,
     
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Asegurar columna de copropietarios si la tabla ya existe
+ALTER TABLE gestion_residencial.propiedades ADD COLUMN IF NOT EXISTS copropietarios TEXT;
+
+
 
 -- 5. Asignación de Propietarios a Propiedades (Relación N:M)
 CREATE TABLE IF NOT EXISTS gestion_residencial.propiedad_usuarios (
@@ -105,7 +109,6 @@ CREATE TABLE IF NOT EXISTS gestion_residencial.reservaciones (
     notas TEXT,
     brazaletes VARCHAR(100),
     vehiculo_info VARCHAR(150),
-    balance NUMERIC(10, 2) DEFAULT 0.00,
     estado VARCHAR(30) DEFAULT 'Confirmada', -- Confirmada, En Casa (Checked-in), Checked-out, Pendiente, Cancelada
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -177,11 +180,11 @@ INSERT INTO gestion_residencial.usuarios (id, email, nombre, apellido, rol, tele
 ON CONFLICT (email) DO NOTHING;
 
 -- Propiedades Iniciales
-INSERT INTO gestion_residencial.propiedades (id, nombre, edificio_id, grupo_id, piso, area, tipo_cuarto, dormitorios, banos, capacidad_personas, max_carros, moneda, cuota_hoa, estado) VALUES 
-  (1, 'Diamante 101', 1, 1, 1, '145 m²', 'Frente al Mar', 2, 2.0, 6, 2, 'USD', 450.00, 'Active'),
-  (2, 'Topaz 404', 2, 2, 4, '180 m²', 'Vista al Mar / Piscina', 3, 2.5, 8, 2, 'USD', 580.00, 'Active'),
-  (3, 'Rubi 202', 3, 1, 2, '110 m²', 'Vista Campo de Golf', 1, 1.5, 4, 1, 'USD', 320.00, 'Active'),
-  (4, 'Cristales 701 (Penthouse)', 5, 3, 7, '260 m²', 'Penthouse Panorámico', 4, 4.0, 10, 3, 'USD', 850.00, 'Active')
+INSERT INTO gestion_residencial.propiedades (id, nombre, edificio_id, grupo_id, piso, area, tipo_cuarto, dormitorios, banos, capacidad_personas, max_carros, estado) VALUES 
+  (1, 'Diamante 101', 1, 1, 1, '145 m²', 'Frente al Mar', 2, 2.0, 6, 2, 'Active'),
+  (2, 'Topaz 404', 2, 2, 4, '180 m²', 'Vista al Mar / Piscina', 3, 2.5, 8, 2, 'Active'),
+  (3, 'Rubi 202', 3, 1, 2, '110 m²', 'Vista Campo de Golf', 1, 1.5, 4, 1, 'Active'),
+  (4, 'Cristales 701 (Penthouse)', 5, 3, 7, '260 m²', 'Penthouse Panorámico', 4, 4.0, 10, 3, 'Active')
 ON CONFLICT (id) DO NOTHING;
 
 -- Asignaciones Propiedad - Dueños
@@ -200,10 +203,10 @@ INSERT INTO gestion_residencial.huespedes (id, nombres) VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- Reservaciones Iniciales
-INSERT INTO gestion_residencial.reservaciones (id, codigo, propiedad_id, huesped_id, tipo_huesped, fecha_checkin, fecha_checkout, numero_ocupantes, numero_autos, brazaletes, vehiculo_info, balance, estado) VALUES 
-  (1, 'RES-202601', 1, 1, 'Dueño', '2026-09-20', '2026-09-26', 4, 1, 'Azul Diamante 101A-101D', 'GMC Sierra Blanca Sonora UBN-892', 0.00, 'En Casa (Checked-in)'),
-  (2, 'RES-202602', 2, 2, 'Renta / Streamline', '2026-09-22', '2026-09-27', 6, 2, 'Verde Topaz 404-1 a 404-6', 'Ford Expedition Negra AZ ABC-1234', 0.00, 'En Casa (Checked-in)'),
-  (3, 'RES-202603', 3, 3, 'Huésped con Cobro (PG)', '2026-09-25', '2026-09-29', 2, 1, 'Pendiente', 'Pendiente al arribo', 180.00, 'Confirmada')
+INSERT INTO gestion_residencial.reservaciones (id, codigo, propiedad_id, huesped_id, tipo_huesped, fecha_checkin, fecha_checkout, numero_ocupantes, numero_autos, brazaletes, vehiculo_info, estado) VALUES 
+  (1, 'RES-202601', 1, 1, 'Dueño', '2026-09-20', '2026-09-26', 4, 1, 'Azul Diamante 101A-101D', 'GMC Sierra Blanca Sonora UBN-892', 'En Casa (Checked-in)'),
+  (2, 'RES-202602', 2, 2, 'Renta / Streamline', '2026-09-22', '2026-09-27', 6, 2, 'Verde Topaz 404-1 a 404-6', 'Ford Expedition Negra AZ ABC-1234', 'En Casa (Checked-in)'),
+  (3, 'RES-202603', 3, 3, 'Huésped con Cobro (PG)', '2026-09-25', '2026-09-29', 2, 1, 'Pendiente', 'Pendiente al arribo', 'Confirmada')
 ON CONFLICT (id) DO NOTHING;
 
 -- Solicitudes de Acceso Iniciales

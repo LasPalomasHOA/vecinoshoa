@@ -9,9 +9,15 @@ interface CalendarLegendProps {
     pendiente?: number;
     checkedIn?: number;
   };
+  dayColWidth?: number;
+  onDayColWidthChange?: (width: number) => void;
 }
 
-export const CalendarLegend: React.FC<CalendarLegendProps> = ({ counts }) => {
+export const CalendarLegend: React.FC<CalendarLegendProps> = ({ 
+  counts,
+  dayColWidth = 40,
+  onDayColWidthChange
+}) => {
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 py-2.5 px-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs text-xs">
       {/* Types and Status Groups */}
@@ -72,9 +78,47 @@ export const CalendarLegend: React.FC<CalendarLegendProps> = ({ counts }) => {
 
       </div>
 
-      <div className="text-[11px] text-teal-800/90 font-semibold hidden lg:flex items-center gap-1.5 bg-teal-50/80 px-2.5 py-1 rounded-lg border border-teal-100">
-        <span>💡 Tip: Haz click en 2 días para reservar un rango de fechas</span>
-      </div>
+      {/* Density / Day Width Selector (Replaced Tip as requested) */}
+      {onDayColWidthChange && (
+        <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+          <button
+            type="button"
+            onClick={() => onDayColWidthChange(32)}
+            title="Vista compacta (más días visibles)"
+            className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+              dayColWidth === 32
+                ? 'bg-white text-teal-800 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Compacto
+          </button>
+          <button
+            type="button"
+            onClick={() => onDayColWidthChange(40)}
+            title="Vista normal"
+            className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+              dayColWidth === 40
+                ? 'bg-white text-teal-800 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Normal
+          </button>
+          <button
+            type="button"
+            onClick={() => onDayColWidthChange(52)}
+            title="Vista amplia"
+            className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+              dayColWidth === 52
+                ? 'bg-white text-teal-800 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Amplio
+          </button>
+        </div>
+      )}
     </div>
   );
 };

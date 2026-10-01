@@ -110,10 +110,6 @@ export const ReportsView: React.FC = () => {
     return filteredReservations.filter(r => formatTipo(r.tipo_huesped) === 'Non-paying' || formatTipo(r.tipo_huesped) === 'Resort Amenity Usage').length;
   }, [filteredReservations]);
 
-  const totalBalance = useMemo(() => {
-    return filteredReservations.reduce((acc, res) => acc + (res.balance || 0), 0);
-  }, [filteredReservations]);
-
   // Export report to Excel confined strictly to the 10 table columns (no horizontal color bleed)
   const handleExport = () => {
     const title = 'Entradas – Reporte de Reservaciones';
@@ -161,7 +157,6 @@ export const ReportsView: React.FC = () => {
           <td class="${cellClass}">-</td>
           <td class="${cellClass}">${tipoHtml}</td>
           <td class="${cellClass}">${res.estado === 'En Casa (Checked-in)' ? 'En Casa' : res.estado}</td>
-          <td class="${cellClass}" style="text-align: right; mso-number-format:'\\$#,##0.00';">$${res.balance !== undefined ? res.balance.toFixed(2) : '0.00'}</td>
           <td class="${cellClass}" style="mso-number-format:'\\@';">${formatReportDateTime(res.created_at)}</td>
         </tr>
       `;
@@ -240,20 +235,19 @@ export const ReportsView: React.FC = () => {
               <col width="175" />
               <col width="125" />
               <col width="90" />
-              <col width="80" />
               <col width="135" />
             </colgroup>
             <tr>
-              <td colspan="10" class="report-title">${title}</td>
+              <td colspan="9" class="report-title">${title}</td>
             </tr>
             <tr>
-              <td colspan="10" class="report-subtitle">${subtitle}</td>
+              <td colspan="9" class="report-subtitle">${subtitle}</td>
             </tr>
             <tr>
-              <td colspan="10" class="report-dates">${dateRange}</td>
+              <td colspan="9" class="report-dates">${dateRange}</td>
             </tr>
             <tr>
-              <td colspan="10" style="height: 10px;"></td>
+              <td colspan="9" style="height: 10px;"></td>
             </tr>
             <thead>
               <tr>
@@ -265,7 +259,6 @@ export const ReportsView: React.FC = () => {
                 <th class="th-cell">Correo de huésped</th>
                 <th class="th-cell">Tipo</th>
                 <th class="th-cell">Estatus</th>
-                <th class="th-cell-right">Balance</th>
                 <th class="th-cell">Creación</th>
               </tr>
             </thead>
@@ -274,10 +267,10 @@ export const ReportsView: React.FC = () => {
             </tbody>
             <tfoot>
               <tr>
-                <td colspan="10" style="height: 10px;"></td>
+                <td colspan="9" style="height: 10px;"></td>
               </tr>
               <tr>
-                <td colspan="5" style="font-size: 9pt; color: #64748b; font-style: italic; padding: 6px; border-top: 1pt solid #cbd5e1;">Total de registros: ${filteredReservations.length}</td>
+                <td colspan="4" style="font-size: 9pt; color: #64748b; font-style: italic; padding: 6px; border-top: 1pt solid #cbd5e1;">Total de registros: ${filteredReservations.length}</td>
                 <td colspan="5" style="font-size: 9pt; color: #64748b; text-align: right; font-style: italic; padding: 6px; border-top: 1pt solid #cbd5e1;">Las Palomas Seaside Golf Community</td>
               </tr>
             </tfoot>
@@ -304,8 +297,8 @@ export const ReportsView: React.FC = () => {
   return (
     <div className="space-y-5">
       
-      {/* 4 KPI Summary Cards matching app design language (Hidden on Print) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 no-print">
+      {/* 3 KPI Summary Cards matching app design language (Hidden on Print) */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 no-print">
         
         <div className="p-4 rounded-xl glass-card flex items-center justify-between">
           <div>
@@ -343,19 +336,6 @@ export const ReportsView: React.FC = () => {
           </div>
           <div className="w-10 h-10 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-700 shadow-xs">
             <Tag className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="p-4 rounded-xl glass-card flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Balance Pendiente</p>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-2xl font-black text-slate-900">${totalBalance.toFixed(2)}</span>
-              <span className="text-xs text-emerald-700 font-semibold">USD</span>
-            </div>
-          </div>
-          <div className="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-700 shadow-xs">
-            <DollarSign className="w-5 h-5" />
           </div>
         </div>
 
@@ -525,7 +505,6 @@ export const ReportsView: React.FC = () => {
                   <th className="py-2.5 px-2.5 whitespace-nowrap print:py-1.5 print:px-1.5">Correo de huésped</th>
                   <th className="py-2.5 px-2.5 whitespace-nowrap print:py-1.5 print:px-1.5">Tipo</th>
                   <th className="py-2.5 px-2.5 whitespace-nowrap print:py-1.5 print:px-1.5">Estatus</th>
-                  <th className="py-2.5 px-2.5 whitespace-nowrap print:py-1.5 print:px-1.5">Balance</th>
                   <th className="py-2.5 px-2.5 whitespace-nowrap print:py-1.5 print:px-1.5">Creación</th>
                 </tr>
               </thead>
@@ -534,7 +513,7 @@ export const ReportsView: React.FC = () => {
               <tbody className="text-[11px] text-slate-900">
                 {filteredReservations.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="py-12 text-center text-slate-400 font-medium">
+                    <td colSpan={9} className="py-12 text-center text-slate-400 font-medium">
                       No se encontraron registros de reservaciones para el periodo seleccionado.
                     </td>
                   </tr>
@@ -659,11 +638,6 @@ export const ReportsView: React.FC = () => {
                         {/* Estatus */}
                         <td className="py-2 px-2.5 whitespace-nowrap">
                           {res.estado === 'En Casa (Checked-in)' ? 'En Casa' : res.estado}
-                        </td>
-
-                        {/* Balance */}
-                        <td className="py-2 px-2.5 whitespace-nowrap">
-                          ${res.balance !== undefined ? res.balance.toFixed(2) : '0.00'}
                         </td>
 
                         {/* Creación */}

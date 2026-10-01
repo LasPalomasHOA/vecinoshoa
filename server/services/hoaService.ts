@@ -262,19 +262,22 @@ export async function deleteUsuario(id: number): Promise<{ success: boolean; id:
 // ==============================================================================
 // 4. PROPIEDADES (CONDOMINIOS)
 // ==============================================================================
-
 export async function getAllPropiedades(): Promise<Propiedad[]> {
   const res = await query<any>(`
     SELECT 
       id, nombre, edificio_id, grupo_id, piso, area, tipo_cuarto, 
       dormitorios, CAST(banos AS FLOAT) as banos, capacidad_personas, max_carros, 
       id_impuesto, medidor_agua, medidor_electricidad, empresa_manejadora, 
-      moneda, estado, CAST(cuota_hoa AS FLOAT) as cuota_hoa, notas, 
+      estado, 
+      copropietarios, notas, 
       created_at, updated_at
     FROM ${T.propiedades()}
-    ORDER BY nombre ASC;
+    ORDER BY 
+      SUBSTRING(nombre FROM '^[A-Za-z]+') ASC, 
+      CAST(NULLIF(REGEXP_REPLACE(nombre, '[^0-9]', '', 'g'), '') AS INTEGER) ASC NULLS LAST,
+      nombre ASC;
   `);
-  return res.rows;
+  return res.rows.sort((a, b) => a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' }));
 }
 
 export async function getPropiedadById(id: number): Promise<Propiedad | null> {
@@ -283,7 +286,8 @@ export async function getPropiedadById(id: number): Promise<Propiedad | null> {
       id, nombre, edificio_id, grupo_id, piso, area, tipo_cuarto, 
       dormitorios, CAST(banos AS FLOAT) as banos, capacidad_personas, max_carros, 
       id_impuesto, medidor_agua, medidor_electricidad, empresa_manejadora, 
-      moneda, estado, CAST(cuota_hoa AS FLOAT) as cuota_hoa, notas, 
+      estado, 
+      copropietarios, notas, 
       created_at, updated_at
     FROM ${T.propiedades()}
     WHERE id = $1;
@@ -296,14 +300,15 @@ export async function createPropiedad(data: Omit<Propiedad, 'id'>, ownerId?: num
       nombre, edificio_id, grupo_id, piso, area, tipo_cuarto,
       dormitorios, banos, capacidad_personas, max_carros,
       id_impuesto, medidor_agua, medidor_electricidad, empresa_manejadora,
-      moneda, estado, cuota_hoa, notas
+      estado, copropietarios, notas
     )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
     RETURNING 
       id, nombre, edificio_id, grupo_id, piso, area, tipo_cuarto, 
       dormitorios, CAST(banos AS FLOAT) as banos, capacidad_personas, max_carros, 
       id_impuesto, medidor_agua, medidor_electricidad, empresa_manejadora, 
-      moneda, estado, CAST(cuota_hoa AS FLOAT) as cuota_hoa, notas, 
+      estado, 
+      copropietarios, notas, 
       created_at, updated_at;
   `, [
     data.nombre.trim(),
@@ -320,9 +325,8 @@ export async function createPropiedad(data: Omit<Propiedad, 'id'>, ownerId?: num
     data.medidor_agua || null,
     data.medidor_electricidad || null,
     data.empresa_manejadora || null,
-    data.moneda || 'USD',
     data.estado || 'Active',
-    data.cuota_hoa || 0,
+    data.copropietarios || null,
     data.notas || null,
   ]);
 
@@ -359,9 +363,8 @@ export async function updatePropiedad(id: number, data: Partial<Propiedad>, owne
   if (data.medidor_agua !== undefined) { fields.push(`medidor_agua = $${idx++}`); values.push(data.medidor_agua); }
   if (data.medidor_electricidad !== undefined) { fields.push(`medidor_electricidad = $${idx++}`); values.push(data.medidor_electricidad); }
   if (data.empresa_manejadora !== undefined) { fields.push(`empresa_manejadora = $${idx++}`); values.push(data.empresa_manejadora); }
-  if (data.moneda !== undefined) { fields.push(`moneda = $${idx++}`); values.push(data.moneda); }
   if (data.estado !== undefined) { fields.push(`estado = $${idx++}`); values.push(data.estado); }
-  if (data.cuota_hoa !== undefined) { fields.push(`cuota_hoa = $${idx++}`); values.push(data.cuota_hoa); }
+  if (data.copropietarios !== undefined) { fields.push(`copropietarios = $${idx++}`); values.push(data.copropietarios); }
   if (data.notas !== undefined) { fields.push(`notas = $${idx++}`); values.push(data.notas); }
 
   values.push(id);
@@ -373,9 +376,12 @@ export async function updatePropiedad(id: number, data: Partial<Propiedad>, owne
       id, nombre, edificio_id, grupo_id, piso, area, tipo_cuarto, 
       dormitorios, CAST(banos AS FLOAT) as banos, capacidad_personas, max_carros, 
       id_impuesto, medidor_agua, medidor_electricidad, empresa_manejadora, 
-      moneda, estado, CAST(cuota_hoa AS FLOAT) as cuota_hoa, notas, 
+      estado, 
+      copropietarios, notas, 
       created_at, updated_at;
   `, values);
+
+
 
   if (ownerId !== undefined) {
     await query(`DELETE FROM ${T.propiedadUsuarios()} WHERE propiedad_id = $1 AND es_principal = true;`, [id]);
@@ -499,7 +505,7 @@ export async function checkReservationOverlap(
            TO_CHAR(fecha_checkin, 'YYYY-MM-DD') AS fecha_checkin, 
            TO_CHAR(fecha_checkout, 'YYYY-MM-DD') AS fecha_checkout, 
            numero_ocupantes, numero_autos, notas, brazaletes, vehiculo_info, 
-           CAST(balance AS FLOAT) as balance, estado, created_at, updated_at
+           estado, created_at, updated_at
     FROM ${T.reservaciones()}
     WHERE propiedad_id = $1
       AND estado NOT IN ('Cancelada', 'Checked-out')
@@ -518,7 +524,7 @@ export async function getAllReservaciones(): Promise<Reservacion[]> {
       TO_CHAR(fecha_checkin, 'YYYY-MM-DD') AS fecha_checkin, 
       TO_CHAR(fecha_checkout, 'YYYY-MM-DD') AS fecha_checkout, 
       numero_ocupantes, numero_autos, notas, brazaletes, vehiculo_info, 
-      CAST(balance AS FLOAT) as balance, estado, 
+      estado, 
       COALESCE(acompanantes, '[]'::jsonb) AS acompanantes,
       COALESCE(acompanantes_amenidades, '[]'::jsonb) AS acompanantes_amenidades,
       created_at, updated_at
@@ -535,7 +541,7 @@ export async function getReservacionById(id: number): Promise<Reservacion | null
       TO_CHAR(fecha_checkin, 'YYYY-MM-DD') AS fecha_checkin, 
       TO_CHAR(fecha_checkout, 'YYYY-MM-DD') AS fecha_checkout, 
       numero_ocupantes, numero_autos, notas, brazaletes, vehiculo_info, 
-      CAST(balance AS FLOAT) as balance, estado, 
+      estado, 
       COALESCE(acompanantes, '[]'::jsonb) AS acompanantes,
       COALESCE(acompanantes_amenidades, '[]'::jsonb) AS acompanantes_amenidades,
       created_at, updated_at
@@ -567,15 +573,15 @@ export async function createReservacion(
     INSERT INTO ${T.reservaciones()} (
       codigo, propiedad_id, huesped_id, tipo_huesped, 
       fecha_checkin, fecha_checkout, numero_ocupantes, numero_autos, 
-      notas, brazaletes, vehiculo_info, balance, estado, acompanantes, acompanantes_amenidades
+      notas, brazaletes, vehiculo_info, estado, acompanantes, acompanantes_amenidades
     )
-    VALUES ($1, $2, $3, $4, $5::date, $6::date, $7, $8, $9, $10, $11, $12, $13, $14::jsonb, $15::jsonb)
+    VALUES ($1, $2, $3, $4, $5::date, $6::date, $7, $8, $9, $10, $11, $12, $13::jsonb, $14::jsonb)
     RETURNING 
       id, codigo, propiedad_id, huesped_id, tipo_huesped, 
       TO_CHAR(fecha_checkin, 'YYYY-MM-DD') AS fecha_checkin, 
       TO_CHAR(fecha_checkout, 'YYYY-MM-DD') AS fecha_checkout, 
       numero_ocupantes, numero_autos, notas, brazaletes, vehiculo_info, 
-      CAST(balance AS FLOAT) as balance, estado, 
+      estado, 
       COALESCE(acompanantes, '[]'::jsonb) AS acompanantes,
       COALESCE(acompanantes_amenidades, '[]'::jsonb) AS acompanantes_amenidades,
       created_at, updated_at;
@@ -591,7 +597,6 @@ export async function createReservacion(
     data.notas || null,
     data.brazaletes || null,
     data.vehiculo_info || null,
-    data.balance || 0,
     data.estado || 'Confirmada',
     acompanantesJson,
     acompanantesAmenidadesJson
@@ -630,7 +635,6 @@ export async function updateReservacion(id: number, data: Partial<Reservacion>):
   if (data.notas !== undefined) { fields.push(`notas = $${idx++}`); values.push(data.notas); }
   if (data.brazaletes !== undefined) { fields.push(`brazaletes = $${idx++}`); values.push(data.brazaletes); }
   if (data.vehiculo_info !== undefined) { fields.push(`vehiculo_info = $${idx++}`); values.push(data.vehiculo_info); }
-  if (data.balance !== undefined) { fields.push(`balance = $${idx++}`); values.push(data.balance); }
   if (data.estado !== undefined) { fields.push(`estado = $${idx++}`); values.push(data.estado); }
   if (data.acompanantes !== undefined) {
     fields.push(`acompanantes = $${idx++}::jsonb`);
@@ -651,7 +655,7 @@ export async function updateReservacion(id: number, data: Partial<Reservacion>):
       TO_CHAR(fecha_checkin, 'YYYY-MM-DD') AS fecha_checkin, 
       TO_CHAR(fecha_checkout, 'YYYY-MM-DD') AS fecha_checkout, 
       numero_ocupantes, numero_autos, notas, brazaletes, vehiculo_info, 
-      CAST(balance AS FLOAT) as balance, estado, 
+      estado, 
       COALESCE(acompanantes, '[]'::jsonb) AS acompanantes,
       COALESCE(acompanantes_amenidades, '[]'::jsonb) AS acompanantes_amenidades,
       created_at, updated_at;
@@ -889,7 +893,7 @@ export async function getAllBitacora(): Promise<any[]> {
 
     // 3. Propiedades en gestion_residencial
     const props = await query<any>(`
-      SELECT p.id, p.nombre, p.cuota_hoa, p.moneda, p.estado, e.nombre AS torre_nombre, p.created_at, p.updated_at
+      SELECT p.id, p.nombre, p.estado, e.nombre AS torre_nombre, p.created_at, p.updated_at
       FROM ${T.propiedades()} p
       LEFT JOIN ${T.edificios()} e ON p.edificio_id = e.id
       ORDER BY p.created_at DESC;
@@ -904,12 +908,11 @@ export async function getAllBitacora(): Promise<any[]> {
         usuario_rol: 'Supervisor',
         accion: 'CREACIÓN',
         modulo: 'Propiedades',
-        descripcion: `Registró el condominio "${p.nombre}" en ${p.torre_nombre || 'Torre HOA'} (Cuota HOA: $${p.cuota_hoa || 0} ${p.moneda || 'USD'}).`,
+        descripcion: `Registró el condominio "${p.nombre}" en ${p.torre_nombre || 'Torre HOA'}.`,
         entidad_nombre: p.nombre,
         entidad_id: p.id,
         detalles: {
           torre: p.torre_nombre,
-          cuota_hoa: p.cuota_hoa,
           estado: p.estado,
           esquema: 'gestion_residencial.propiedades'
         }

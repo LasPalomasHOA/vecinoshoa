@@ -36,10 +36,10 @@ Las tablas creadas y administradas por el sistema son:
 1. **`edificios`**: Catálogo de torres (Diamante, Topaz, Rubi, Opal, Cristales, Esmeralda).
 2. **`grupos_propiedad`**: Grupos de cobranza y HOA (NR, POOL, Premium).
 3. **`usuarios`**: Dueños, administradores, residentes y personal con roles y estatus.
-4. **`propiedades`**: Condominios con características (piso, cuartos, baños, medidores, cuota HOA, etc.).
+4. **`propiedades`**: Condominios con características (piso, cuartos, baños, medidores, copropietarios, etc.).
 5. **`propiedad_usuarios`**: Relación N:M entre condominios y propietarios.
 6. **`huespedes`**: Directorio y datos de contacto de huéspedes.
-7. **`reservaciones`**: Reservaciones con fechas de check-in / check-out, ocupantes, brazaletes, vehículos, balance, estatus ('Confirmada', 'En Casa (Checked-in)', 'Checked-out', 'Cancelada') y validación de traslape.
+7. **`reservaciones`**: Reservaciones con fechas de check-in / check-out, ocupantes, brazaletes, vehículos, estatus ('Confirmada', 'En Casa (Checked-in)', 'Checked-out', 'Cancelada') y validación de traslape.
 8. **`solicitudes_acceso`**: Pases de contratistas, entregas y proveedores con seguimiento de autorización.
 
 ### 📥 Creación de Tablas en Supabase / Postgres:

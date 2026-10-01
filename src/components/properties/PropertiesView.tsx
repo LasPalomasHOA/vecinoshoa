@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Propiedad } from '../../types';
+import { compareCondoNames } from '../../utils/sortUtils';
 import {
   Building2,
   Plus,
@@ -40,30 +41,32 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
   const [selectedGrupo, setSelectedGrupo] = useState<string>('ALL');
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
 
-  const filteredProperties = propiedades.filter(prop => {
-    const edificio = getEdificioById(prop.edificio_id);
-    const owner = getOwnerByPropiedadId(prop.id);
+  const filteredProperties = propiedades
+    .filter(prop => {
+      const edificio = getEdificioById(prop.edificio_id);
+      const owner = getOwnerByPropiedadId(prop.id);
 
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      const matchName = prop.nombre.toLowerCase().includes(q);
-      const matchEd = edificio?.nombre.toLowerCase().includes(q);
-      const matchOwner = owner ? `${owner.nombre} ${owner.apellido}`.toLowerCase().includes(q) || owner.email.toLowerCase().includes(q) : false;
-      const matchImpuesto = prop.id_impuesto?.toLowerCase().includes(q);
-      const matchMedidor = prop.medidor_electricidad?.toLowerCase().includes(q);
-      if (!matchName && !matchEd && !matchOwner && !matchImpuesto && !matchMedidor) return false;
-    }
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const matchName = prop.nombre.toLowerCase().includes(q);
+        const matchEd = edificio?.nombre.toLowerCase().includes(q);
+        const matchOwner = owner ? `${owner.nombre} ${owner.apellido}`.toLowerCase().includes(q) || owner.email.toLowerCase().includes(q) : false;
+        const matchImpuesto = prop.id_impuesto?.toLowerCase().includes(q);
+        const matchMedidor = prop.medidor_electricidad?.toLowerCase().includes(q);
+        if (!matchName && !matchEd && !matchOwner && !matchImpuesto && !matchMedidor) return false;
+      }
 
-    if (selectedEdificio !== 'ALL' && prop.edificio_id !== parseInt(selectedEdificio)) {
-      return false;
-    }
+      if (selectedEdificio !== 'ALL' && prop.edificio_id !== parseInt(selectedEdificio)) {
+        return false;
+      }
 
-    if (selectedGrupo !== 'ALL' && prop.grupo_id !== parseInt(selectedGrupo)) {
-      return false;
-    }
+      if (selectedGrupo !== 'ALL' && prop.grupo_id !== parseInt(selectedGrupo)) {
+        return false;
+      }
 
-    return true;
-  });
+      return true;
+    })
+    .sort((a, b) => compareCondoNames(a.nombre, b.nombre));
 
   // Clean formatted Grupo badge helper
   const getGrupoBadge = (grupoNombre?: string) => {
@@ -179,7 +182,6 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
                   <th className="py-3 px-3.5 whitespace-nowrap w-44">Condominio</th>
                   <th className="py-3 px-3.5 whitespace-nowrap w-36">Distribución</th>
                   <th className="py-3 px-3.5 whitespace-nowrap min-w-[170px]">Propietario</th>
-                  <th className="py-3 px-3.5 whitespace-nowrap w-28">Cuota HOA</th>
                   <th className="py-3 px-3.5 whitespace-nowrap w-36">Grupo</th>
                   <th className="py-3 px-3.5 whitespace-nowrap w-40">Medidores (Luz/Agua)</th>
                   <th className="py-3 px-3.5 whitespace-nowrap w-24">Estatus</th>
@@ -189,7 +191,7 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
               <tbody className="divide-y divide-slate-100">
                 {filteredProperties.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="py-12 text-center text-slate-400 font-medium">
+                    <td colSpan={7} className="py-12 text-center text-slate-400 font-medium">
                       No se encontraron condominios con estos filtros.
                     </td>
                   </tr>
@@ -223,30 +225,31 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
                           </span>
                         </td>
 
-                        {/* Owner & Email */}
-                        <td className="py-3 px-3.5 align-middle whitespace-nowrap">
+                        {/* Owner & Email & Copropietarios */}
+                        <td className="py-3 px-3.5 align-middle max-w-[240px]">
                           {owner ? (
                             <div>
-                              <span className="font-bold text-slate-900 block">{owner.nombre} {owner.apellido}</span>
-                              <span className="text-[10px] text-slate-500 font-mono">{owner.email || '—'}</span>
+                              <span className="font-bold text-slate-900 block truncate">{owner.nombre} {owner.apellido}</span>
+                              <span className="text-[10px] text-slate-500 font-mono block truncate">{owner.email || '—'}</span>
+                              {prop.copropietarios && (
+                                <span className="text-[9.5px] text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-200 mt-0.5 block truncate" title={`Copropietarios: ${prop.copropietarios}`}>
+                                  👥 {prop.copropietarios}
+                                </span>
+                              )}
+                            </div>
+                          ) : prop.copropietarios ? (
+                            <div>
+                              <span className="text-slate-400 italic text-[11px] block">Sin asignar</span>
+                              <span className="text-[9.5px] text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-200 mt-0.5 block truncate" title={`Copropietarios: ${prop.copropietarios}`}>
+                                👥 {prop.copropietarios}
+                              </span>
                             </div>
                           ) : (
                             <span className="text-slate-400 italic text-[11px]">Sin asignar</span>
                           )}
                         </td>
 
-                        {/* Cuota HOA */}
-                        <td className="py-3 px-3.5 align-middle whitespace-nowrap">
-                          {prop.cuota_hoa && prop.cuota_hoa > 0 ? (
-                            <span className="font-mono font-bold text-teal-700">
-                              ${prop.cuota_hoa} {prop.moneda || 'USD'}
-                            </span>
-                          ) : (
-                            <span className="text-slate-400 font-medium italic text-[11px]">
-                              N/A
-                            </span>
-                          )}
-                        </td>
+
 
                         {/* Grupo */}
                         <td className="py-3 px-3.5 align-middle whitespace-nowrap">
@@ -343,12 +346,8 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
                     <span className="font-semibold text-slate-800">{prop.dormitorios} Rec • {prop.banos} Baños</span>
                   </div>
                   <div className="p-2 rounded-lg bg-slate-50">
-                    <span className="text-[10px] text-slate-400 block">Cuota HOA</span>
-                    {prop.cuota_hoa && prop.cuota_hoa > 0 ? (
-                      <span className="font-mono font-bold text-teal-800">${prop.cuota_hoa} {prop.moneda || 'USD'}</span>
-                    ) : (
-                      <span className="text-slate-400 font-medium italic text-xs">N/A</span>
-                    )}
+                    <span className="text-[10px] text-slate-400 block">Medidores</span>
+                    <span className="font-mono text-xs text-slate-700">⚡{prop.medidor_electricidad || 'N/A'} • 💧{prop.medidor_agua || 'N/A'}</span>
                   </div>
                 </div>
 
@@ -364,6 +363,14 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
                     </div>
                   ) : (
                     <span className="text-slate-400 italic">Sin asignar</span>
+                  )}
+                  {prop.copropietarios && (
+                    <div className="mt-1.5 pt-1.5 border-t border-slate-200/60">
+                      <span className="text-[10px] font-semibold text-teal-800 block">👥 Copropietarios:</span>
+                      <p className="text-[10px] text-slate-600 line-clamp-2" title={prop.copropietarios}>
+                        {prop.copropietarios}
+                      </p>
+                    </div>
                   )}
                 </div>
 

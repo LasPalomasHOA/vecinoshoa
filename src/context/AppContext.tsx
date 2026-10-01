@@ -13,6 +13,7 @@ import {
   BitacoraEntry
 } from '../types';
 import { api } from '../services/api';
+import { compareCondoNames } from '../utils/sortUtils';
 import { useAuth } from './AuthContext';
 
 export type ActiveTab = 'inicio' | 'frontdesk' | 'calendar' | 'properties' | 'users' | 'requests' | 'reports' | 'bitacora';
@@ -149,11 +150,11 @@ const DEFAULT_BITACORA_LOGS: BitacoraEntry[] = [
     usuario_rol: 'Supervisor',
     accion: 'EDICIÓN',
     modulo: 'Propiedades',
-    descripcion: 'Actualizó cuota de mantenimiento HOA y notas administrativas en Cristales 701 (Penthouse).',
+    descripcion: 'Actualizó información y notas administrativas en Cristales 701 (Penthouse).',
     entidad_id: 4,
     entidad_nombre: 'Cristales 701 (Penthouse)',
     detalles: {
-      cambios: ['Cuota HOA establecida en $850.00 USD', 'Actualización de notas de inspección'],
+      cambios: ['Actualización de notas de inspección'],
       dispositivo: 'Módulo Supervisor (Windows / Chrome)'
     }
   },
@@ -169,7 +170,7 @@ const DEFAULT_BITACORA_LOGS: BitacoraEntry[] = [
     entidad_id: 3,
     entidad_nombre: 'RES-202603 / Rubi 202',
     detalles: {
-      nuevo: { codigo: 'RES-202603', huesped: 'Daniela Fernández', propiedad: 'Rubi 202', fechas: '2026-09-25 a 2026-09-29', balance: 180 },
+      nuevo: { codigo: 'RES-202603', huesped: 'Daniela Fernández', propiedad: 'Rubi 202', fechas: '2026-09-25 a 2026-09-29' },
       dispositivo: 'Portal Administrativo'
     }
   },
@@ -387,7 +388,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       setUsuarios(combinedUsers);
 
-      setPropiedades(propiedadesData);
+      // Sort properties naturally (e.g. A-101 before A-1001, A then B then C)
+      const sortedPropiedades = (propiedadesData || []).slice().sort((a, b) => 
+        compareCondoNames(a.nombre, b.nombre)
+      );
+      setPropiedades(sortedPropiedades);
       setPropiedadUsuarios(propiedadUsuariosData);
       setHuespedes(huespedesData);
       setReservaciones(reservacionesData);
@@ -415,7 +420,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addPropiedad = async (propData: Omit<Propiedad, 'id'>, ownerId?: number) => {
     try {
       const created = await api.propiedades.create(propData, ownerId);
-      setPropiedades(prev => [created, ...prev]);
+      setPropiedades(prev => [created, ...prev].sort((a, b) => 
+        compareCondoNames(a.nombre, b.nombre)
+      ));
       
       if (ownerId && ownerId > 0) {
         const assignments = await api.propiedadUsuarios.getAll();
@@ -425,7 +432,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       registrarEventoBitacora({
         accion: 'CREACIÓN',
         modulo: 'Propiedades',
-        descripcion: `Creó la propiedad "${created.nombre}" (${created.dormitorios} recámaras, ${created.banos} baños, cuota HOA: $${created.cuota_hoa || 0} ${created.moneda || 'USD'}).`,
+        descripcion: `Creó la propiedad "${created.nombre}" (${created.dormitorios} recámaras, ${created.banos} baños).`,
         entidad_id: created.id,
         entidad_nombre: created.nombre,
         detalles: { nuevo: created }
@@ -441,7 +448,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const previous = propiedades.find(p => p.id === id);
       const updated = await api.propiedades.update(id, propData, ownerId);
-      setPropiedades(prev => prev.map(p => (p.id === id ? updated : p)));
+      setPropiedades(prev => prev.map(p => (p.id === id ? updated : p)).sort((a, b) => 
+        compareCondoNames(a.nombre, b.nombre)
+      ));
 
       if (ownerId !== undefined) {
         const assignments = await api.propiedadUsuarios.getAll();
@@ -636,7 +645,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         ...resData,
         codigo: resData.codigo || generatedCode,
         huesped_id: targetHuespedId,
-        balance: resData.balance || 0,
         estado: resData.estado || 'Confirmada'
       });
 
