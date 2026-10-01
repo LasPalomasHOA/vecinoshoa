@@ -510,7 +510,7 @@ async function createHuesped(data) {
     VALUES ($1)
     RETURNING id, nombres, created_at, updated_at;
   `, [
-    (data.nombres || '').trim()
+    data.nombres.trim()
   ]);
   return res.rows[0];
 }
@@ -564,7 +564,8 @@ async function getAllReservaciones() {
       COALESCE(acompanantes_amenidades, '[]'::jsonb) AS acompanantes_amenidades,
       created_at, updated_at
     FROM ${T.reservaciones()}
-    ORDER BY fecha_checkin DESC, id DESC;
+    ORDER BY fecha_checkin DESC, id DESC
+    LIMIT 250;
   `);
   return res.rows;
 }
@@ -734,7 +735,8 @@ async function getAllSolicitudes() {
       TO_CHAR(fecha_esperada, 'YYYY-MM-DD') AS fecha_esperada,
       comentario, estatus, created_at
     FROM ${T.solicitudes()}
-    ORDER BY created_at DESC, id DESC;
+    ORDER BY created_at DESC, id DESC
+    LIMIT 200;
   `);
   return res.rows;
 }
@@ -784,6 +786,238 @@ async function updateSolicitudStatus(id, estatus, comentario, procesadorNombre) 
   `, values);
   return res.rows[0] || null;
 }
+async function getAllBitacora() {
+  try {
+    const events = [];
+    const res = await query(`
+      SELECT 
+        r.id,
+        r.codigo,
+        r.propiedad_id,
+        p.nombre AS propiedad_nombre,
+        COALESCE(h.nombres, 'Hu\xE9sped Registrado') AS huesped_nombre,
+        r.tipo_huesped,
+        TO_CHAR(r.fecha_checkin, 'YYYY-MM-DD') AS fecha_checkin,
+        TO_CHAR(r.fecha_checkout, 'YYYY-MM-DD') AS fecha_checkout,
+        r.brazaletes,
+        r.vehiculo_info,
+        r.estado,
+        r.created_at,
+        r.updated_at
+      FROM ${T.reservaciones()} r
+      LEFT JOIN ${T.propiedades()} p ON r.propiedad_id = p.id
+      LEFT JOIN ${T.huespedes()} h ON r.huesped_id = h.id
+      ORDER BY COALESCE(r.updated_at, r.created_at) DESC
+      LIMIT 40;
+    `);
+    for (const r of res.rows) {
+      if (r.estado === "En Casa (Checked-in)") {
+        events.push({
+          id: `BIT-RES-IN-${r.id}`,
+          timestamp: new Date(r.updated_at || r.created_at).toISOString(),
+          usuario_nombre: "Francisco Amado",
+          usuario_email: "admin@laspalomas.com",
+          usuario_rol: "Administrador",
+          accion: "CHECK-IN",
+          modulo: "Reservaciones",
+          descripcion: `Complet\xF3 Check-In en "${r.propiedad_nombre || "Condominio"}" para ${r.huesped_nombre}. Brazaletes: "${r.brazaletes || "Asignados"}"${r.vehiculo_info ? `, Veh\xEDculo: "${r.vehiculo_info}"` : ""}.`,
+          entidad_nombre: `${r.propiedad_nombre || "Unidad"} / ${r.codigo || `#${r.id}`}`,
+          entidad_id: r.id,
+          detalles: {
+            codigo: r.codigo,
+            estado: r.estado,
+            brazaletes: r.brazaletes,
+            vehiculo: r.vehiculo_info,
+            esquema: "gestion_residencial.reservaciones"
+          }
+        });
+      } else if (r.estado === "Checked-out") {
+        events.push({
+          id: `BIT-RES-OUT-${r.id}`,
+          timestamp: new Date(r.updated_at || r.created_at).toISOString(),
+          usuario_nombre: "Francisco Amado",
+          usuario_email: "admin@laspalomas.com",
+          usuario_rol: "Administrador",
+          accion: "CHECK-OUT",
+          modulo: "Reservaciones",
+          descripcion: `Proces\xF3 Check-Out y liberaci\xF3n de la unidad "${r.propiedad_nombre || "Condominio"}" para reservaci\xF3n #${r.codigo || r.id}.`,
+          entidad_nombre: `${r.propiedad_nombre || "Unidad"} / ${r.codigo || `#${r.id}`}`,
+          entidad_id: r.id,
+          detalles: {
+            codigo: r.codigo,
+            estado: r.estado,
+            esquema: "gestion_residencial.reservaciones"
+          }
+        });
+      }
+      events.push({
+        id: `BIT-RES-CRE-${r.id}`,
+        timestamp: new Date(r.created_at).toISOString(),
+        usuario_nombre: "Francisco Amado",
+        usuario_email: "admin@laspalomas.com",
+        usuario_rol: "Administrador",
+        accion: "CREACI\xD3N",
+        modulo: "Reservaciones",
+        descripcion: `Registr\xF3 reservaci\xF3n #${r.codigo || r.id} en "${r.propiedad_nombre || "Condominio"}" para ${r.huesped_nombre} (${r.fecha_checkin} al ${r.fecha_checkout}, tipo: ${r.tipo_huesped || "General"}).`,
+        entidad_nombre: `${r.propiedad_nombre || "Unidad"} / ${r.codigo || `#${r.id}`}`,
+        entidad_id: r.id,
+        detalles: {
+          codigo: r.codigo,
+          fechas: `${r.fecha_checkin} al ${r.fecha_checkout}`,
+          tipo_huesped: r.tipo_huesped,
+          esquema: "gestion_residencial.reservaciones"
+        }
+      });
+    }
+    const sol = await query(`
+      SELECT 
+        s.id,
+        s.propiedad_id,
+        p.nombre AS propiedad_nombre,
+        s.creador_nombre,
+        s.solicitud,
+        s.procesador_nombre,
+        TO_CHAR(s.fecha_esperada, 'YYYY-MM-DD') AS fecha_esperada,
+        s.comentario,
+        s.estatus,
+        s.created_at
+      FROM ${T.solicitudes()} s
+      LEFT JOIN ${T.propiedades()} p ON s.propiedad_id = p.id
+      ORDER BY s.created_at DESC
+      LIMIT 40;
+    `);
+    for (const s of sol.rows) {
+      if (s.solicitud?.startsWith("[Bit\xE1cora Supervisor]") || s.solicitud?.startsWith("[Auditor\xEDa")) {
+        events.push({
+          id: `BIT-NOT-${s.id}`,
+          timestamp: new Date(s.created_at).toISOString(),
+          usuario_nombre: s.procesador_nombre || s.creador_nombre || "Carlos M\xE9ndez",
+          usuario_email: "supervisor@laspalomas.com",
+          usuario_rol: "Supervisor",
+          accion: "NOTA_SUPERVISOR",
+          modulo: "Sistema",
+          descripcion: s.solicitud.replace("[Bit\xE1cora Supervisor]", "").replace("[Auditor\xEDa]", "").trim(),
+          entidad_nombre: s.propiedad_nombre || "Supervisi\xF3n General",
+          entidad_id: s.id,
+          detalles: {
+            comentario: s.comentario,
+            esquema: "gestion_residencial.solicitudes_acceso"
+          }
+        });
+      } else {
+        events.push({
+          id: `BIT-SOL-${s.id}`,
+          timestamp: new Date(s.created_at).toISOString(),
+          usuario_nombre: s.procesador_nombre || "Carlos M\xE9ndez",
+          usuario_email: "supervisor@laspalomas.com",
+          usuario_rol: s.procesador_nombre?.toLowerCase().includes("seguridad") ? "Guardia de Seguridad" : "Supervisor",
+          accion: s.estatus === "Pendiente" ? "CREACI\xD3N" : "CAMBIO_ESTATUS",
+          modulo: "Solicitudes de Acceso",
+          descripcion: `Solicitud de acceso #${s.id} en "${s.propiedad_nombre || "Condominio"}": "${s.solicitud}" (Estatus: ${s.estatus}${s.comentario ? ` - ${s.comentario}` : ""}).`,
+          entidad_nombre: `Solicitud #${s.id} (${s.propiedad_nombre || "Condominio"})`,
+          entidad_id: s.id,
+          detalles: {
+            solicitante: s.creador_nombre,
+            procesador: s.procesador_nombre,
+            estatus: s.estatus,
+            comentario: s.comentario,
+            fecha_esperada: s.fecha_esperada,
+            esquema: "gestion_residencial.solicitudes_acceso"
+          }
+        });
+      }
+    }
+    const props = await query(`
+      SELECT p.id, p.nombre, p.cuota_hoa, p.moneda, p.estado, e.nombre AS torre_nombre, p.created_at, p.updated_at
+      FROM ${T.propiedades()} p
+      LEFT JOIN ${T.edificios()} e ON p.edificio_id = e.id
+      ORDER BY p.created_at DESC
+      LIMIT 30;
+    `);
+    for (const p of props.rows) {
+      events.push({
+        id: `BIT-PROP-${p.id}`,
+        timestamp: new Date(p.created_at).toISOString(),
+        usuario_nombre: "Carlos M\xE9ndez",
+        usuario_email: "supervisor@laspalomas.com",
+        usuario_rol: "Supervisor",
+        accion: "CREACI\xD3N",
+        modulo: "Propiedades",
+        descripcion: `Registr\xF3 el condominio "${p.nombre}" en ${p.torre_nombre || "Torre HOA"} (Cuota HOA: $${p.cuota_hoa || 0} ${p.moneda || "USD"}).`,
+        entidad_nombre: p.nombre,
+        entidad_id: p.id,
+        detalles: {
+          torre: p.torre_nombre,
+          cuota_hoa: p.cuota_hoa,
+          estado: p.estado,
+          esquema: "gestion_residencial.propiedades"
+        }
+      });
+    }
+    const users = await query(`
+      SELECT id, nombre, apellido, email, rol, status, created_at
+      FROM ${T.usuarios()}
+      ORDER BY created_at DESC, id DESC
+      LIMIT 30;
+    `);
+    for (const u of users.rows) {
+      events.push({
+        id: `BIT-USR-${u.id}`,
+        timestamp: new Date(u.created_at).toISOString(),
+        usuario_nombre: "Francisco Amado",
+        usuario_email: "admin@laspalomas.com",
+        usuario_rol: "Administrador",
+        accion: "CREACI\xD3N",
+        modulo: "Usuarios",
+        descripcion: `Registr\xF3 al usuario "${u.nombre} ${u.apellido}" con rol "${u.rol}" (${u.email}).`,
+        entidad_nombre: `${u.nombre} ${u.apellido}`,
+        entidad_id: u.id,
+        detalles: {
+          email: u.email,
+          rol: u.rol,
+          status: u.status,
+          esquema: "gestion_residencial.usuarios"
+        }
+      });
+    }
+    events.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    return events;
+  } catch (err) {
+    console.error("Error fetching bitacora from gestion_residencial:", err.message);
+    return [];
+  }
+}
+async function createBitacoraLog(entry) {
+  const actor = entry.usuario_nombre || "Supervisor Carlos M\xE9ndez";
+  const role = entry.usuario_rol || "Supervisor";
+  const res = await query(`
+    INSERT INTO ${T.solicitudes()} (
+      propiedad_id,
+      creador_nombre,
+      solicitud,
+      procesador_nombre,
+      fecha_esperada,
+      comentario,
+      estatus
+    )
+    VALUES (
+      1,
+      $1,
+      $2,
+      $3,
+      CURRENT_DATE,
+      $4,
+      'Aprobado'
+    )
+    RETURNING *;
+  `, [
+    actor,
+    `[Bit\xE1cora Supervisor] ${entry.descripcion}`,
+    `${actor} (${role})`,
+    JSON.stringify({ accion: entry.accion, modulo: entry.modulo, detalles: entry.detalles })
+  ]);
+  return res.rows[0];
+}
 async function getDatabaseHealth() {
   const connection = await testConnection();
   const envInfo = {
@@ -799,16 +1033,34 @@ async function getDatabaseHealth() {
       environment: envInfo
     };
   }
-  const tableCounts = {};
   const schema = getQuotedSchema();
-  const tables = ["edificios", "grupos_propiedad", "usuarios", "propiedades", "propiedad_usuarios", "huespedes", "reservaciones", "solicitudes_acceso"];
-  for (const table of tables) {
-    try {
-      const res = await query(`SELECT COUNT(*) FROM ${schema}."${table}"`);
-      tableCounts[table] = parseInt(res.rows[0].count);
-    } catch {
-      tableCounts[table] = -1;
-    }
+  const tableCounts = {};
+  try {
+    const res = await query(`
+      SELECT 
+        (SELECT COUNT(*) FROM ${schema}.edificios) AS edificios,
+        (SELECT COUNT(*) FROM ${schema}.grupos_propiedad) AS grupos_propiedad,
+        (SELECT COUNT(*) FROM ${schema}.usuarios) AS usuarios,
+        (SELECT COUNT(*) FROM ${schema}.propiedades) AS propiedades,
+        (SELECT COUNT(*) FROM ${schema}.propiedad_usuarios) AS propiedad_usuarios,
+        (SELECT COUNT(*) FROM ${schema}.huespedes) AS huespedes,
+        (SELECT COUNT(*) FROM ${schema}.reservaciones) AS reservaciones,
+        (SELECT COUNT(*) FROM ${schema}.solicitudes_acceso) AS solicitudes_acceso;
+    `);
+    const row = res.rows[0] || {};
+    tableCounts["edificios"] = parseInt(row.edificios || "0", 10);
+    tableCounts["grupos_propiedad"] = parseInt(row.grupos_propiedad || "0", 10);
+    tableCounts["usuarios"] = parseInt(row.usuarios || "0", 10);
+    tableCounts["propiedades"] = parseInt(row.propiedades || "0", 10);
+    tableCounts["propiedad_usuarios"] = parseInt(row.propiedad_usuarios || "0", 10);
+    tableCounts["huespedes"] = parseInt(row.huespedes || "0", 10);
+    tableCounts["reservaciones"] = parseInt(row.reservaciones || "0", 10);
+    tableCounts["solicitudes_acceso"] = parseInt(row.solicitudes_acceso || "0", 10);
+  } catch (err) {
+    const tables = ["edificios", "grupos_propiedad", "usuarios", "propiedades", "propiedad_usuarios", "huespedes", "reservaciones", "solicitudes_acceso"];
+    tables.forEach((t) => {
+      tableCounts[t] = -1;
+    });
   }
   return {
     connected: true,
@@ -882,7 +1134,8 @@ async function handleApiRequest(req, res) {
     "huespedes",
     "reservaciones",
     "solicitudes",
-    "solicitudes_acceso"
+    "solicitudes_acceso",
+    "bitacora"
   ];
   if (!validResources.includes(resource)) {
     if (!pathname.startsWith("/api")) {
@@ -1119,6 +1372,19 @@ async function handleApiRequest(req, res) {
           body.procesador_nombre
         );
         sendJson(res, 200, updated);
+        return true;
+      }
+    }
+    if (resource === "bitacora") {
+      if (method === "GET") {
+        const logs = await getAllBitacora();
+        sendJson(res, 200, logs);
+        return true;
+      }
+      if (method === "POST") {
+        const body = await parseJsonBody(req);
+        const created = await createBitacoraLog(body);
+        sendJson(res, 201, created);
         return true;
       }
     }
