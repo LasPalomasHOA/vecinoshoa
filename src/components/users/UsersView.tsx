@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Usuario, RolUsuario } from '../../types';
+import { DeleteConfirmModal } from '../common/DeleteConfirmModal';
 import { 
   Users, 
   Plus, 
@@ -29,6 +30,8 @@ export const UsersView: React.FC<UsersViewProps> = ({
 
   const [roleFilter, setRoleFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [userToDelete, setUserToDelete] = useState<Usuario | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const filteredUsers = usuarios.filter(u => {
     if (searchQuery) {
@@ -235,12 +238,11 @@ export const UsersView: React.FC<UsersViewProps> = ({
                           </button>
                           <button
                             onClick={() => {
-                              if (window.confirm(`¿Eliminar al usuario ${user.nombre} ${user.apellido}?`)) {
-                                deleteUsuario(user.id);
-                              }
+                              setUserToDelete(user);
+                              setIsDeleteModalOpen(true);
                             }}
                             className="p-1 rounded-md hover:bg-rose-50 text-rose-600 transition-colors cursor-pointer"
-                            title="Eliminar"
+                            title="Eliminar usuario"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -255,6 +257,29 @@ export const UsersView: React.FC<UsersViewProps> = ({
           </table>
         </div>
       </div>
+
+      {/* Delete User Modal with Motivo */}
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setUserToDelete(null);
+        }}
+        title="Eliminar Usuario"
+        itemType="Usuario"
+        itemName={userToDelete ? `${userToDelete.nombre} ${userToDelete.apellido}` : ''}
+        details={[
+          { label: 'Correo', value: userToDelete?.email || 'N/A' },
+          { label: 'Rol', value: userToDelete?.rol || 'N/A' },
+          { label: 'Estatus', value: userToDelete?.status || 'N/A' }
+        ]}
+        placeholder="Escribe el motivo de la baja del usuario (ej. Traspaso de condominio, baja laboral, cuenta duplicada)..."
+        onConfirm={async (motivo) => {
+          if (userToDelete) {
+            await deleteUsuario(userToDelete.id, motivo);
+          }
+        }}
+      />
 
     </div>
   );

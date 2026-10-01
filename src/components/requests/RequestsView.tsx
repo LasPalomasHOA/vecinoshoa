@@ -1,113 +1,104 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { SolicitudAcceso } from '../../types';
+import { DeleteRequestModal } from './DeleteRequestModal';
 import { 
   Plus, 
   Building2,
   Calendar,
   Wrench,
   ShieldCheck,
-  Clock,
   CheckCircle2,
   FileCheck,
-  AlertCircle
+  Edit,
+  Trash2
 } from 'lucide-react';
 
 interface RequestsViewProps {
   onOpenNewRequest: () => void;
+  onEditRequest?: (sol: SolicitudAcceso) => void;
 }
 
-export const RequestsView: React.FC<RequestsViewProps> = ({ onOpenNewRequest }) => {
+export const RequestsView: React.FC<RequestsViewProps> = ({ onOpenNewRequest, onEditRequest }) => {
   const { 
     solicitudes, 
     propiedades, 
     searchQuery, 
     getPropiedadById, 
-    updateSolicitudStatus 
+    updateSolicitudStatus,
+    deleteSolicitud
   } = useApp();
+
+  const [requestToDelete, setRequestToDelete] = useState<SolicitudAcceso | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const [estatusFilter, setEstatusFilter] = useState<string>('ALL');
   const [propiedadFilter, setPropiedadFilter] = useState<string>('ALL');
 
-  const pendingCount = solicitudes.filter(s => s.estatus === 'Pendiente').length;
-  const inProcessCount = solicitudes.filter(s => s.estatus === 'En Proceso').length;
-  const approvedCount = solicitudes.filter(s => s.estatus === 'Aprobado' || s.estatus === 'Completado').length;
+  const aprobadosCount = solicitudes.filter(s => s.estatus === 'Aprobado' || s.estatus !== 'Permanente').length;
+  const permanentesCount = solicitudes.filter(s => s.estatus === 'Permanente').length;
 
   const filteredSolicitudes = solicitudes.filter(sol => {
     const prop = getPropiedadById(sol.propiedad_id);
 
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      const matchSolicitud = sol.solicitud.toLowerCase().includes(q);
-      const matchCreador = sol.creador_nombre.toLowerCase().includes(q);
-      const matchProcesador = sol.procesador_nombre?.toLowerCase().includes(q);
-      const matchProp = prop?.nombre.toLowerCase().includes(q);
-      const matchComentario = sol.comentario?.toLowerCase().includes(q);
+      const matchSolicitud = (sol.solicitud || '').toLowerCase().includes(q);
+      const matchCreador = (sol.creador_nombre || '').toLowerCase().includes(q);
+      const matchProcesador = (sol.procesador_nombre || '').toLowerCase().includes(q);
+      const matchProp = (prop?.nombre || '').toLowerCase().includes(q);
+      const matchComentario = (sol.comentario || '').toLowerCase().includes(q);
       if (!matchSolicitud && !matchCreador && !matchProcesador && !matchProp && !matchComentario) return false;
     }
 
-    if (estatusFilter !== 'ALL' && sol.estatus !== estatusFilter) return false;
+    if (estatusFilter !== 'ALL') {
+      if (estatusFilter === 'Permanente' && sol.estatus !== 'Permanente') return false;
+      if (estatusFilter === 'Aprobado' && sol.estatus === 'Permanente') return false;
+    }
     if (propiedadFilter !== 'ALL' && sol.propiedad_id !== parseInt(propiedadFilter)) return false;
 
     return true;
   });
 
-  const getStatusBadge = (estatus: SolicitudAcceso['estatus']) => {
+  const getStatusBadge = (estatus: SolicitudAcceso['estatus'] | string) => {
     switch (estatus) {
+      case 'Permanente':
+        return 'bg-purple-50 text-purple-800 border-purple-300 font-bold';
       case 'Aprobado':
-      case 'Completado':
+      default:
         return 'bg-emerald-50 text-emerald-800 border-emerald-300 font-bold';
-      case 'En Proceso':
-        return 'bg-sky-50 text-sky-800 border-sky-300 font-bold';
-      case 'Pendiente':
-        return 'bg-amber-50 text-amber-900 border-amber-300 font-bold';
-      case 'Rechazado':
-        return 'bg-rose-50 text-rose-800 border-rose-300 font-bold';
     }
   };
 
   return (
     <div className="space-y-5">
       
-      {/* 4 Summary KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* 3 Summary KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         
         <div className="p-4 rounded-xl glass-card flex items-center justify-between">
           <div>
-            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Pendientes</p>
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Pases Aprobados</p>
             <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-2xl font-black text-amber-700">{pendingCount}</span>
-              <span className="text-xs text-amber-600 font-semibold">por autorizar</span>
-            </div>
-          </div>
-          <div className="w-10 h-10 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shadow-xs">
-            <Clock className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="p-4 rounded-xl glass-card flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">En Proceso</p>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-2xl font-black text-sky-700">{inProcessCount}</span>
-              <span className="text-xs text-sky-600 font-semibold">en revisión</span>
-            </div>
-          </div>
-          <div className="w-10 h-10 rounded-lg bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-700 shadow-xs">
-            <AlertCircle className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="p-4 rounded-xl glass-card flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Aprobados / Listos</p>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-2xl font-black text-emerald-800">{approvedCount}</span>
+              <span className="text-2xl font-black text-emerald-800">{aprobadosCount}</span>
               <span className="text-xs text-emerald-700 font-semibold">autorizados</span>
             </div>
           </div>
           <div className="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-700 shadow-xs">
             <CheckCircle2 className="w-5 h-5" />
+          </div>
+        </div>
+
+        <div className="p-4 rounded-xl glass-card flex items-center justify-between">
+          <div>
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Pases Permanentes</p>
+            <div className="mt-1 flex items-baseline gap-2">
+              <span className="text-2xl font-black text-purple-800">{permanentesCount}</span>
+              <span className="text-xs text-purple-700 font-semibold">acceso continuo</span>
+            </div>
+          </div>
+          <div className="w-10 h-10 rounded-lg bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-700 shadow-xs">
+            <ShieldCheck className="w-5 h-5" />
           </div>
         </div>
 
@@ -141,28 +132,20 @@ export const RequestsView: React.FC<RequestsViewProps> = ({ onOpenNewRequest }) 
               Todos ({solicitudes.length})
             </button>
             <button
-              onClick={() => setEstatusFilter('Pendiente')}
-              className={`h-7.5 px-3 rounded-md transition-colors duration-150 cursor-pointer ${
-                estatusFilter === 'Pendiente' ? 'bg-amber-600 text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Pendientes ({pendingCount})
-            </button>
-            <button
-              onClick={() => setEstatusFilter('En Proceso')}
-              className={`h-7.5 px-3 rounded-md transition-colors duration-150 cursor-pointer ${
-                estatusFilter === 'En Proceso' ? 'bg-sky-600 text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              En Proceso ({inProcessCount})
-            </button>
-            <button
               onClick={() => setEstatusFilter('Aprobado')}
               className={`h-7.5 px-3 rounded-md transition-colors duration-150 cursor-pointer ${
                 estatusFilter === 'Aprobado' ? 'bg-emerald-600 text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Aprobados ({approvedCount})
+              Aprobados ({aprobadosCount})
+            </button>
+            <button
+              onClick={() => setEstatusFilter('Permanente')}
+              className={`h-7.5 px-3 rounded-md transition-colors duration-150 cursor-pointer ${
+                estatusFilter === 'Permanente' ? 'bg-purple-600 text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Permanentes ({permanentesCount})
             </button>
           </div>
 
@@ -201,16 +184,17 @@ export const RequestsView: React.FC<RequestsViewProps> = ({ onOpenNewRequest }) 
               <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
                 <th className="py-3 px-4 whitespace-nowrap w-28">Propiedad</th>
                 <th className="py-3 px-4 whitespace-nowrap w-44">Solicitante</th>
-                <th className="py-3 px-4 min-w-[220px]">Detalle / Trabajo</th>
+                <th className="py-3 px-4 min-w-[200px]">Detalle / Trabajo</th>
                 <th className="py-3 px-4 whitespace-nowrap w-36">Fecha Acceso</th>
-                <th className="py-3 px-4 min-w-[220px]">Gestión HOA & Caseta</th>
-                <th className="py-3 px-4 text-right whitespace-nowrap w-36">Estatus</th>
+                <th className="py-3 px-4 min-w-[200px]">Gestión HOA & Caseta</th>
+                <th className="py-3 px-4 text-center whitespace-nowrap w-36">Estatus</th>
+                <th className="py-3 px-4 text-right whitespace-nowrap w-24">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredSolicitudes.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-400 font-medium">
+                  <td colSpan={7} className="py-12 text-center text-slate-400 font-medium">
                     No hay solicitudes registradas con estos filtros.
                   </td>
                 </tr>
@@ -233,8 +217,8 @@ export const RequestsView: React.FC<RequestsViewProps> = ({ onOpenNewRequest }) 
 
                       {/* Solicitante */}
                       <td className="py-3.5 px-4 align-middle whitespace-nowrap">
-                        <div className="font-bold text-slate-900 text-xs truncate max-w-[160px]" title={sol.creador_nombre}>
-                          {sol.creador_nombre}
+                        <div className="font-bold text-slate-900 text-xs truncate max-w-[160px]" title={sol.creador_nombre || 'Propietario'}>
+                          {sol.creador_nombre || 'Propietario'}
                         </div>
                         <div className="text-[10px] text-slate-400 font-medium mt-0.5">
                           Residente / Solicitante
@@ -280,19 +264,42 @@ export const RequestsView: React.FC<RequestsViewProps> = ({ onOpenNewRequest }) 
                       </td>
 
                       {/* Estatus selector */}
-                      <td className="py-3.5 px-4 text-right align-middle whitespace-nowrap">
+                      <td className="py-3.5 px-4 text-center align-middle whitespace-nowrap">
                         <select
-                          value={sol.estatus}
+                          value={sol.estatus === 'Permanente' ? 'Permanente' : 'Aprobado'}
                           onChange={(e) => updateSolicitudStatus(sol.id, e.target.value as SolicitudAcceso['estatus'])}
                           className={`px-3 py-1.5 text-xs font-semibold rounded-lg border shadow-2xs cursor-pointer transition-colors ${getStatusBadge(sol.estatus)}`}
                         >
-                          <option value="Pendiente">Pendiente</option>
-                          <option value="En Proceso">En Proceso</option>
                           <option value="Aprobado">Aprobado</option>
-                          <option value="Completado">Completado</option>
-                          <option value="Rechazado">Rechazado</option>
+                          <option value="Permanente">Permanente</option>
                         </select>
                       </td>
+
+                      {/* Actions (Edit & Delete) */}
+                      <td className="py-3.5 px-4 text-right align-middle whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => onEditRequest && onEditRequest(sol)}
+                            className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
+                            title="Editar pase de acceso"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setRequestToDelete(sol);
+                              setIsDeleteModalOpen(true);
+                            }}
+                            className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-800 transition-colors cursor-pointer"
+                            title="Eliminar pase de acceso"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+
                     </tr>
                   );
                 })
@@ -301,6 +308,22 @@ export const RequestsView: React.FC<RequestsViewProps> = ({ onOpenNewRequest }) 
           </table>
         </div>
       </div>
+
+      {/* Delete Request Modal with Motivo */}
+      <DeleteRequestModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setRequestToDelete(null);
+        }}
+        solicitud={requestToDelete}
+        propiedad={requestToDelete ? getPropiedadById(requestToDelete.propiedad_id) : undefined}
+        onConfirm={(motivo) => {
+          if (requestToDelete) {
+            deleteSolicitud(requestToDelete.id, motivo);
+          }
+        }}
+      />
 
     </div>
   );

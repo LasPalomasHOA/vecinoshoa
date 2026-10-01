@@ -363,13 +363,13 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
       }
       if ((method === 'PUT' || method === 'PATCH') && id) {
         const body = await parseJsonBody(req);
-        const updated = await hoaService.updateSolicitudStatus(
-          id, 
-          body.estatus, 
-          body.comentario, 
-          body.procesador_nombre
-        );
+        const updated = await hoaService.updateSolicitud(id, body);
         sendJson(res, 200, updated);
+        return true;
+      }
+      if (method === 'DELETE' && id) {
+        const result = await hoaService.deleteSolicitud(id);
+        sendJson(res, 200, result);
         return true;
       }
     }

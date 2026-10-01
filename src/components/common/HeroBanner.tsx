@@ -7,7 +7,6 @@ export const HeroBanner: React.FC = () => {
 
   const inHouseCount = reservaciones.filter(r => r.estado === 'En Casa (Checked-in)').length;
   const pendingCheckins = reservaciones.filter(r => r.estado === 'Confirmada' || r.estado === 'Pendiente').length;
-  const pendingRequests = solicitudes.filter(s => s.estatus === 'Pendiente' || s.estatus === 'En Proceso').length;
 
   return (
     <div className="relative mb-6 rounded-xl overflow-hidden border border-white/80 bg-gradient-to-r from-white/90 via-white/75 to-teal-50/50 backdrop-blur-2xl shadow-[0_10px_30px_rgba(0,0,0,0.03)] no-print print:hidden">

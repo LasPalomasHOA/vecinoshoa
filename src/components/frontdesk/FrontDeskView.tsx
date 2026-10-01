@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Reservacion, TipoHuesped } from '../../types';
+import { DeleteConfirmModal } from '../common/DeleteConfirmModal';
 import { 
   KeyRound, 
   Clock, 
@@ -49,6 +50,8 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [tipoFilter, setTipoFilter] = useState<string>('ALL');
   const [edificioFilter, setEdificioFilter] = useState<string>('ALL');
+  const [reservationToDelete, setReservationToDelete] = useState<Reservacion | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const filteredReservations = reservaciones.filter(res => {
     const prop = getPropiedadById(res.propiedad_id);
@@ -524,12 +527,11 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
 
                           <button
                             onClick={() => {
-                              if (window.confirm('¿Eliminar esta reservación?')) {
-                                deleteReservacion(res.id);
-                              }
+                              setReservationToDelete(res);
+                              setIsDeleteModalOpen(true);
                             }}
                             className="h-6.5 w-6.5 flex items-center justify-center rounded-md hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer shrink-0"
-                            title="Eliminar"
+                            title="Eliminar reservación"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -544,6 +546,38 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
           </table>
         </div>
       </div>
+
+      {/* Delete Reservation Modal with Motivo */}
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setReservationToDelete(null);
+        }}
+        title="Eliminar Reservación"
+        itemType="Reservación"
+        itemName={reservationToDelete ? `#${reservationToDelete.codigo || reservationToDelete.id}` : ''}
+        details={[
+          { 
+            label: 'Condominio', 
+            value: reservationToDelete ? (getPropiedadById(reservationToDelete.propiedad_id)?.nombre || `ID #${reservationToDelete.propiedad_id}`) : 'N/A' 
+          },
+          { 
+            label: 'Titular', 
+            value: reservationToDelete ? (getHuespedById(reservationToDelete.huesped_id)?.nombres || 'Huésped') : 'N/A' 
+          },
+          { 
+            label: 'Fechas', 
+            value: reservationToDelete ? `${reservationToDelete.fecha_checkin} al ${reservationToDelete.fecha_checkout}` : 'N/A' 
+          }
+        ]}
+        placeholder="Escribe el motivo de la cancelación o eliminación de esta reservación (ej. Cancelación del huésped, fecha errónea, duplicada)..."
+        onConfirm={async (motivo) => {
+          if (reservationToDelete) {
+            await deleteReservacion(reservationToDelete.id, motivo);
+          }
+        }}
+      />
 
     </div>
   );

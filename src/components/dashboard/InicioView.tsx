@@ -564,13 +564,13 @@ export const InicioView: React.FC<InicioViewProps> = ({
           </div>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-3xl font-black text-indigo-950">
-              {solicitudes.filter(s => s.estatus === 'Pendiente' || s.estatus === 'En Proceso').length}
+              {solicitudes.length}
             </span>
-            <span className="text-xs font-black text-indigo-800">pendientes</span>
+            <span className="text-xs font-black text-indigo-800">pases registrados</span>
           </div>
           <div className="mt-3 text-xs text-slate-800 flex items-center gap-1.5 font-bold">
             <Activity className="w-4 h-4 text-indigo-700" />
-            <span>{solicitudes.length} solicitudes totales registradas</span>
+            <span>{solicitudes.filter(s => s.estatus === 'Permanente').length} permanentes • {solicitudes.filter(s => s.estatus !== 'Permanente').length} aprobados</span>
           </div>
           <div className="mt-1 text-xs text-slate-600 font-semibold">
 

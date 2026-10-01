@@ -94,7 +94,7 @@ export const BitacoraView: React.FC = () => {
       }
 
       return true;
-    });
+    }).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }, [bitacora, effectiveSearch, actionFilter, moduleFilter, userFilter, timeFilter]);
 
   // Statistics calculation
@@ -713,9 +713,25 @@ export const BitacoraView: React.FC = () => {
 
                       {/* Description */}
                       <td className="py-3.5 px-4 max-w-md">
-                        <p className="text-slate-800 font-medium line-clamp-2 text-xs leading-relaxed">
-                          {entry.descripcion}
-                        </p>
+                        <div className="text-slate-800 font-medium text-xs leading-relaxed">
+                          {(() => {
+                            const desc = entry.descripcion || '';
+                            const match = desc.match(/(?:(?:\. |\n|\s+)Motivo:\s*)([\s\S]+)$/i);
+                            if (match) {
+                              const mainPart = desc.slice(0, match.index).trim();
+                              const motivo = match[1].trim();
+                              return (
+                                <div className="space-y-0.5">
+                                  <p className="line-clamp-1 text-slate-900 font-semibold">{mainPart}</p>
+                                  <p className="text-[11px] text-rose-700 font-bold truncate">
+                                    Motivo: <span className="font-normal text-slate-600">{motivo}</span>
+                                  </p>
+                                </div>
+                              );
+                            }
+                            return <p className="line-clamp-2 whitespace-pre-line">{desc}</p>;
+                          })()}
+                        </div>
                       </td>
 
                       {/* Entity / Target */}
@@ -789,9 +805,28 @@ export const BitacoraView: React.FC = () => {
 
                 <div className="pt-3 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                   <div className="space-y-1.5 flex-1">
-                    <p className="text-sm font-semibold text-slate-900 leading-relaxed">
-                      {entry.descripcion}
-                    </p>
+                    {(() => {
+                      const desc = entry.descripcion || '';
+                      const match = desc.match(/(?:(?:\. |\n|\s+)Motivo:\s*)([\s\S]+)$/i);
+                      if (match) {
+                        const mainPart = desc.slice(0, match.index).trim();
+                        const motivo = match[1].trim();
+                        return (
+                          <div className="space-y-2">
+                            <p className="text-sm font-semibold text-slate-900 leading-relaxed">{mainPart}</p>
+                            <div className="p-2.5 rounded-lg bg-rose-50/70 border border-rose-200/80 text-xs">
+                              <span className="font-bold text-rose-800 block mb-0.5">Motivo:</span>
+                              <span className="text-slate-700 font-medium whitespace-pre-line">{motivo}</span>
+                            </div>
+                          </div>
+                        );
+                      }
+                      return (
+                        <p className="text-sm font-semibold text-slate-900 leading-relaxed whitespace-pre-line">
+                          {desc}
+                        </p>
+                      );
+                    })()}
                     {entry.entidad_nombre && (
                       <p className="text-xs text-slate-500">
                         Entidad afectada: <strong className="text-slate-800">{entry.entidad_nombre}</strong>

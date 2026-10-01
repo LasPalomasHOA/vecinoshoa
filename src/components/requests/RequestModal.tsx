@@ -6,28 +6,43 @@ import { X, FileCheck } from 'lucide-react';
 interface RequestModalProps {
   isOpen: boolean;
   onClose: () => void;
+  solicitudToEdit?: SolicitudAcceso | null;
 }
 
-export const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose }) => {
-  const { propiedades, addSolicitud } = useApp();
+export const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose, solicitudToEdit }) => {
+  const { propiedades, addSolicitud, updateSolicitud } = useApp();
 
   const [propiedadId, setPropiedadId] = useState<number>(propiedades[0]?.id || 0);
   const [creadorNombre, setCreadorNombre] = useState('');
   const [solicitud, setSolicitud] = useState('');
   const [fechaEsperada, setFechaEsperada] = useState('2026-09-24');
   const [comentario, setComentario] = useState('');
-  const [estatus] = useState<SolicitudAcceso['estatus']>('Pendiente');
+  const [estatus, setEstatus] = useState<SolicitudAcceso['estatus']>('Aprobado');
 
   useEffect(() => {
-    if (isOpen && propiedades.length > 0) {
-      const exists = propiedades.some(p => p.id === propiedadId);
-      if (!exists || propiedadId === 0) {
-        setPropiedadId(propiedades[0].id);
+    if (isOpen) {
+      if (solicitudToEdit) {
+        setPropiedadId(solicitudToEdit.propiedad_id);
+        setCreadorNombre(solicitudToEdit.creador_nombre || '');
+        setSolicitud(solicitudToEdit.solicitud || '');
+        setFechaEsperada(solicitudToEdit.fecha_esperada || new Date().toISOString().split('T')[0]);
+        setComentario(solicitudToEdit.comentario || '');
+        setEstatus(solicitudToEdit.estatus === 'Permanente' ? 'Permanente' : 'Aprobado');
+      } else {
+        if (propiedades.length > 0) {
+          const exists = propiedades.some(p => p.id === propiedadId);
+          if (!exists || propiedadId === 0) {
+            setPropiedadId(propiedades[0].id);
+          }
+        }
+        setCreadorNombre('');
+        setSolicitud('');
+        setFechaEsperada(new Date().toISOString().split('T')[0]);
+        setComentario('');
+        setEstatus('Aprobado');
       }
-      const today = new Date().toISOString().split('T')[0];
-      setFechaEsperada(today);
     }
-  }, [isOpen, propiedades, propiedadId]);
+  }, [isOpen, solicitudToEdit, propiedades]);
 
   if (!isOpen) return null;
 
@@ -36,18 +51,27 @@ export const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose }) =
     const finalPropId = Number(propiedadId) || propiedades[0]?.id;
     if (!finalPropId) return;
 
-    addSolicitud({
-      propiedad_id: finalPropId,
-      creador_nombre: creadorNombre.trim() || 'Propietario',
-      solicitud: solicitud.trim(),
-      fecha_esperada: fechaEsperada,
-      comentario: comentario.trim() || undefined,
-      estatus,
-      procesador_nombre: 'Recepción HOA'
-    });
-    setCreadorNombre('');
-    setSolicitud('');
-    setComentario('');
+    if (solicitudToEdit) {
+      updateSolicitud(solicitudToEdit.id, {
+        propiedad_id: finalPropId,
+        creador_nombre: creadorNombre.trim() || 'Propietario',
+        solicitud: solicitud.trim(),
+        fecha_esperada: fechaEsperada,
+        comentario: comentario.trim() || undefined,
+        estatus,
+      });
+    } else {
+      addSolicitud({
+        propiedad_id: finalPropId,
+        creador_nombre: creadorNombre.trim() || 'Propietario',
+        solicitud: solicitud.trim(),
+        fecha_esperada: fechaEsperada,
+        comentario: comentario.trim() || undefined,
+        estatus,
+        procesador_nombre: 'Recepción HOA'
+      });
+    }
+
     onClose();
   };
 
@@ -62,8 +86,12 @@ export const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose }) =
               <FileCheck className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900">Nueva Solicitud / Pase de Acceso</h2>
-              <p className="text-xs text-slate-500">Pase para técnicos, vidrieros o mantenimiento</p>
+              <h2 className="text-base font-bold text-slate-900">
+                {solicitudToEdit ? 'Editar Solicitud / Pase de Acceso' : 'Nueva Solicitud / Pase de Acceso'}
+              </h2>
+              <p className="text-xs text-slate-500">
+                {solicitudToEdit ? 'Modificar datos del pase o contratista' : 'Pase para técnicos, vidrieros o mantenimiento'}
+              </p>
             </div>
           </div>
           <button
@@ -96,11 +124,10 @@ export const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose }) =
 
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1.5">
-              Solicitante / Residente *
+              Solicitante / Residente (Opcional)
             </label>
             <input
               type="text"
-              required
               value={creadorNombre}
               onChange={(e) => setCreadorNombre(e.target.value)}
               placeholder="ej. Ennia Celaya / Propietario"
@@ -137,6 +164,20 @@ export const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose }) =
 
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1.5">
+              Estatus / Tipo de Pase *
+            </label>
+            <select
+              value={estatus}
+              onChange={(e) => setEstatus(e.target.value as SolicitudAcceso['estatus'])}
+              className="w-full px-3.5 py-2 rounded-lg form-input text-xs font-bold text-teal-900 cursor-pointer"
+            >
+              <option value="Aprobado">Aprobado</option>
+              <option value="Permanente">Permanente</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">
               Comentarios de Recepción / Seguridad (Opcional)
             </label>
             <input
@@ -160,7 +201,7 @@ export const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose }) =
               type="submit"
               className="px-6 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-700/20"
             >
-              Registrar Pase
+              {solicitudToEdit ? 'Guardar Cambios' : 'Registrar Pase'}
             </button>
           </div>
 

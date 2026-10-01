@@ -123,8 +123,23 @@ CREATE TABLE IF NOT EXISTS gestion_residencial.solicitudes_acceso (
     procesador_nombre VARCHAR(100),
     fecha_esperada DATE NOT NULL,
     comentario TEXT,
-    estatus VARCHAR(30) DEFAULT 'Pendiente', -- Pendiente, En Proceso, Aprobado, Rechazado, Completado
+    estatus VARCHAR(30) DEFAULT 'Aprobado', -- Aprobado, Permanente
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 9. Bitácora de Auditoría y Eventos del Sistema
+CREATE TABLE IF NOT EXISTS gestion_residencial.bitacora (
+    id VARCHAR(60) PRIMARY KEY,
+    timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    usuario_nombre VARCHAR(100) NOT NULL,
+    usuario_email VARCHAR(100) NOT NULL,
+    usuario_rol VARCHAR(50) NOT NULL,
+    accion VARCHAR(50) NOT NULL,
+    modulo VARCHAR(100) NOT NULL,
+    descripcion TEXT NOT NULL,
+    entidad_nombre VARCHAR(150),
+    entidad_id INT,
+    detalles JSONB
 );
 
 -- Índices de Rendimiento y Búsqueda en gestion_residencial
@@ -138,6 +153,7 @@ CREATE INDEX IF NOT EXISTS idx_propiedad_usuarios_prop ON gestion_residencial.pr
 CREATE INDEX IF NOT EXISTS idx_propiedad_usuarios_user ON gestion_residencial.propiedad_usuarios(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_solicitudes_propiedad ON gestion_residencial.solicitudes_acceso(propiedad_id);
 CREATE INDEX IF NOT EXISTS idx_solicitudes_estatus ON gestion_residencial.solicitudes_acceso(estatus);
+CREATE INDEX IF NOT EXISTS idx_bitacora_timestamp ON gestion_residencial.bitacora(timestamp DESC);
 
 -- ==============================================================================
 -- PERMISOS ESTRICTAMENTE CRUD PARA EL USUARIO DE APLICACIÓN (SIN DDL / DROP)

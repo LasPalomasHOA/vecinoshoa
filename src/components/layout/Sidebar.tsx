@@ -37,7 +37,7 @@ export const Sidebar: React.FC = () => {
   const { currentUser, logout } = useAuth();
 
   const inHouseCount = reservaciones.filter(r => r.estado === 'En Casa (Checked-in)').length;
-  const pendingRequestsCount = solicitudes.filter(s => s.estatus === 'Pendiente' || s.estatus === 'En Proceso').length;
+  const totalRequestsCount = solicitudes.length;
 
   const navItems = [
     {
@@ -75,9 +75,9 @@ export const Sidebar: React.FC = () => {
       id: 'requests' as const,
       label: 'Solicitudes de Acceso',
       icon: FileCheck,
-      badge: pendingRequestsCount > 0 ? `${pendingRequestsCount}` : undefined,
-      badgeCount: pendingRequestsCount > 0 ? pendingRequestsCount : undefined,
-      badgeColor: 'bg-amber-100 text-amber-800 font-bold'
+      badge: totalRequestsCount > 0 ? `${totalRequestsCount}` : undefined,
+      badgeCount: totalRequestsCount > 0 ? totalRequestsCount : undefined,
+      badgeColor: 'bg-teal-100 text-teal-800 font-bold'
     },
     {
       id: 'reports' as const,

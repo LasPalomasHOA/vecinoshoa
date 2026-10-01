@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { Edificio } from '../../types';
+import { DeleteConfirmModal } from '../common/DeleteConfirmModal';
 import { Building2, X, Plus, Trash2 } from 'lucide-react';
 
 interface BuildingsManagerModalProps {
@@ -13,6 +15,8 @@ export const BuildingsManagerModal: React.FC<BuildingsManagerModalProps> = ({
 }) => {
   const { edificios, addEdificio, deleteEdificio, propiedades } = useApp();
   const [newNombre, setNewNombre] = useState('');
+  const [buildingToDelete, setBuildingToDelete] = useState<Edificio | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   if (!isOpen) return null;
 
@@ -40,7 +44,7 @@ export const BuildingsManagerModal: React.FC<BuildingsManagerModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -63,7 +67,7 @@ export const BuildingsManagerModal: React.FC<BuildingsManagerModalProps> = ({
               />
               <button
                 type="submit"
-                className="px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs flex items-center gap-1"
+                className="px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs flex items-center gap-1 cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 <span>Agregar</span>
@@ -94,9 +98,10 @@ export const BuildingsManagerModal: React.FC<BuildingsManagerModalProps> = ({
                           alert(`No puedes eliminar la torre "${ed.nombre}" porque tiene ${count} condominios asociados.`);
                           return;
                         }
-                        deleteEdificio(ed.id);
+                        setBuildingToDelete(ed);
+                        setIsDeleteModalOpen(true);
                       }}
-                      className="opacity-40 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-rose-50 text-rose-600 transition-all"
+                      className="opacity-40 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-rose-50 text-rose-600 transition-all cursor-pointer"
                       title="Eliminar edificio"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -113,13 +118,32 @@ export const BuildingsManagerModal: React.FC<BuildingsManagerModalProps> = ({
         <div className="flex items-center justify-end p-4 border-t border-slate-100 bg-slate-50/80">
           <button
             onClick={onClose}
-            className="px-5 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold"
+            className="px-5 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold cursor-pointer"
           >
             Listo
           </button>
         </div>
 
       </div>
+
+      {/* Delete Building Modal with Motivo */}
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setBuildingToDelete(null);
+        }}
+        title="Eliminar Torre / Edificio"
+        itemType="Torre"
+        itemName={buildingToDelete?.nombre || ''}
+        placeholder="Escribe el motivo por el cual se da de baja esta torre..."
+        onConfirm={async (motivo) => {
+          if (buildingToDelete) {
+            await deleteEdificio(buildingToDelete.id, motivo);
+          }
+        }}
+      />
+
     </div>
   );
 };

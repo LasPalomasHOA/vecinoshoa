@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Propiedad } from '../../types';
 import { compareCondoNames } from '../../utils/sortUtils';
+import { DeleteConfirmModal } from '../common/DeleteConfirmModal';
 import {
   Building2,
   Plus,
@@ -40,6 +41,8 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
   const [selectedEdificio, setSelectedEdificio] = useState<string>('ALL');
   const [selectedGrupo, setSelectedGrupo] = useState<string>('ALL');
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+  const [propertyToDelete, setPropertyToDelete] = useState<Propiedad | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const filteredProperties = propiedades
     .filter(prop => {
@@ -295,12 +298,11 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
                             </button>
                             <button
                               onClick={() => {
-                                if (window.confirm(`¿Eliminar el condominio ${prop.nombre}?`)) {
-                                  deletePropiedad(prop.id);
-                                }
+                                setPropertyToDelete(prop);
+                                setIsDeleteModalOpen(true);
                               }}
                               className="p-1 rounded-md hover:bg-rose-50 text-rose-600 transition-colors cursor-pointer"
-                              title="Eliminar"
+                              title="Eliminar condominio"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -377,13 +379,17 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
                 <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
                   <button
                     onClick={() => onEditProperty(prop)}
-                    className="px-3 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold"
+                    className="px-3 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold cursor-pointer"
                   >
                     Editar
                   </button>
                   <button
-                    onClick={() => deletePropiedad(prop.id)}
-                    className="p-1 rounded-lg hover:bg-rose-50 text-rose-600"
+                    onClick={() => {
+                      setPropertyToDelete(prop);
+                      setIsDeleteModalOpen(true);
+                    }}
+                    className="p-1 rounded-lg hover:bg-rose-50 text-rose-600 cursor-pointer"
+                    title="Eliminar condominio"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -393,6 +399,34 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
           })}
         </div>
       )}
+
+      {/* Delete Property Modal with Motivo */}
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setPropertyToDelete(null);
+        }}
+        title="Eliminar Condominio"
+        itemType="Condominio"
+        itemName={propertyToDelete?.nombre || ''}
+        details={[
+          { 
+            label: 'Torre', 
+            value: propertyToDelete ? (getEdificioById(propertyToDelete.edificio_id)?.nombre || `ID #${propertyToDelete.edificio_id}`) : 'N/A' 
+          },
+          { 
+            label: 'Propietario', 
+            value: propertyToDelete ? (getOwnerByPropiedadId(propertyToDelete.id)?.nombre || 'Sin asignar') : 'N/A' 
+          }
+        ]}
+        placeholder="Escribe el motivo por el cual se da de baja este condominio (ej. Desincorporación, duplicado, corrección de inventario)..."
+        onConfirm={async (motivo) => {
+          if (propertyToDelete) {
+            await deletePropiedad(propertyToDelete.id, motivo);
+          }
+        }}
+      />
 
     </div>
   );

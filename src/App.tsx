@@ -26,7 +26,7 @@ import { BuildingsManagerModal } from './components/properties/BuildingsManagerM
 import { UserFormModal } from './components/users/UserFormModal';
 import { RequestModal } from './components/requests/RequestModal';
 
-import { Reservacion, Propiedad, Usuario } from './types';
+import { Reservacion, Propiedad, Usuario, SolicitudAcceso } from './types';
 
 export const App: React.FC = () => {
   const { activeTab, setActiveTab } = useApp();
@@ -59,6 +59,7 @@ export const App: React.FC = () => {
   const [userToEdit, setUserToEdit] = useState<Usuario | null>(null);
 
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+  const [requestToEdit, setRequestToEdit] = useState<SolicitudAcceso | null>(null);
 
   // Handlers
   const handleOpenQrPass = (res: Reservacion) => {
@@ -115,6 +116,12 @@ export const App: React.FC = () => {
   };
 
   const handleOpenNewRequest = () => {
+    setRequestToEdit(null);
+    setIsRequestModalOpen(true);
+  };
+
+  const handleEditRequest = (sol: SolicitudAcceso) => {
+    setRequestToEdit(sol);
     setIsRequestModalOpen(true);
   };
 
@@ -187,6 +194,7 @@ export const App: React.FC = () => {
           {activeTab === 'requests' && (
             <RequestsView
               onOpenNewRequest={handleOpenNewRequest}
+              onEditRequest={handleEditRequest}
             />
           )}
 
@@ -258,7 +266,11 @@ export const App: React.FC = () => {
 
       <RequestModal
         isOpen={isRequestModalOpen}
-        onClose={() => setIsRequestModalOpen(false)}
+        onClose={() => {
+          setIsRequestModalOpen(false);
+          setRequestToEdit(null);
+        }}
+        solicitudToEdit={requestToEdit}
       />
 
       {/* Floating Notifications */}

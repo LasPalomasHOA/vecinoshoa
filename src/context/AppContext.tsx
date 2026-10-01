@@ -59,14 +59,14 @@ interface AppContextType {
   // CRUD Actions connected to Database Layer
   addPropiedad: (propiedad: Omit<Propiedad, 'id'>, ownerId?: number) => Promise<void>;
   updatePropiedad: (id: number, propiedad: Partial<Propiedad>, ownerId?: number) => Promise<void>;
-  deletePropiedad: (id: number) => Promise<void>;
+  deletePropiedad: (id: number, motivo?: string) => Promise<void>;
   
   addEdificio: (nombre: string) => Promise<void>;
-  deleteEdificio: (id: number) => Promise<void>;
+  deleteEdificio: (id: number, motivo?: string) => Promise<void>;
   
   addUsuario: (usuario: Omit<Usuario, 'id'>) => Promise<void>;
   updateUsuario: (id: number, usuario: Partial<Usuario>) => Promise<void>;
-  deleteUsuario: (id: number) => Promise<void>;
+  deleteUsuario: (id: number, motivo?: string) => Promise<void>;
   
   addReservacion: (reservacion: Omit<Reservacion, 'id'>, huespedData?: Partial<Huesped>) => Promise<void>;
   updateReservacion: (id: number, reservacion: Partial<Reservacion>, huespedData?: Partial<Huesped>) => Promise<void>;
@@ -79,10 +79,12 @@ interface AppContextType {
     acompanantes_amenidades?: AcompananteAmenidad[]
   ) => Promise<void>;
   checkOutReservacion: (id: number) => Promise<void>;
-  deleteReservacion: (id: number) => Promise<void>;
+  deleteReservacion: (id: number, motivo?: string) => Promise<void>;
   
   addSolicitud: (solicitud: Omit<SolicitudAcceso, 'id' | 'created_at'>) => Promise<void>;
+  updateSolicitud: (id: number, data: Partial<SolicitudAcceso>) => Promise<void>;
   updateSolicitudStatus: (id: number, estatus: SolicitudAcceso['estatus'], comentario?: string) => Promise<void>;
+  deleteSolicitud: (id: number, motivo: string) => Promise<void>;
   
   // Helpers
   getPropiedadById: (id: number) => Propiedad | undefined;
@@ -283,7 +285,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     setBitacora(prev => {
-      const updated = [newLog, ...prev];
+      const updated = [newLog, ...prev.filter(p => p.id !== newLog.id)].sort((a, b) => 
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      );
       try {
         localStorage.setItem('lp_bitacora_logs', JSON.stringify(updated));
       } catch {}
@@ -292,14 +296,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // Guardar permanentemente en la base de datos PostgreSQL
     api.bitacora.create({
+      id: newLog.id,
+      timestamp: newLog.timestamp,
+      usuario_id: currentUser?.id,
       usuario_nombre: actorNombre,
       usuario_email: actorEmail,
       usuario_rol: actorRol,
       accion: entry.accion,
       modulo: entry.modulo,
       descripcion: entry.descripcion,
+      entidad_id: entry.entidad_id,
       entidad_nombre: entry.entidad_nombre,
-      detalles: entry.detalles
+      detalles: newLog.detalles
     }).catch(err => console.warn('[Bitacora PostgreSQL Sync]:', err.message));
 
   }, [currentUser]);
@@ -399,9 +407,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setSolicitudes(solicitudesData);
 
       if (Array.isArray(bitacoraData) && bitacoraData.length > 0) {
-        setBitacora(bitacoraData);
+        const sortedBitacora = bitacoraData.slice().sort((a, b) => 
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        );
+        setBitacora(sortedBitacora);
         try {
-          localStorage.setItem('lp_bitacora_logs', JSON.stringify(bitacoraData));
+          localStorage.setItem('lp_bitacora_logs', JSON.stringify(sortedBitacora));
         } catch {}
       }
     } catch (err: any) {
@@ -472,9 +483,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const deletePropiedad = async (id: number) => {
+  const deletePropiedad = async (id: number, motivo?: string) => {
     try {
       const target = propiedades.find(p => p.id === id);
+      const targetEdificio = target ? edificios.find(e => e.id === target.edificio_id) : undefined;
       await api.propiedades.delete(id);
       setPropiedades(prev => prev.filter(p => p.id !== id));
       setPropiedadUsuarios(prev => prev.filter(pu => pu.propiedad_id !== id));
@@ -482,10 +494,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       registrarEventoBitacora({
         accion: 'ELIMINACIÓN',
         modulo: 'Propiedades',
-        descripcion: `Eliminó la propiedad "${target?.nombre || `#${id}`}" del inventario de condominios.`,
+        descripcion: `Eliminó el condominio "${target?.nombre || `#${id}`}" (${target?.area || ''}${targetEdificio ? `, ${targetEdificio.nombre}` : ''}).`,
         entidad_id: id,
         entidad_nombre: target?.nombre,
-        detalles: { previo: target }
+        detalles: { 
+          motivo: (motivo || 'Baja manual de condominio').trim(),
+          previo: target 
+        }
       });
 
       showToast('Propiedad eliminada', 'info');
@@ -514,7 +529,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const deleteEdificio = async (id: number) => {
+  const deleteEdificio = async (id: number, motivo?: string) => {
     try {
       const target = edificios.find(e => e.id === id);
       await api.edificios.delete(id);
@@ -526,7 +541,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         descripcion: `Eliminó la torre "${target?.nombre || `#${id}`}" del sistema.`,
         entidad_id: id,
         entidad_nombre: target?.nombre,
-        detalles: { previo: target }
+        detalles: { 
+          motivo: (motivo || 'Baja manual de torre').trim(),
+          previo: target 
+        }
       });
 
       showToast('Torre eliminada', 'info');
@@ -576,7 +594,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const deleteUsuario = async (id: number) => {
+  const deleteUsuario = async (id: number, motivo?: string) => {
     try {
       const target = usuarios.find(u => u.id === id);
       await api.usuarios.delete(id);
@@ -589,7 +607,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         descripcion: `Eliminó al usuario "${target ? `${target.nombre} ${target.apellido}` : `#${id}`}" (${target?.email || ''}, Rol: ${target?.rol || ''}).`,
         entidad_id: id,
         entidad_nombre: target ? `${target.nombre} ${target.apellido}` : undefined,
-        detalles: { previo: target }
+        detalles: { 
+          motivo: (motivo || 'Baja manual de usuario').trim(),
+          previo: target 
+        }
       });
 
       showToast('Usuario eliminado', 'info');
@@ -797,20 +818,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const deleteReservacion = async (id: number) => {
+  const deleteReservacion = async (id: number, motivo?: string) => {
     try {
       const target = reservaciones.find(r => r.id === id);
       const prop = target ? propiedades.find(p => p.id === target.propiedad_id) : undefined;
+      const huesped = target ? huespedes.find(h => h.id === target.huesped_id) : undefined;
       await api.reservaciones.delete(id);
       setReservaciones(prev => prev.filter(r => r.id !== id));
 
       registrarEventoBitacora({
         accion: 'ELIMINACIÓN',
         modulo: 'Reservaciones',
-        descripcion: `Eliminó la reservación #${target?.codigo || id} (${prop?.nombre || 'Unidad'}, del ${target?.fecha_checkin} al ${target?.fecha_checkout}).`,
+        descripcion: `Eliminó la reservación #${target?.codigo || id} (${prop?.nombre || 'Unidad'}, del ${target?.fecha_checkin} al ${target?.fecha_checkout}, Titular: ${huesped?.nombres || 'Huésped'}).`,
         entidad_id: id,
         entidad_nombre: target?.codigo,
-        detalles: { previo: target }
+        detalles: { 
+          motivo: (motivo || 'Cancelación / Eliminación de reservación').trim(),
+          previo: target 
+        }
       });
 
       showToast('Reservación eliminada', 'info');
@@ -870,6 +895,54 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       showToast(`Solicitud ${estatus.toLowerCase()}`, 'info');
     } catch (err: any) {
       showToast(err.message || 'Error al actualizar estatus', 'error');
+    }
+  };
+
+  const updateSolicitud = async (id: number, data: Partial<SolicitudAcceso>) => {
+    try {
+      const prev = solicitudes.find(s => s.id === id);
+      const updated = await api.solicitudes.update(id, data);
+      setSolicitudes(prevList => prevList.map(s => s.id === id ? updated : s));
+
+      const prop = propiedades.find(p => p.id === updated.propiedad_id);
+      registrarEventoBitacora({
+        accion: 'EDICIÓN',
+        modulo: 'Solicitudes de Acceso',
+        descripcion: `Actualizó datos del pase de acceso #${id} ("${updated.solicitud}") para ${prop?.nombre || `Propiedad #${updated.propiedad_id}`} (Fecha: ${updated.fecha_esperada}, Estatus: ${updated.estatus}).`,
+        entidad_id: id,
+        entidad_nombre: updated.solicitud,
+        detalles: { previo: prev, nuevo: updated }
+      });
+
+      showToast('Solicitud actualizada con éxito', 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Error al actualizar solicitud', 'error');
+    }
+  };
+
+  const deleteSolicitud = async (id: number, motivo: string) => {
+    try {
+      const target = solicitudes.find(s => s.id === id);
+      const prop = target ? propiedades.find(p => p.id === target.propiedad_id) : undefined;
+      await api.solicitudes.delete(id);
+      setSolicitudes(prev => prev.filter(s => s.id !== id));
+
+      const motivoLimpio = motivo.trim() || 'Sin motivo especificado';
+      registrarEventoBitacora({
+        accion: 'ELIMINACIÓN',
+        modulo: 'Solicitudes de Acceso',
+        descripcion: `Eliminó solicitud de acceso #${id} ("${target?.solicitud || 'Pase'}") de ${prop?.nombre || `Propiedad #${target?.propiedad_id}`}.\nMotivo: ${motivoLimpio}`,
+        entidad_id: id,
+        entidad_nombre: target?.solicitud,
+        detalles: {
+          solicitud_eliminada: target,
+          motivo: motivoLimpio
+        }
+      });
+
+      showToast('Solicitud de acceso eliminada', 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Error al eliminar solicitud', 'error');
     }
   };
 
@@ -952,7 +1025,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         checkOutReservacion,
         deleteReservacion,
         addSolicitud,
+        updateSolicitud,
         updateSolicitudStatus,
+        deleteSolicitud,
         getPropiedadById,
         getEdificioById,
         getGrupoById,

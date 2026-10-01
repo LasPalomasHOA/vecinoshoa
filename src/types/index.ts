@@ -192,6 +192,6 @@ export interface SolicitudAcceso {
   procesador_nombre?: string;
   fecha_esperada: string;
   comentario?: string;
-  estatus: 'Pendiente' | 'En Proceso' | 'Aprobado' | 'Rechazado' | 'Completado';
+  estatus: 'Aprobado' | 'Permanente';
   created_at: string;
 }

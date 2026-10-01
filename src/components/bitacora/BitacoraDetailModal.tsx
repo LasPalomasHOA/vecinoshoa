@@ -244,7 +244,28 @@ export const BitacoraDetailModal: React.FC<BitacoraDetailModalProps> = ({
               Descripción del Cambio
             </span>
             <div className="p-4 rounded-xl bg-white border border-slate-200 text-slate-800 text-xs sm:text-sm leading-relaxed shadow-2xs">
-              {entry.descripcion}
+              {(() => {
+                const desc = entry.descripcion || '';
+                const motivoMatch = desc.match(/(?:(?:\. |\n|\s+)Motivo:\s*)([\s\S]+)$/i);
+                if (motivoMatch) {
+                  const mainPart = desc.slice(0, motivoMatch.index).trim();
+                  const motivoValue = motivoMatch[1].trim();
+                  return (
+                    <div className="space-y-3">
+                      <p className="font-semibold text-slate-900 leading-relaxed">{mainPart}</p>
+                      <div className="p-3.5 rounded-lg bg-rose-50/80 border border-rose-200/90 text-slate-900">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-rose-700 block mb-1">
+                          Motivo:
+                        </span>
+                        <p className="font-medium text-xs sm:text-sm text-slate-800 break-words leading-relaxed whitespace-pre-line">
+                          {motivoValue}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                }
+                return <p className="whitespace-pre-line leading-relaxed">{desc}</p>;
+              })()}
             </div>
           </div>
 

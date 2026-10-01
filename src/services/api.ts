@@ -162,6 +162,8 @@ export const solicitudesApi = {
   getAll: () => request<SolicitudAcceso[]>('/solicitudes'),
   create: (data: Omit<SolicitudAcceso, 'id' | 'created_at'>) => 
     request<SolicitudAcceso>('/solicitudes', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: number, data: Partial<SolicitudAcceso>) =>
+    request<SolicitudAcceso>(`/solicitudes/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   updateStatus: (id: number, estatus: SolicitudAcceso['estatus'], comentario?: string, procesadorNombre?: string) => 
     request<SolicitudAcceso>(`/solicitudes/${id}`, { 
       method: 'PUT', 
@@ -171,6 +173,7 @@ export const solicitudesApi = {
         procesador_nombre: procesadorNombre 
       }) 
     }),
+  delete: (id: number) => request<{ success: boolean; id: number }>(`/solicitudes/${id}`, { method: 'DELETE' }),
 };
 
 // 9. Bitácora de Auditoría API (PostgreSQL DB)

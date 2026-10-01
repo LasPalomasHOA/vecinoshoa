@@ -84,7 +84,8 @@ var T = {
   propiedadUsuarios: () => `${getQuotedSchema()}.propiedad_usuarios`,
   huespedes: () => `${getQuotedSchema()}.huespedes`,
   reservaciones: () => `${getQuotedSchema()}.reservaciones`,
-  solicitudes: () => `${getQuotedSchema()}.solicitudes_acceso`
+  solicitudes: () => `${getQuotedSchema()}.solicitudes_acceso`,
+  bitacora: () => `${getQuotedSchema()}.bitacora`
 };
 async function getAllEdificios() {
   const res = await query(`
@@ -750,27 +751,48 @@ async function createSolicitud(data) {
       comentario, estatus, created_at;
   `, [
     data.propiedad_id,
-    data.creador_nombre.trim(),
+    (data.creador_nombre || "").trim() || "Propietario",
     data.solicitud.trim(),
     data.procesador_nombre || null,
     data.fecha_esperada,
     data.comentario || null,
-    data.estatus || "Pendiente"
+    data.estatus === "Permanente" ? "Permanente" : "Aprobado"
   ]);
   return res.rows[0];
 }
-async function updateSolicitudStatus(id, estatus, comentario, procesadorNombre) {
-  const fields = ["estatus = $1"];
-  const values = [estatus];
-  let idx = 2;
-  if (comentario !== void 0) {
-    fields.push(`comentario = $${idx++}`);
-    values.push(comentario);
+async function updateSolicitud(id, data) {
+  const fields = [];
+  const values = [];
+  let idx = 1;
+  if (data.propiedad_id !== void 0) {
+    fields.push(`propiedad_id = $${idx++}`);
+    values.push(data.propiedad_id);
   }
-  if (procesadorNombre !== void 0) {
+  if (data.creador_nombre !== void 0) {
+    fields.push(`creador_nombre = $${idx++}`);
+    values.push((data.creador_nombre || "").trim() || "Propietario");
+  }
+  if (data.solicitud !== void 0) {
+    fields.push(`solicitud = $${idx++}`);
+    values.push(data.solicitud.trim());
+  }
+  if (data.procesador_nombre !== void 0) {
     fields.push(`procesador_nombre = $${idx++}`);
-    values.push(procesadorNombre);
+    values.push(data.procesador_nombre);
   }
+  if (data.fecha_esperada !== void 0) {
+    fields.push(`fecha_esperada = $${idx++}::date`);
+    values.push(data.fecha_esperada);
+  }
+  if (data.comentario !== void 0) {
+    fields.push(`comentario = $${idx++}`);
+    values.push(data.comentario);
+  }
+  if (data.estatus !== void 0) {
+    fields.push(`estatus = $${idx++}`);
+    values.push(data.estatus === "Permanente" ? "Permanente" : "Aprobado");
+  }
+  if (fields.length === 0) return null;
   values.push(id);
   const res = await query(`
     UPDATE ${T.solicitudes()}
@@ -783,9 +805,64 @@ async function updateSolicitudStatus(id, estatus, comentario, procesadorNombre) 
   `, values);
   return res.rows[0] || null;
 }
+async function deleteSolicitud(id) {
+  await query(`DELETE FROM ${T.solicitudes()} WHERE id = $1`, [id]);
+  return { success: true, id };
+}
+var bitacoraTableInitialized = false;
+async function ensureBitacoraTable() {
+  if (bitacoraTableInitialized) return;
+  try {
+    await query(`
+      CREATE TABLE IF NOT EXISTS ${T.bitacora()} (
+        id VARCHAR(60) PRIMARY KEY,
+        timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        usuario_nombre VARCHAR(100) NOT NULL,
+        usuario_email VARCHAR(100) NOT NULL,
+        usuario_rol VARCHAR(50) NOT NULL,
+        accion VARCHAR(50) NOT NULL,
+        modulo VARCHAR(100) NOT NULL,
+        descripcion TEXT NOT NULL,
+        entidad_nombre VARCHAR(150),
+        entidad_id INT,
+        detalles JSONB
+      );
+      CREATE INDEX IF NOT EXISTS idx_bitacora_timestamp ON ${T.bitacora()}(timestamp DESC);
+    `);
+    bitacoraTableInitialized = true;
+  } catch (err) {
+    console.warn("[Bitacora Init]", err.message);
+  }
+}
 async function getAllBitacora() {
   try {
+    await ensureBitacoraTable();
     const events = [];
+    const dbLogs = await query(`
+      SELECT 
+        id, 
+        timestamp,
+        usuario_nombre, 
+        usuario_email, 
+        usuario_rol, 
+        accion, 
+        modulo, 
+        descripcion, 
+        entidad_nombre, 
+        entidad_id, 
+        detalles
+      FROM ${T.bitacora()}
+      ORDER BY timestamp DESC
+      LIMIT 200;
+    `);
+    for (const row of dbLogs.rows) {
+      events.push({
+        ...row,
+        timestamp: row.timestamp ? new Date(row.timestamp).toISOString() : (/* @__PURE__ */ new Date()).toISOString(),
+        detalles: typeof row.detalles === "string" ? JSON.parse(row.detalles) : row.detalles || {}
+      });
+    }
+    const existingIds = new Set(events.map((e) => e.id));
     const res = await query(`
       SELECT 
         r.id,
@@ -805,121 +882,72 @@ async function getAllBitacora() {
       LEFT JOIN ${T.propiedades()} p ON r.propiedad_id = p.id
       LEFT JOIN ${T.huespedes()} h ON r.huesped_id = h.id
       ORDER BY COALESCE(r.updated_at, r.created_at) DESC
-      LIMIT 40;
+      LIMIT 30;
     `);
     for (const r of res.rows) {
       if (r.estado === "En Casa (Checked-in)") {
-        events.push({
-          id: `BIT-RES-IN-${r.id}`,
-          timestamp: new Date(r.updated_at || r.created_at).toISOString(),
-          usuario_nombre: "Francisco Amado",
-          usuario_email: "admin@laspalomas.com",
-          usuario_rol: "Administrador",
-          accion: "CHECK-IN",
-          modulo: "Reservaciones",
-          descripcion: `Complet\xF3 Check-In en "${r.propiedad_nombre || "Condominio"}" para ${r.huesped_nombre}. Brazaletes: "${r.brazaletes || "Asignados"}"${r.vehiculo_info ? `, Veh\xEDculo: "${r.vehiculo_info}"` : ""}.`,
-          entidad_nombre: `${r.propiedad_nombre || "Unidad"} / ${r.codigo || `#${r.id}`}`,
-          entidad_id: r.id,
-          detalles: {
-            codigo: r.codigo,
-            estado: r.estado,
-            brazaletes: r.brazaletes,
-            vehiculo: r.vehiculo_info,
-            esquema: "gestion_residencial.reservaciones"
-          }
-        });
-      } else if (r.estado === "Checked-out") {
-        events.push({
-          id: `BIT-RES-OUT-${r.id}`,
-          timestamp: new Date(r.updated_at || r.created_at).toISOString(),
-          usuario_nombre: "Francisco Amado",
-          usuario_email: "admin@laspalomas.com",
-          usuario_rol: "Administrador",
-          accion: "CHECK-OUT",
-          modulo: "Reservaciones",
-          descripcion: `Proces\xF3 Check-Out y liberaci\xF3n de la unidad "${r.propiedad_nombre || "Condominio"}" para reservaci\xF3n #${r.codigo || r.id}.`,
-          entidad_nombre: `${r.propiedad_nombre || "Unidad"} / ${r.codigo || `#${r.id}`}`,
-          entidad_id: r.id,
-          detalles: {
-            codigo: r.codigo,
-            estado: r.estado,
-            esquema: "gestion_residencial.reservaciones"
-          }
-        });
-      }
-      events.push({
-        id: `BIT-RES-CRE-${r.id}`,
-        timestamp: new Date(r.created_at).toISOString(),
-        usuario_nombre: "Francisco Amado",
-        usuario_email: "admin@laspalomas.com",
-        usuario_rol: "Administrador",
-        accion: "CREACI\xD3N",
-        modulo: "Reservaciones",
-        descripcion: `Registr\xF3 reservaci\xF3n #${r.codigo || r.id} en "${r.propiedad_nombre || "Condominio"}" para ${r.huesped_nombre} (${r.fecha_checkin} al ${r.fecha_checkout}, tipo: ${r.tipo_huesped || "General"}).`,
-        entidad_nombre: `${r.propiedad_nombre || "Unidad"} / ${r.codigo || `#${r.id}`}`,
-        entidad_id: r.id,
-        detalles: {
-          codigo: r.codigo,
-          fechas: `${r.fecha_checkin} al ${r.fecha_checkout}`,
-          tipo_huesped: r.tipo_huesped,
-          esquema: "gestion_residencial.reservaciones"
+        const id = `BIT-RES-IN-${r.id}`;
+        if (!existingIds.has(id)) {
+          events.push({
+            id,
+            timestamp: new Date(r.updated_at || r.created_at).toISOString(),
+            usuario_nombre: "Francisco Amado",
+            usuario_email: "admin@laspalomas.com",
+            usuario_rol: "Administrador",
+            accion: "CHECK-IN",
+            modulo: "Reservaciones",
+            descripcion: `Complet\xF3 Check-In en "${r.propiedad_nombre || "Condominio"}" para ${r.huesped_nombre}. Brazaletes: "${r.brazaletes || "Asignados"}"${r.vehiculo_info ? `, Veh\xEDculo: "${r.vehiculo_info}"` : ""}.`,
+            entidad_nombre: `${r.propiedad_nombre || "Unidad"} / ${r.codigo || `#${r.id}`}`,
+            entidad_id: r.id,
+            detalles: {
+              codigo: r.codigo,
+              estado: r.estado,
+              brazaletes: r.brazaletes,
+              vehiculo: r.vehiculo_info,
+              esquema: "gestion_residencial.reservaciones"
+            }
+          });
         }
-      });
-    }
-    const sol = await query(`
-      SELECT 
-        s.id,
-        s.propiedad_id,
-        p.nombre AS propiedad_nombre,
-        s.creador_nombre,
-        s.solicitud,
-        s.procesador_nombre,
-        TO_CHAR(s.fecha_esperada, 'YYYY-MM-DD') AS fecha_esperada,
-        s.comentario,
-        s.estatus,
-        s.created_at
-      FROM ${T.solicitudes()} s
-      LEFT JOIN ${T.propiedades()} p ON s.propiedad_id = p.id
-      ORDER BY s.created_at DESC
-      LIMIT 40;
-    `);
-    for (const s of sol.rows) {
-      if (s.solicitud?.startsWith("[Bit\xE1cora Supervisor]") || s.solicitud?.startsWith("[Auditor\xEDa")) {
+      } else if (r.estado === "Checked-out") {
+        const id = `BIT-RES-OUT-${r.id}`;
+        if (!existingIds.has(id)) {
+          events.push({
+            id,
+            timestamp: new Date(r.updated_at || r.created_at).toISOString(),
+            usuario_nombre: "Francisco Amado",
+            usuario_email: "admin@laspalomas.com",
+            usuario_rol: "Administrador",
+            accion: "CHECK-OUT",
+            modulo: "Reservaciones",
+            descripcion: `Proces\xF3 Check-Out y liberaci\xF3n de la unidad "${r.propiedad_nombre || "Condominio"}" para reservaci\xF3n #${r.codigo || r.id}.`,
+            entidad_nombre: `${r.propiedad_nombre || "Unidad"} / ${r.codigo || `#${r.id}`}`,
+            entidad_id: r.id,
+            detalles: {
+              codigo: r.codigo,
+              estado: r.estado,
+              esquema: "gestion_residencial.reservaciones"
+            }
+          });
+        }
+      }
+      const createId = `BIT-RES-CRE-${r.id}`;
+      if (!existingIds.has(createId)) {
         events.push({
-          id: `BIT-NOT-${s.id}`,
-          timestamp: new Date(s.created_at).toISOString(),
-          usuario_nombre: s.procesador_nombre || s.creador_nombre || "Carlos M\xE9ndez",
-          usuario_email: "supervisor@laspalomas.com",
-          usuario_rol: "Supervisor",
-          accion: "NOTA_SUPERVISOR",
-          modulo: "Sistema",
-          descripcion: s.solicitud.replace("[Bit\xE1cora Supervisor]", "").replace("[Auditor\xEDa]", "").trim(),
-          entidad_nombre: s.propiedad_nombre || "Supervisi\xF3n General",
-          entidad_id: s.id,
+          id: createId,
+          timestamp: new Date(r.created_at).toISOString(),
+          usuario_nombre: "Francisco Amado",
+          usuario_email: "admin@laspalomas.com",
+          usuario_rol: "Administrador",
+          accion: "CREACI\xD3N",
+          modulo: "Reservaciones",
+          descripcion: `Registr\xF3 reservaci\xF3n #${r.codigo || r.id} en "${r.propiedad_nombre || "Condominio"}" para ${r.huesped_nombre} (${r.fecha_checkin} al ${r.fecha_checkout}, tipo: ${r.tipo_huesped || "General"}).`,
+          entidad_nombre: `${r.propiedad_nombre || "Unidad"} / ${r.codigo || `#${r.id}`}`,
+          entidad_id: r.id,
           detalles: {
-            comentario: s.comentario,
-            esquema: "gestion_residencial.solicitudes_acceso"
-          }
-        });
-      } else {
-        events.push({
-          id: `BIT-SOL-${s.id}`,
-          timestamp: new Date(s.created_at).toISOString(),
-          usuario_nombre: s.procesador_nombre || "Carlos M\xE9ndez",
-          usuario_email: "supervisor@laspalomas.com",
-          usuario_rol: s.procesador_nombre?.toLowerCase().includes("seguridad") ? "Guardia de Seguridad" : "Supervisor",
-          accion: s.estatus === "Pendiente" ? "CREACI\xD3N" : "CAMBIO_ESTATUS",
-          modulo: "Solicitudes de Acceso",
-          descripcion: `Solicitud de acceso #${s.id} en "${s.propiedad_nombre || "Condominio"}": "${s.solicitud}" (Estatus: ${s.estatus}${s.comentario ? ` - ${s.comentario}` : ""}).`,
-          entidad_nombre: `Solicitud #${s.id} (${s.propiedad_nombre || "Condominio"})`,
-          entidad_id: s.id,
-          detalles: {
-            solicitante: s.creador_nombre,
-            procesador: s.procesador_nombre,
-            estatus: s.estatus,
-            comentario: s.comentario,
-            fecha_esperada: s.fecha_esperada,
-            esquema: "gestion_residencial.solicitudes_acceso"
+            codigo: r.codigo,
+            fechas: `${r.fecha_checkin} al ${r.fecha_checkout}`,
+            tipo_huesped: r.tipo_huesped,
+            esquema: "gestion_residencial.reservaciones"
           }
         });
       }
@@ -929,52 +957,58 @@ async function getAllBitacora() {
       FROM ${T.propiedades()} p
       LEFT JOIN ${T.edificios()} e ON p.edificio_id = e.id
       ORDER BY p.created_at DESC
-      LIMIT 30;
+      LIMIT 20;
     `);
     for (const p of props.rows) {
-      events.push({
-        id: `BIT-PROP-${p.id}`,
-        timestamp: new Date(p.created_at).toISOString(),
-        usuario_nombre: "Carlos M\xE9ndez",
-        usuario_email: "supervisor@laspalomas.com",
-        usuario_rol: "Supervisor",
-        accion: "CREACI\xD3N",
-        modulo: "Propiedades",
-        descripcion: `Registr\xF3 el condominio "${p.nombre}" en ${p.torre_nombre || "Torre HOA"}.`,
-        entidad_nombre: p.nombre,
-        entidad_id: p.id,
-        detalles: {
-          torre: p.torre_nombre,
-          estado: p.estado,
-          esquema: "gestion_residencial.propiedades"
-        }
-      });
+      const propId = `BIT-PROP-${p.id}`;
+      if (!existingIds.has(propId)) {
+        events.push({
+          id: propId,
+          timestamp: new Date(p.created_at).toISOString(),
+          usuario_nombre: "Carlos M\xE9ndez",
+          usuario_email: "supervisor@laspalomas.com",
+          usuario_rol: "Supervisor",
+          accion: "CREACI\xD3N",
+          modulo: "Propiedades",
+          descripcion: `Registr\xF3 el condominio "${p.nombre}" en ${p.torre_nombre || "Torre HOA"}.`,
+          entidad_nombre: p.nombre,
+          entidad_id: p.id,
+          detalles: {
+            torre: p.torre_nombre,
+            estado: p.estado,
+            esquema: "gestion_residencial.propiedades"
+          }
+        });
+      }
     }
     const users = await query(`
       SELECT id, nombre, apellido, email, rol, status, created_at
       FROM ${T.usuarios()}
       ORDER BY created_at DESC, id DESC
-      LIMIT 30;
+      LIMIT 20;
     `);
     for (const u of users.rows) {
-      events.push({
-        id: `BIT-USR-${u.id}`,
-        timestamp: new Date(u.created_at).toISOString(),
-        usuario_nombre: "Francisco Amado",
-        usuario_email: "admin@laspalomas.com",
-        usuario_rol: "Administrador",
-        accion: "CREACI\xD3N",
-        modulo: "Usuarios",
-        descripcion: `Registr\xF3 al usuario "${u.nombre} ${u.apellido}" con rol "${u.rol}" (${u.email}).`,
-        entidad_nombre: `${u.nombre} ${u.apellido}`,
-        entidad_id: u.id,
-        detalles: {
-          email: u.email,
-          rol: u.rol,
-          status: u.status,
-          esquema: "gestion_residencial.usuarios"
-        }
-      });
+      const usrId = `BIT-USR-${u.id}`;
+      if (!existingIds.has(usrId)) {
+        events.push({
+          id: usrId,
+          timestamp: new Date(u.created_at).toISOString(),
+          usuario_nombre: "Francisco Amado",
+          usuario_email: "admin@laspalomas.com",
+          usuario_rol: "Administrador",
+          accion: "CREACI\xD3N",
+          modulo: "Usuarios",
+          descripcion: `Registr\xF3 al usuario "${u.nombre} ${u.apellido}" con rol "${u.rol}" (${u.email}).`,
+          entidad_nombre: `${u.nombre} ${u.apellido}`,
+          entidad_id: u.id,
+          detalles: {
+            email: u.email,
+            rol: u.rol,
+            status: u.status,
+            esquema: "gestion_residencial.usuarios"
+          }
+        });
+      }
     }
     events.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     return events;
@@ -984,35 +1018,53 @@ async function getAllBitacora() {
   }
 }
 async function createBitacoraLog(entry) {
-  const actor = entry.usuario_nombre || "Supervisor Carlos M\xE9ndez";
-  const role = entry.usuario_rol || "Supervisor";
+  await ensureBitacoraTable();
+  const id = entry.id || `BIT-${Date.now()}`;
+  const timestamp = entry.timestamp || (/* @__PURE__ */ new Date()).toISOString();
+  const actor = entry.usuario_nombre || "Francisco Amado";
+  const email = entry.usuario_email || "admin@laspalomas.com";
+  const role = entry.usuario_rol || "Administrador";
   const res = await query(`
-    INSERT INTO ${T.solicitudes()} (
-      propiedad_id,
-      creador_nombre,
-      solicitud,
-      procesador_nombre,
-      fecha_esperada,
-      comentario,
-      estatus
+    INSERT INTO ${T.bitacora()} (
+      id, timestamp, usuario_nombre, usuario_email, usuario_rol,
+      accion, modulo, descripcion, entidad_nombre, entidad_id, detalles
     )
-    VALUES (
-      1,
-      $1,
-      $2,
-      $3,
-      CURRENT_DATE,
-      $4,
-      'Aprobado'
-    )
-    RETURNING *;
+    VALUES ($1, $2::timestamptz, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+    ON CONFLICT (id) DO UPDATE SET
+      descripcion = EXCLUDED.descripcion,
+      detalles = EXCLUDED.detalles
+    RETURNING 
+      id, 
+      timestamp,
+      usuario_nombre, 
+      usuario_email, 
+      usuario_rol, 
+      accion, 
+      modulo, 
+      descripcion, 
+      entidad_nombre, 
+      entidad_id, 
+      detalles;
   `, [
+    id,
+    timestamp,
     actor,
-    `[Bit\xE1cora Supervisor] ${entry.descripcion}`,
-    `${actor} (${role})`,
-    JSON.stringify({ accion: entry.accion, modulo: entry.modulo, detalles: entry.detalles })
+    email,
+    role,
+    entry.accion,
+    entry.modulo,
+    entry.descripcion,
+    entry.entidad_nombre || null,
+    entry.entidad_id || null,
+    entry.detalles ? JSON.stringify(entry.detalles) : null
   ]);
-  return res.rows[0];
+  const row = res.rows[0];
+  if (!row) return null;
+  return {
+    ...row,
+    timestamp: row.timestamp ? new Date(row.timestamp).toISOString() : (/* @__PURE__ */ new Date()).toISOString(),
+    detalles: typeof row.detalles === "string" ? JSON.parse(row.detalles) : row.detalles || {}
+  };
 }
 async function getDatabaseHealth() {
   const connection = await testConnection();
@@ -1361,13 +1413,13 @@ async function handleApiRequest(req, res) {
       }
       if ((method === "PUT" || method === "PATCH") && id) {
         const body = await parseJsonBody(req);
-        const updated = await updateSolicitudStatus(
-          id,
-          body.estatus,
-          body.comentario,
-          body.procesador_nombre
-        );
+        const updated = await updateSolicitud(id, body);
         sendJson(res, 200, updated);
+        return true;
+      }
+      if (method === "DELETE" && id) {
+        const result = await deleteSolicitud(id);
+        sendJson(res, 200, result);
         return true;
       }
     }
