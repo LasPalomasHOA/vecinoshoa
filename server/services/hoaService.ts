@@ -529,7 +529,8 @@ export async function getAllReservaciones(): Promise<Reservacion[]> {
       COALESCE(acompanantes_amenidades, '[]'::jsonb) AS acompanantes_amenidades,
       created_at, updated_at
     FROM ${T.reservaciones()}
-    ORDER BY fecha_checkin DESC, id DESC;
+    ORDER BY fecha_checkin DESC, id DESC
+    LIMIT 250;
   `);
   return res.rows;
 }
@@ -680,7 +681,8 @@ export async function getAllSolicitudes(): Promise<SolicitudAcceso[]> {
       TO_CHAR(fecha_esperada, 'YYYY-MM-DD') AS fecha_esperada,
       comentario, estatus, created_at
     FROM ${T.solicitudes()}
-    ORDER BY created_at DESC, id DESC;
+    ORDER BY created_at DESC, id DESC
+    LIMIT 200;
   `);
   return res.rows;
 }
@@ -767,7 +769,8 @@ export async function getAllBitacora(): Promise<any[]> {
       FROM ${T.reservaciones()} r
       LEFT JOIN ${T.propiedades()} p ON r.propiedad_id = p.id
       LEFT JOIN ${T.huespedes()} h ON r.huesped_id = h.id
-      ORDER BY COALESCE(r.updated_at, r.created_at) DESC;
+      ORDER BY COALESCE(r.updated_at, r.created_at) DESC
+      LIMIT 40;
     `);
 
     for (const r of res.rows) {
@@ -846,7 +849,8 @@ export async function getAllBitacora(): Promise<any[]> {
         s.created_at
       FROM ${T.solicitudes()} s
       LEFT JOIN ${T.propiedades()} p ON s.propiedad_id = p.id
-      ORDER BY s.created_at DESC;
+      ORDER BY s.created_at DESC
+      LIMIT 40;
     `);
 
     for (const s of sol.rows) {
@@ -896,7 +900,8 @@ export async function getAllBitacora(): Promise<any[]> {
       SELECT p.id, p.nombre, p.estado, e.nombre AS torre_nombre, p.created_at, p.updated_at
       FROM ${T.propiedades()} p
       LEFT JOIN ${T.edificios()} e ON p.edificio_id = e.id
-      ORDER BY p.created_at DESC;
+      ORDER BY p.created_at DESC
+      LIMIT 30;
     `);
 
     for (const p of props.rows) {
@@ -923,7 +928,8 @@ export async function getAllBitacora(): Promise<any[]> {
     const users = await query<any>(`
       SELECT id, nombre, apellido, email, rol, status, created_at
       FROM ${T.usuarios()}
-      ORDER BY created_at DESC, id DESC;
+      ORDER BY created_at DESC, id DESC
+      LIMIT 30;
     `);
 
     for (const u of users.rows) {
@@ -1031,17 +1037,33 @@ export async function getDatabaseHealth(): Promise<{
     };
   }
 
-  const tableCounts: Record<string, number> = {};
   const schema = getQuotedSchema();
-  const tables = ['edificios', 'grupos_propiedad', 'usuarios', 'propiedades', 'propiedad_usuarios', 'huespedes', 'reservaciones', 'solicitudes_acceso'];
+  const tableCounts: Record<string, number> = {};
 
-  for (const table of tables) {
-    try {
-      const res = await query(`SELECT COUNT(*) FROM ${schema}."${table}"`);
-      tableCounts[table] = parseInt(res.rows[0].count);
-    } catch {
-      tableCounts[table] = -1;
-    }
+  try {
+    const res = await query(`
+      SELECT 
+        (SELECT COUNT(*) FROM ${schema}.edificios) AS edificios,
+        (SELECT COUNT(*) FROM ${schema}.grupos_propiedad) AS grupos_propiedad,
+        (SELECT COUNT(*) FROM ${schema}.usuarios) AS usuarios,
+        (SELECT COUNT(*) FROM ${schema}.propiedades) AS propiedades,
+        (SELECT COUNT(*) FROM ${schema}.propiedad_usuarios) AS propiedad_usuarios,
+        (SELECT COUNT(*) FROM ${schema}.huespedes) AS huespedes,
+        (SELECT COUNT(*) FROM ${schema}.reservaciones) AS reservaciones,
+        (SELECT COUNT(*) FROM ${schema}.solicitudes_acceso) AS solicitudes_acceso;
+    `);
+    const row = res.rows[0] || {};
+    tableCounts['edificios'] = parseInt(row.edificios || '0', 10);
+    tableCounts['grupos_propiedad'] = parseInt(row.grupos_propiedad || '0', 10);
+    tableCounts['usuarios'] = parseInt(row.usuarios || '0', 10);
+    tableCounts['propiedades'] = parseInt(row.propiedades || '0', 10);
+    tableCounts['propiedad_usuarios'] = parseInt(row.propiedad_usuarios || '0', 10);
+    tableCounts['huespedes'] = parseInt(row.huespedes || '0', 10);
+    tableCounts['reservaciones'] = parseInt(row.reservaciones || '0', 10);
+    tableCounts['solicitudes_acceso'] = parseInt(row.solicitudes_acceso || '0', 10);
+  } catch (err) {
+    const tables = ['edificios', 'grupos_propiedad', 'usuarios', 'propiedades', 'propiedad_usuarios', 'huespedes', 'reservaciones', 'solicitudes_acceso'];
+    tables.forEach(t => { tableCounts[t] = -1; });
   }
 
   return {
