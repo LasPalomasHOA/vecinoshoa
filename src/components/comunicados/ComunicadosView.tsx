@@ -27,6 +27,7 @@ import { PlantillasManager, DEFAULT_PLANTILLAS } from './PlantillasManager';
 import { HistorialView } from './HistorialView';
 import { ConfirmSendModal } from './ConfirmSendModal';
 import { ComunicadoDetailModal } from './ComunicadoDetailModal';
+import { DispatchProgressModal } from './DispatchProgressModal';
 
 export const ComunicadosView: React.FC = () => {
   const {
@@ -284,11 +285,16 @@ Las Palomas Seaside Golf Community`
   const senderName = currentUser ? `${currentUser.nombre} ${currentUser.apellido}` : 'Administración Las Palomas';
   const senderEmail = currentUser ? currentUser.email : 'admin@laspalomas.com';
 
+  const [isSendSuccess, setIsSendSuccess] = useState(false);
+
   // Handle Send Confirmation
   const handleSendBroadcast = async () => {
     if (destinatariosCalculados.length === 0 || !asunto.trim() || !cuerpo.trim()) return;
 
+    setIsConfirmModalOpen(false);
     setIsSending(true);
+    setIsSendSuccess(false);
+
     try {
       if (!isTestMode) {
         // Real SMTP dispatch
@@ -329,13 +335,16 @@ Las Palomas Seaside Golf Community`
         estado: isTestMode ? 'Simulado' : 'Enviado'
       });
 
-      setIsConfirmModalOpen(false);
+      setIsSendSuccess(true);
+      await new Promise(resolve => setTimeout(resolve, 1600));
+      setIsSending(false);
+      setIsSendSuccess(false);
       setActiveTab('historial');
     } catch (err: any) {
       console.error('[Error envio comunicado]:', err);
-      alert(`Error al emitir comunicado: ${err.message || 'Error en servidor'}`);
-    } finally {
       setIsSending(false);
+      setIsSendSuccess(false);
+      alert(`Error al emitir comunicado: ${err.message || 'Error en servidor'}`);
     }
   };
 
@@ -494,6 +503,15 @@ Las Palomas Seaside Golf Community`
         comunicado={historyDetailModal}
         onClose={() => setHistoryDetailModal(null)}
         onReuse={handleReuseHistory}
+      />
+
+      {/* FULL SCREEN DISPATCH PROGRESS MODAL */}
+      <DispatchProgressModal
+        isOpen={isSending}
+        totalDestinatarios={destinatariosCalculados.length}
+        asunto={asunto}
+        isTestMode={isTestMode}
+        isSuccess={isSendSuccess}
       />
 
     </div>
