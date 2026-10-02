@@ -392,13 +392,13 @@ export const PlantillasManager: React.FC<PlantillasManagerProps> = ({ onSelectPl
                     onChange={(e) => setNuevaCategoria(e.target.value as CategoriaComunicado)}
                     className="w-full px-3 py-2 rounded-lg form-input text-xs font-semibold text-slate-800"
                   >
-                    <option value="AVISO_GENERAL">📢 Aviso General</option>
-                    <option value="MANTENIMIENTO">🛠️ Mantenimiento</option>
-                    <option value="ASAMBLEA">🏛️ Asamblea</option>
-                    <option value="SEGURIDAD">🛡️ Seguridad</option>
-                    <option value="PAGOS_HOA">💳 Pagos HOA</option>
-                    <option value="EVENTO">🎉 Evento</option>
-                    <option value="URGENTE">🚨 Urgente</option>
+                    <option value="AVISO_GENERAL">Aviso General</option>
+                    <option value="MANTENIMIENTO">Mantenimiento</option>
+                    <option value="ASAMBLEA">Asamblea</option>
+                    <option value="SEGURIDAD">Seguridad</option>
+                    <option value="PAGOS_HOA">Pagos HOA</option>
+                    <option value="EVENTO">Evento</option>
+                    <option value="URGENTE">Urgente</option>
                   </select>
                 </div>
               </div>

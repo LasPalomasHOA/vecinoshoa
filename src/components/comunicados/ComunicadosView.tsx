@@ -25,7 +25,6 @@ import { AudienceSelector } from './AudienceSelector';
 import { ComunicadoComposer } from './ComunicadoComposer';
 import { PlantillasManager, DEFAULT_PLANTILLAS } from './PlantillasManager';
 import { HistorialView } from './HistorialView';
-import { EmailPreviewModal } from './EmailPreviewModal';
 import { ConfirmSendModal } from './ConfirmSendModal';
 import { ComunicadoDetailModal } from './ComunicadoDetailModal';
 
@@ -76,7 +75,6 @@ Las Palomas Seaside Golf Community`
   const [isTestMode, setIsTestMode] = useState(false); // Default to real email dispatch
 
   // Modals
-  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [historyDetailModal, setHistoryDetailModal] = useState<ComunicadoHistorial | null>(null);
 
@@ -454,7 +452,6 @@ Las Palomas Seaside Golf Community`
               destinatariosCalculados={destinatariosCalculados}
               plantillas={DEFAULT_PLANTILLAS}
               onApplyPlantilla={handleApplyPlantilla}
-              onOpenPreview={() => setIsPreviewModalOpen(true)}
               onOpenConfirm={() => setIsConfirmModalOpen(true)}
               adminEmail={senderEmail}
               adminName={senderName}
@@ -478,17 +475,6 @@ Las Palomas Seaside Golf Community`
       )}
 
       {/* MODALS */}
-      <EmailPreviewModal
-        isOpen={isPreviewModalOpen}
-        onClose={() => setIsPreviewModalOpen(false)}
-        asunto={asunto}
-        cuerpo={cuerpo}
-        categoria={categoria}
-        destinatarios={destinatariosCalculados}
-        remitenteNombre={senderName}
-        remitenteEmail={senderEmail}
-      />
-
       <ConfirmSendModal
         isOpen={isConfirmModalOpen}
         onClose={() => setIsConfirmModalOpen(false)}

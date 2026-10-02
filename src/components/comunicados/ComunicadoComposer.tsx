@@ -29,7 +29,6 @@ interface ComunicadoComposerProps {
   destinatariosCalculados: DestinatarioComunicado[];
   plantillas: PlantillaComunicado[];
   onApplyPlantilla: (plantilla: PlantillaComunicado) => void;
-  onOpenPreview: () => void;
   onOpenConfirm: () => void;
   adminEmail?: string;
   adminName?: string;
@@ -48,7 +47,6 @@ export const ComunicadoComposer: React.FC<ComunicadoComposerProps> = ({
   destinatariosCalculados,
   plantillas,
   onApplyPlantilla,
-  onOpenPreview,
   onOpenConfirm,
   adminEmail = 'admin@laspalomas.com',
   adminName = 'Administración Las Palomas HOA'
@@ -369,22 +367,12 @@ export const ComunicadoComposer: React.FC<ComunicadoComposerProps> = ({
         )}
 
         {/* Bottom Actions */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-100">
-          <button
-            type="button"
-            onClick={onOpenPreview}
-            disabled={!asunto.trim() || !cuerpo.trim()}
-            className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-800 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
-          >
-            <Eye className="w-4 h-4 text-slate-600" />
-            <span>Simular en Pantalla (Móvil / PC)</span>
-          </button>
-
+        <div className="flex items-center justify-end pt-3 border-t border-slate-100">
           <button
             type="button"
             onClick={onOpenConfirm}
             disabled={destinatariosCount === 0 || !asunto.trim() || !cuerpo.trim()}
-            className="px-6 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold shadow-md shadow-teal-700/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full sm:w-auto px-8 py-3 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold shadow-md shadow-teal-700/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
             <Send className="w-4 h-4" />
             <span>Emitir Comunicado ({destinatariosCount} propietarios)</span>
