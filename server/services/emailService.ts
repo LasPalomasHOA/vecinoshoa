@@ -30,7 +30,6 @@ export async function sendBroadcastEmail(payload: {
   });
 
   const results: Array<{ email: string; success: boolean; error?: string }> = [];
-  console.log(`[SMTP Broadcast] Despachando ${payload.destinatarios.length} correo(s) desde ${user}...`);
 
   for (const dest of payload.destinatarios) {
     if (!dest.email || !dest.email.includes('@')) continue;
@@ -97,7 +96,6 @@ export async function sendBroadcastEmail(payload: {
         text: plainText,
         html
       });
-      console.log(`[SMTP Success] Correo entregado exitosamente a: ${dest.email}`);
       results.push({ email: dest.email, success: true });
     } catch (err: any) {
       console.error(`[SMTP Error to ${dest.email}]:`, err.message);
