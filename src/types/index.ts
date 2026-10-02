@@ -117,6 +117,13 @@ export interface Propiedad {
   notas?: string;
   created_at?: string;
   updated_at?: string;
+  edificio_nombre?: string;
+  grupo_nombre?: string;
+  owner_id?: number;
+  owner_nombre?: string;
+  owner_apellido?: string;
+  owner_email?: string;
+  owner_telefono?: string;
 }
 
 export interface PropiedadUsuario {

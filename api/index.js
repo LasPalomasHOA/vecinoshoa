@@ -292,31 +292,50 @@ async function deleteUsuario(id) {
 async function getAllPropiedades() {
   const res = await query(`
     SELECT 
-      id, nombre, edificio_id, grupo_id, piso, area, tipo_cuarto, 
-      dormitorios, CAST(banos AS FLOAT) as banos, capacidad_personas, max_carros, 
-      id_impuesto, medidor_agua, medidor_electricidad, empresa_manejadora, 
-      estado, 
-      copropietarios, notas, 
-      created_at, updated_at
-    FROM ${T.propiedades()}
-    ORDER BY 
-      SUBSTRING(nombre FROM '^[A-Za-z]+') ASC, 
-      CAST(NULLIF(REGEXP_REPLACE(nombre, '[^0-9]', '', 'g'), '') AS INTEGER) ASC NULLS LAST,
-      nombre ASC;
+      p.id, p.nombre, p.edificio_id, p.grupo_id, p.piso, p.area, p.tipo_cuarto, 
+      p.dormitorios, CAST(p.banos AS FLOAT) as banos, p.capacidad_personas, p.max_carros, 
+      p.id_impuesto, p.medidor_agua, p.medidor_electricidad, p.empresa_manejadora, 
+      p.estado, 
+      p.copropietarios, p.notas, 
+      p.created_at, p.updated_at,
+      e.nombre AS edificio_nombre,
+      g.nombre AS grupo_nombre,
+      u.id AS owner_id,
+      u.nombre AS owner_nombre,
+      u.apellido AS owner_apellido,
+      u.email AS owner_email,
+      u.telefono AS owner_telefono
+    FROM ${T.propiedades()} p
+    LEFT JOIN ${T.edificios()} e ON e.id = p.edificio_id
+    LEFT JOIN ${T.grupos()} g ON g.id = p.grupo_id
+    LEFT JOIN ${T.propiedadUsuarios()} pu ON pu.propiedad_id = p.id AND pu.es_principal = true
+    LEFT JOIN ${T.usuarios()} u ON u.id = pu.usuario_id
+    ORDER BY p.nombre ASC;
   `);
   return res.rows.sort((a, b) => a.nombre.localeCompare(b.nombre, void 0, { numeric: true, sensitivity: "base" }));
 }
 async function getPropiedadById(id) {
   return queryOne(`
     SELECT 
-      id, nombre, edificio_id, grupo_id, piso, area, tipo_cuarto, 
-      dormitorios, CAST(banos AS FLOAT) as banos, capacidad_personas, max_carros, 
-      id_impuesto, medidor_agua, medidor_electricidad, empresa_manejadora, 
-      estado, 
-      copropietarios, notas, 
-      created_at, updated_at
-    FROM ${T.propiedades()}
-    WHERE id = $1;
+      p.id, p.nombre, p.edificio_id, p.grupo_id, p.piso, p.area, p.tipo_cuarto, 
+      p.dormitorios, CAST(p.banos AS FLOAT) as banos, p.capacidad_personas, p.max_carros, 
+      p.id_impuesto, p.medidor_agua, p.medidor_electricidad, p.empresa_manejadora, 
+      p.estado, 
+      p.copropietarios, p.notas, 
+      p.created_at, p.updated_at,
+      e.nombre AS edificio_nombre,
+      g.nombre AS grupo_nombre,
+      u.id AS owner_id,
+      u.nombre AS owner_nombre,
+      u.apellido AS owner_apellido,
+      u.email AS owner_email,
+      u.telefono AS owner_telefono
+    FROM ${T.propiedades()} p
+    LEFT JOIN ${T.edificios()} e ON e.id = p.edificio_id
+    LEFT JOIN ${T.grupos()} g ON g.id = p.grupo_id
+    LEFT JOIN ${T.propiedadUsuarios()} pu ON pu.propiedad_id = p.id AND pu.es_principal = true
+    LEFT JOIN ${T.usuarios()} u ON u.id = pu.usuario_id
+    WHERE p.id = $1;
   `, [id]);
 }
 async function createPropiedad(data, ownerId) {
@@ -328,13 +347,7 @@ async function createPropiedad(data, ownerId) {
       estado, copropietarios, notas
     )
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
-    RETURNING 
-      id, nombre, edificio_id, grupo_id, piso, area, tipo_cuarto, 
-      dormitorios, CAST(banos AS FLOAT) as banos, capacidad_personas, max_carros, 
-      id_impuesto, medidor_agua, medidor_electricidad, empresa_manejadora, 
-      estado, 
-      copropietarios, notas, 
-      created_at, updated_at;
+    RETURNING id;
   `, [
     data.nombre.trim(),
     data.edificio_id,
@@ -354,15 +367,16 @@ async function createPropiedad(data, ownerId) {
     data.copropietarios || null,
     data.notas || null
   ]);
-  const createdProp = res.rows[0];
+  const createdId = res.rows[0].id;
   if (ownerId && ownerId > 0) {
     await query(`
       INSERT INTO ${T.propiedadUsuarios()} (propiedad_id, usuario_id, tipo_relacion, es_principal)
       VALUES ($1, $2, 'Owner', true)
       ON CONFLICT (propiedad_id, usuario_id) DO UPDATE SET es_principal = true;
-    `, [createdProp.id, ownerId]);
+    `, [createdId, ownerId]);
   }
-  return createdProp;
+  const fullProp = await getPropiedadById(createdId);
+  return fullProp;
 }
 async function updatePropiedad(id, data, ownerId) {
   const fields = ["updated_at = CURRENT_TIMESTAMP"];
@@ -436,19 +450,14 @@ async function updatePropiedad(id, data, ownerId) {
     fields.push(`notas = $${idx++}`);
     values.push(data.notas);
   }
-  values.push(id);
-  const res = await query(`
-    UPDATE ${T.propiedades()}
-    SET ${fields.join(", ")}
-    WHERE id = $${idx}
-    RETURNING 
-      id, nombre, edificio_id, grupo_id, piso, area, tipo_cuarto, 
-      dormitorios, CAST(banos AS FLOAT) as banos, capacidad_personas, max_carros, 
-      id_impuesto, medidor_agua, medidor_electricidad, empresa_manejadora, 
-      estado, 
-      copropietarios, notas, 
-      created_at, updated_at;
-  `, values);
+  if (fields.length > 1) {
+    values.push(id);
+    await query(`
+      UPDATE ${T.propiedades()}
+      SET ${fields.join(", ")}
+      WHERE id = $${idx};
+    `, values);
+  }
   if (ownerId !== void 0) {
     await query(`DELETE FROM ${T.propiedadUsuarios()} WHERE propiedad_id = $1 AND es_principal = true;`, [id]);
     if (ownerId > 0) {
@@ -459,7 +468,7 @@ async function updatePropiedad(id, data, ownerId) {
       `, [id, ownerId]);
     }
   }
-  return res.rows[0] || null;
+  return getPropiedadById(id);
 }
 async function deletePropiedad(id) {
   await query(`DELETE FROM ${T.propiedades()} WHERE id = $1`, [id]);
@@ -899,7 +908,7 @@ async function createBitacoraLog(entry) {
     detalles: typeof row.detalles === "string" ? JSON.parse(row.detalles) : row.detalles || {}
   };
 }
-async function getDatabaseHealth() {
+async function getDatabaseHealth(includeCounts = false) {
   const connection = await testConnection();
   const envInfo = {
     hasCustomDbUrl: !!process.env.CUSTOM_DB_URL,
@@ -914,34 +923,36 @@ async function getDatabaseHealth() {
       environment: envInfo
     };
   }
-  const schema = getQuotedSchema();
   const tableCounts = {};
-  try {
-    const res = await query(`
-      SELECT 
-        (SELECT COUNT(*) FROM ${schema}.edificios) AS edificios,
-        (SELECT COUNT(*) FROM ${schema}.grupos_propiedad) AS grupos_propiedad,
-        (SELECT COUNT(*) FROM ${schema}.usuarios) AS usuarios,
-        (SELECT COUNT(*) FROM ${schema}.propiedades) AS propiedades,
-        (SELECT COUNT(*) FROM ${schema}.propiedad_usuarios) AS propiedad_usuarios,
-        (SELECT COUNT(*) FROM ${schema}.huespedes) AS huespedes,
-        (SELECT COUNT(*) FROM ${schema}.reservaciones) AS reservaciones,
-        (SELECT COUNT(*) FROM ${schema}.solicitudes_acceso) AS solicitudes_acceso;
-    `);
-    const row = res.rows[0] || {};
-    tableCounts["edificios"] = parseInt(row.edificios || "0", 10);
-    tableCounts["grupos_propiedad"] = parseInt(row.grupos_propiedad || "0", 10);
-    tableCounts["usuarios"] = parseInt(row.usuarios || "0", 10);
-    tableCounts["propiedades"] = parseInt(row.propiedades || "0", 10);
-    tableCounts["propiedad_usuarios"] = parseInt(row.propiedad_usuarios || "0", 10);
-    tableCounts["huespedes"] = parseInt(row.huespedes || "0", 10);
-    tableCounts["reservaciones"] = parseInt(row.reservaciones || "0", 10);
-    tableCounts["solicitudes_acceso"] = parseInt(row.solicitudes_acceso || "0", 10);
-  } catch (err) {
-    const tables = ["edificios", "grupos_propiedad", "usuarios", "propiedades", "propiedad_usuarios", "huespedes", "reservaciones", "solicitudes_acceso"];
-    tables.forEach((t) => {
-      tableCounts[t] = -1;
-    });
+  if (includeCounts) {
+    const schema = getQuotedSchema();
+    try {
+      const res = await query(`
+        SELECT 
+          (SELECT COUNT(*) FROM ${schema}.edificios) AS edificios,
+          (SELECT COUNT(*) FROM ${schema}.grupos_propiedad) AS grupos_propiedad,
+          (SELECT COUNT(*) FROM ${schema}.usuarios) AS usuarios,
+          (SELECT COUNT(*) FROM ${schema}.propiedades) AS propiedades,
+          (SELECT COUNT(*) FROM ${schema}.propiedad_usuarios) AS propiedad_usuarios,
+          (SELECT COUNT(*) FROM ${schema}.huespedes) AS huespedes,
+          (SELECT COUNT(*) FROM ${schema}.reservaciones) AS reservaciones,
+          (SELECT COUNT(*) FROM ${schema}.solicitudes_acceso) AS solicitudes_acceso;
+      `);
+      const row = res.rows[0] || {};
+      tableCounts["edificios"] = parseInt(row.edificios || "0", 10);
+      tableCounts["grupos_propiedad"] = parseInt(row.grupos_propiedad || "0", 10);
+      tableCounts["usuarios"] = parseInt(row.usuarios || "0", 10);
+      tableCounts["propiedades"] = parseInt(row.propiedades || "0", 10);
+      tableCounts["propiedad_usuarios"] = parseInt(row.propiedad_usuarios || "0", 10);
+      tableCounts["huespedes"] = parseInt(row.huespedes || "0", 10);
+      tableCounts["reservaciones"] = parseInt(row.reservaciones || "0", 10);
+      tableCounts["solicitudes_acceso"] = parseInt(row.solicitudes_acceso || "0", 10);
+    } catch (err) {
+      const tables = ["edificios", "grupos_propiedad", "usuarios", "propiedades", "propiedad_usuarios", "huespedes", "reservaciones", "solicitudes_acceso"];
+      tables.forEach((t) => {
+        tableCounts[t] = -1;
+      });
+    }
   }
   return {
     connected: true,
@@ -958,66 +969,85 @@ if (typeof dotenv2?.config === "function") {
   dotenv2.config();
 }
 async function sendBroadcastEmail(payload) {
+  const host = process.env.SMTP_HOST?.trim();
+  const port = parseInt(process.env.SMTP_PORT || "465", 10);
+  const secure = process.env.SMTP_SECURE === "false" ? false : port === 465 || !process.env.SMTP_SECURE;
   const user = (process.env.SMTP_USER || "integradorpro.yec@gmail.com").trim();
   const pass = (process.env.SMTP_PASS || "qheulhyenjwsmnxa").replace(/\s+/g, "");
   const from = process.env.SMTP_FROM || `"Las Palomas HOA" <${user}>`;
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user,
-      pass
-    }
-  });
+  let transporter;
+  if (host && process.env.SMTP_USER && process.env.SMTP_PASS) {
+    transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure,
+      auth: {
+        user,
+        pass
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+  } else {
+    transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user,
+        pass
+      }
+    });
+  }
   const results = [];
   for (const dest of payload.destinatarios) {
     if (!dest.email || !dest.email.includes("@")) continue;
     const rawSubject = (payload.asunto || "").trim();
-    const finalSubject = rawSubject ? rawSubject.length < 8 && !rawSubject.toLowerCase().includes("hoa") ? `Aviso HOA \u2014 ${rawSubject}` : rawSubject : "Comunicado Oficial \u2014 Las Palomas Seaside Golf Community";
-    const personalizedBody = payload.contenido.replace(/{nombre_propietario}/g, dest.nombre || "Propietario(a)").replace(/{condominio}/g, dest.condominio || "Condominio").replace(/{torre}/g, dest.torre || "Torre");
+    const finalSubject = rawSubject || "Comunicado Oficial \u2014 Las Palomas Seaside Golf Community";
+    const personalizedBody = payload.contenido.replace(/{nombre_propietario}/g, dest.nombre || "Propietario(a)").replace(/{condominio}/g, dest.condominio || "Condominio").replace(/{torre}/g, dest.torre || "Torre").replace(/{fecha_actual}/g, (/* @__PURE__ */ new Date()).toLocaleDateString("es-MX", { dateStyle: "long" })).replace(/{administrador}/g, "Administraci\xF3n Las Palomas");
     const plainText = `${finalSubject}
 
 ${personalizedBody}
 
 ---
 Las Palomas Seaside Golf Community
-Administraci\xF3n HOA`;
-    const formattedParagraphs = personalizedBody.split("\n\n").map((p) => `<p style="margin: 0 0 14px 0; line-height: 1.6; color: #334155; font-size: 14px;">${p.replace(/\n/g, "<br/>")}</p>`).join("");
+Administraci\xF3n HOA
+Blvd. Costero 150, Sandy Beach, Puerto Pe\xF1asco, Sonora, M\xE9xico.`;
+    const formattedParagraphs = personalizedBody.split("\n\n").map((p) => `<p style="margin: 0 0 16px 0; line-height: 1.6; color: #1e293b; font-size: 15px;">${p.replace(/\n/g, "<br/>")}</p>`).join("");
     const html = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
 </head>
-<body style="margin: 0; padding: 20px; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
-  <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 10px; border: 1px solid #e2e8f0; overflow: hidden;">
-    
-    <!-- Encabezado -->
-    <div style="background: linear-gradient(135deg, #134e4a 0%, #0f172a 100%); padding: 24px; text-align: center;">
-      <h2 style="margin: 0; color: #ffffff; font-size: 17px; font-weight: 800; letter-spacing: 0.5px;">LAS PALOMAS SEASIDE GOLF COMMUNITY</h2>
-      <p style="margin: 4px 0 0 0; color: #5eead4; font-size: 11px; font-weight: 600; text-transform: uppercase;">Gesti\xF3n Residencial & HOA</p>
-    </div>
-
-    <!-- Asunto -->
-    <div style="background-color: #f1f5f9; padding: 12px 24px; border-bottom: 1px solid #e2e8f0; font-size: 12px; color: #475569;">
-      <strong>Asunto:</strong> ${finalSubject}
-    </div>
-
-    <!-- Contenido -->
-    <div style="padding: 24px; font-size: 14px; line-height: 1.6; color: #334155;">
-      ${formattedParagraphs}
-    </div>
-
-    <!-- Pie de p\xE1gina -->
-    <div style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 16px 24px; text-align: center; font-size: 11px; color: #64748b;">
-      <p style="margin: 0 0 3px 0; font-weight: 600;">Asociaci\xF3n de Cond\xF3minos Las Palomas Seaside Golf Community</p>
-      <p style="margin: 0; color: #94a3b8;">Blvd. Costero 150, Sandy Beach, Puerto Pe\xF1asco, Sonora, M\xE9xico.</p>
-    </div>
-
-  </div>
+<body style="margin: 0; padding: 15px; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; border: 1px solid #cbd5e1; overflow: hidden;">
+    <tr>
+      <td style="background-color: #0f766e; padding: 22px 24px; text-align: center;">
+        <h1 style="margin: 0; color: #ffffff; font-size: 18px; font-weight: bold; letter-spacing: 0.5px;">LAS PALOMAS SEASIDE GOLF COMMUNITY</h1>
+        <p style="margin: 4px 0 0 0; color: #99f6e4; font-size: 12px; text-transform: uppercase;">Gesti\xF3n Residencial & HOA</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 16px 24px; background-color: #f8fafc; border-bottom: 1px solid #e2e8f0; font-size: 13px; color: #475569;">
+        <strong>Asunto:</strong> ${finalSubject}
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 24px; font-size: 15px; line-height: 1.6; color: #1e293b;">
+        ${formattedParagraphs}
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 16px 24px; text-align: center; font-size: 11px; color: #64748b;">
+        <p style="margin: 0 0 4px 0; font-weight: bold; color: #334155;">Asociaci\xF3n de Cond\xF3minos Las Palomas Seaside Golf Community</p>
+        <p style="margin: 0; color: #94a3b8;">Blvd. Costero 150, Sandy Beach, Puerto Pe\xF1asco, Sonora, M\xE9xico.</p>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>`;
     try {
       await transporter.sendMail({
-        from,
+        from: `"Las Palomas HOA" <${user}>`,
         to: dest.email,
         replyTo: user,
         subject: finalSubject,
@@ -1028,6 +1058,9 @@ Administraci\xF3n HOA`;
     } catch (err) {
       console.error(`[SMTP Error to ${dest.email}]:`, err.message);
       results.push({ email: dest.email, success: false, error: err.message });
+    }
+    if (payload.destinatarios.length > 1) {
+      await new Promise((resolve) => setTimeout(resolve, 250));
     }
   }
   return {
@@ -1115,7 +1148,8 @@ async function handleApiRequest(req, res) {
   }
   try {
     if (resource === "health") {
-      const health = await getDatabaseHealth();
+      const includeCounts = url.searchParams.get("counts") === "true";
+      const health = await getDatabaseHealth(includeCounts);
       sendJson(res, 200, health);
       return true;
     }

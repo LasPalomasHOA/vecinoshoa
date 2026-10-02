@@ -266,17 +266,25 @@ export async function deleteUsuario(id: number): Promise<{ success: boolean; id:
 export async function getAllPropiedades(): Promise<Propiedad[]> {
   const res = await query<any>(`
     SELECT 
-      id, nombre, edificio_id, grupo_id, piso, area, tipo_cuarto, 
-      dormitorios, CAST(banos AS FLOAT) as banos, capacidad_personas, max_carros, 
-      id_impuesto, medidor_agua, medidor_electricidad, empresa_manejadora, 
-      estado, 
-      copropietarios, notas, 
-      created_at, updated_at
-    FROM ${T.propiedades()}
-    ORDER BY 
-      SUBSTRING(nombre FROM '^[A-Za-z]+') ASC, 
-      CAST(NULLIF(REGEXP_REPLACE(nombre, '[^0-9]', '', 'g'), '') AS INTEGER) ASC NULLS LAST,
-      nombre ASC;
+      p.id, p.nombre, p.edificio_id, p.grupo_id, p.piso, p.area, p.tipo_cuarto, 
+      p.dormitorios, CAST(p.banos AS FLOAT) as banos, p.capacidad_personas, p.max_carros, 
+      p.id_impuesto, p.medidor_agua, p.medidor_electricidad, p.empresa_manejadora, 
+      p.estado, 
+      p.copropietarios, p.notas, 
+      p.created_at, p.updated_at,
+      e.nombre AS edificio_nombre,
+      g.nombre AS grupo_nombre,
+      u.id AS owner_id,
+      u.nombre AS owner_nombre,
+      u.apellido AS owner_apellido,
+      u.email AS owner_email,
+      u.telefono AS owner_telefono
+    FROM ${T.propiedades()} p
+    LEFT JOIN ${T.edificios()} e ON e.id = p.edificio_id
+    LEFT JOIN ${T.grupos()} g ON g.id = p.grupo_id
+    LEFT JOIN ${T.propiedadUsuarios()} pu ON pu.propiedad_id = p.id AND pu.es_principal = true
+    LEFT JOIN ${T.usuarios()} u ON u.id = pu.usuario_id
+    ORDER BY p.nombre ASC;
   `);
   return res.rows.sort((a, b) => a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' }));
 }
@@ -284,14 +292,25 @@ export async function getAllPropiedades(): Promise<Propiedad[]> {
 export async function getPropiedadById(id: number): Promise<Propiedad | null> {
   return queryOne<Propiedad>(`
     SELECT 
-      id, nombre, edificio_id, grupo_id, piso, area, tipo_cuarto, 
-      dormitorios, CAST(banos AS FLOAT) as banos, capacidad_personas, max_carros, 
-      id_impuesto, medidor_agua, medidor_electricidad, empresa_manejadora, 
-      estado, 
-      copropietarios, notas, 
-      created_at, updated_at
-    FROM ${T.propiedades()}
-    WHERE id = $1;
+      p.id, p.nombre, p.edificio_id, p.grupo_id, p.piso, p.area, p.tipo_cuarto, 
+      p.dormitorios, CAST(p.banos AS FLOAT) as banos, p.capacidad_personas, p.max_carros, 
+      p.id_impuesto, p.medidor_agua, p.medidor_electricidad, p.empresa_manejadora, 
+      p.estado, 
+      p.copropietarios, p.notas, 
+      p.created_at, p.updated_at,
+      e.nombre AS edificio_nombre,
+      g.nombre AS grupo_nombre,
+      u.id AS owner_id,
+      u.nombre AS owner_nombre,
+      u.apellido AS owner_apellido,
+      u.email AS owner_email,
+      u.telefono AS owner_telefono
+    FROM ${T.propiedades()} p
+    LEFT JOIN ${T.edificios()} e ON e.id = p.edificio_id
+    LEFT JOIN ${T.grupos()} g ON g.id = p.grupo_id
+    LEFT JOIN ${T.propiedadUsuarios()} pu ON pu.propiedad_id = p.id AND pu.es_principal = true
+    LEFT JOIN ${T.usuarios()} u ON u.id = pu.usuario_id
+    WHERE p.id = $1;
   `, [id]);
 }
 
@@ -304,13 +323,7 @@ export async function createPropiedad(data: Omit<Propiedad, 'id'>, ownerId?: num
       estado, copropietarios, notas
     )
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
-    RETURNING 
-      id, nombre, edificio_id, grupo_id, piso, area, tipo_cuarto, 
-      dormitorios, CAST(banos AS FLOAT) as banos, capacidad_personas, max_carros, 
-      id_impuesto, medidor_agua, medidor_electricidad, empresa_manejadora, 
-      estado, 
-      copropietarios, notas, 
-      created_at, updated_at;
+    RETURNING id;
   `, [
     data.nombre.trim(),
     data.edificio_id,
@@ -331,7 +344,7 @@ export async function createPropiedad(data: Omit<Propiedad, 'id'>, ownerId?: num
     data.notas || null,
   ]);
 
-  const createdProp = res.rows[0];
+  const createdId = res.rows[0].id;
 
   // Assign owner if specified
   if (ownerId && ownerId > 0) {
@@ -339,10 +352,11 @@ export async function createPropiedad(data: Omit<Propiedad, 'id'>, ownerId?: num
       INSERT INTO ${T.propiedadUsuarios()} (propiedad_id, usuario_id, tipo_relacion, es_principal)
       VALUES ($1, $2, 'Owner', true)
       ON CONFLICT (propiedad_id, usuario_id) DO UPDATE SET es_principal = true;
-    `, [createdProp.id, ownerId]);
+    `, [createdId, ownerId]);
   }
 
-  return createdProp;
+  const fullProp = await getPropiedadById(createdId);
+  return fullProp!;
 }
 
 export async function updatePropiedad(id: number, data: Partial<Propiedad>, ownerId?: number): Promise<Propiedad | null> {
@@ -368,21 +382,14 @@ export async function updatePropiedad(id: number, data: Partial<Propiedad>, owne
   if (data.copropietarios !== undefined) { fields.push(`copropietarios = $${idx++}`); values.push(data.copropietarios); }
   if (data.notas !== undefined) { fields.push(`notas = $${idx++}`); values.push(data.notas); }
 
-  values.push(id);
-  const res = await query<Propiedad>(`
-    UPDATE ${T.propiedades()}
-    SET ${fields.join(', ')}
-    WHERE id = $${idx}
-    RETURNING 
-      id, nombre, edificio_id, grupo_id, piso, area, tipo_cuarto, 
-      dormitorios, CAST(banos AS FLOAT) as banos, capacidad_personas, max_carros, 
-      id_impuesto, medidor_agua, medidor_electricidad, empresa_manejadora, 
-      estado, 
-      copropietarios, notas, 
-      created_at, updated_at;
-  `, values);
-
-
+  if (fields.length > 1) {
+    values.push(id);
+    await query(`
+      UPDATE ${T.propiedades()}
+      SET ${fields.join(', ')}
+      WHERE id = $${idx};
+    `, values);
+  }
 
   if (ownerId !== undefined) {
     await query(`DELETE FROM ${T.propiedadUsuarios()} WHERE propiedad_id = $1 AND es_principal = true;`, [id]);
@@ -395,7 +402,7 @@ export async function updatePropiedad(id: number, data: Partial<Propiedad>, owne
     }
   }
 
-  return res.rows[0] || null;
+  return getPropiedadById(id);
 }
 
 export async function deletePropiedad(id: number): Promise<{ success: boolean; id: number }> {
@@ -896,7 +903,7 @@ export async function createBitacoraLog(entry: {
 // 10. DIAGNOSTICS & SYSTEM STATUS
 // ==============================================================================
 
-export async function getDatabaseHealth(): Promise<{
+export async function getDatabaseHealth(includeCounts = false): Promise<{
   connected: boolean;
   message: string;
   tables: Record<string, number>;
@@ -922,33 +929,35 @@ export async function getDatabaseHealth(): Promise<{
     };
   }
 
-  const schema = getQuotedSchema();
   const tableCounts: Record<string, number> = {};
 
-  try {
-    const res = await query(`
-      SELECT 
-        (SELECT COUNT(*) FROM ${schema}.edificios) AS edificios,
-        (SELECT COUNT(*) FROM ${schema}.grupos_propiedad) AS grupos_propiedad,
-        (SELECT COUNT(*) FROM ${schema}.usuarios) AS usuarios,
-        (SELECT COUNT(*) FROM ${schema}.propiedades) AS propiedades,
-        (SELECT COUNT(*) FROM ${schema}.propiedad_usuarios) AS propiedad_usuarios,
-        (SELECT COUNT(*) FROM ${schema}.huespedes) AS huespedes,
-        (SELECT COUNT(*) FROM ${schema}.reservaciones) AS reservaciones,
-        (SELECT COUNT(*) FROM ${schema}.solicitudes_acceso) AS solicitudes_acceso;
-    `);
-    const row = res.rows[0] || {};
-    tableCounts['edificios'] = parseInt(row.edificios || '0', 10);
-    tableCounts['grupos_propiedad'] = parseInt(row.grupos_propiedad || '0', 10);
-    tableCounts['usuarios'] = parseInt(row.usuarios || '0', 10);
-    tableCounts['propiedades'] = parseInt(row.propiedades || '0', 10);
-    tableCounts['propiedad_usuarios'] = parseInt(row.propiedad_usuarios || '0', 10);
-    tableCounts['huespedes'] = parseInt(row.huespedes || '0', 10);
-    tableCounts['reservaciones'] = parseInt(row.reservaciones || '0', 10);
-    tableCounts['solicitudes_acceso'] = parseInt(row.solicitudes_acceso || '0', 10);
-  } catch (err) {
-    const tables = ['edificios', 'grupos_propiedad', 'usuarios', 'propiedades', 'propiedad_usuarios', 'huespedes', 'reservaciones', 'solicitudes_acceso'];
-    tables.forEach(t => { tableCounts[t] = -1; });
+  if (includeCounts) {
+    const schema = getQuotedSchema();
+    try {
+      const res = await query(`
+        SELECT 
+          (SELECT COUNT(*) FROM ${schema}.edificios) AS edificios,
+          (SELECT COUNT(*) FROM ${schema}.grupos_propiedad) AS grupos_propiedad,
+          (SELECT COUNT(*) FROM ${schema}.usuarios) AS usuarios,
+          (SELECT COUNT(*) FROM ${schema}.propiedades) AS propiedades,
+          (SELECT COUNT(*) FROM ${schema}.propiedad_usuarios) AS propiedad_usuarios,
+          (SELECT COUNT(*) FROM ${schema}.huespedes) AS huespedes,
+          (SELECT COUNT(*) FROM ${schema}.reservaciones) AS reservaciones,
+          (SELECT COUNT(*) FROM ${schema}.solicitudes_acceso) AS solicitudes_acceso;
+      `);
+      const row = res.rows[0] || {};
+      tableCounts['edificios'] = parseInt(row.edificios || '0', 10);
+      tableCounts['grupos_propiedad'] = parseInt(row.grupos_propiedad || '0', 10);
+      tableCounts['usuarios'] = parseInt(row.usuarios || '0', 10);
+      tableCounts['propiedades'] = parseInt(row.propiedades || '0', 10);
+      tableCounts['propiedad_usuarios'] = parseInt(row.propiedad_usuarios || '0', 10);
+      tableCounts['huespedes'] = parseInt(row.huespedes || '0', 10);
+      tableCounts['reservaciones'] = parseInt(row.reservaciones || '0', 10);
+      tableCounts['solicitudes_acceso'] = parseInt(row.solicitudes_acceso || '0', 10);
+    } catch (err) {
+      const tables = ['edificios', 'grupos_propiedad', 'usuarios', 'propiedades', 'propiedad_usuarios', 'huespedes', 'reservaciones', 'solicitudes_acceso'];
+      tables.forEach(t => { tableCounts[t] = -1; });
+    }
   }
 
   return {

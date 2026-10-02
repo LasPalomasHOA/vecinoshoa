@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   Edificio, 
   GrupoPropiedad, 
@@ -390,8 +390,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ));
       
       if (ownerId && ownerId > 0) {
-        const assignments = await api.propiedadUsuarios.getAll();
-        setPropiedadUsuarios(assignments);
+        setPropiedadUsuarios(prev => [
+          ...prev.filter(pu => pu.propiedad_id !== created.id),
+          {
+            id: Date.now(),
+            propiedad_id: created.id,
+            usuario_id: ownerId,
+            tipo_relacion: 'Owner',
+            es_principal: true
+          }
+        ]);
       }
 
       registrarEventoBitacora({
@@ -413,13 +421,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const previous = propiedades.find(p => p.id === id);
       const updated = await api.propiedades.update(id, propData, ownerId);
+      if (!updated) throw new Error('No se pudo actualizar la propiedad');
+
       setPropiedades(prev => prev.map(p => (p.id === id ? updated : p)).sort((a, b) => 
         compareCondoNames(a.nombre, b.nombre)
       ));
 
       if (ownerId !== undefined) {
-        const assignments = await api.propiedadUsuarios.getAll();
-        setPropiedadUsuarios(assignments);
+        setPropiedadUsuarios(prev => {
+          const filtered = prev.filter(pu => !(pu.propiedad_id === id && pu.es_principal));
+          if (ownerId > 0) {
+            filtered.push({
+              id: Date.now(),
+              propiedad_id: id,
+              usuario_id: ownerId,
+              tipo_relacion: 'Owner',
+              es_principal: true
+            });
+          }
+          return filtered;
+        });
       }
 
       registrarEventoBitacora({
@@ -916,29 +937,61 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // Helpers
+  // Memoized O(1) Lookup Maps to eliminate O(N^2) linear scans across components
+  const edificiosMap = useMemo(() => new Map(edificios.map(e => [e.id, e])), [edificios]);
+  const gruposMap = useMemo(() => new Map(grupos.map(g => [g.id, g])), [grupos]);
+  const usuariosMap = useMemo(() => new Map(usuarios.map(u => [u.id, u])), [usuarios]);
+  const propiedadesMap = useMemo(() => new Map(propiedades.map(p => [p.id, p])), [propiedades]);
+  const huespedesMap = useMemo(() => new Map(huespedes.map(h => [h.id, h])), [huespedes]);
+
+  const propiedadOwnerMap = useMemo(() => {
+    const map = new Map<number, Usuario>();
+    // Pre-populate with pre-joined owner data if available on propiedad
+    propiedades.forEach(p => {
+      if (p.owner_id && p.owner_nombre) {
+        map.set(p.id, {
+          id: p.owner_id,
+          nombre: p.owner_nombre,
+          apellido: p.owner_apellido || '',
+          email: p.owner_email || '',
+          telefono: p.owner_telefono || '',
+          rol: 'Dueño',
+          idioma: 'es',
+          status: 'Active'
+        });
+      }
+    });
+    // Fallback/override with explicit propiedadUsuarios relations if loaded
+    propiedadUsuarios.forEach(pu => {
+      if (pu.es_principal) {
+        const u = usuariosMap.get(pu.usuario_id);
+        if (u) map.set(pu.propiedad_id, u);
+      }
+    });
+    return map;
+  }, [propiedades, propiedadUsuarios, usuariosMap]);
+
+  // Fast O(1) Helpers
   const getPropiedadById = useCallback((id: number) => {
-    return propiedades.find(p => p.id === id);
-  }, [propiedades]);
+    return propiedadesMap.get(id);
+  }, [propiedadesMap]);
 
   const getEdificioById = useCallback((id: number) => {
-    return edificios.find(e => e.id === id);
-  }, [edificios]);
+    return edificiosMap.get(id);
+  }, [edificiosMap]);
 
   const getGrupoById = useCallback((id?: number) => {
     if (!id) return undefined;
-    return grupos.find(g => g.id === id);
-  }, [grupos]);
+    return gruposMap.get(id);
+  }, [gruposMap]);
 
   const getOwnerByPropiedadId = useCallback((propiedadId: number) => {
-    const relation = propiedadUsuarios.find(pu => pu.propiedad_id === propiedadId && pu.es_principal);
-    if (!relation) return undefined;
-    return usuarios.find(u => u.id === relation.usuario_id);
-  }, [propiedadUsuarios, usuarios]);
+    return propiedadOwnerMap.get(propiedadId);
+  }, [propiedadOwnerMap]);
 
   const getHuespedById = useCallback((id: number) => {
-    return huespedes.find(h => h.id === id);
-  }, [huespedes]);
+    return huespedesMap.get(id);
+  }, [huespedesMap]);
 
   return (
     <AppContext.Provider

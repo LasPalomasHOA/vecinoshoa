@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Propiedad } from '../../types';
 import { compareCondoNames } from '../../utils/sortUtils';
@@ -13,7 +13,11 @@ import {
   Trash2,
   LayoutGrid,
   List,
-  User
+  User,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
 } from 'lucide-react';
 
 interface PropertiesViewProps {
@@ -44,32 +48,55 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
   const [propertyToDelete, setPropertyToDelete] = useState<Propiedad | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  const filteredProperties = propiedades
-    .filter(prop => {
-      const edificio = getEdificioById(prop.edificio_id);
-      const owner = getOwnerByPropiedadId(prop.id);
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(50);
 
-      if (searchQuery) {
-        const q = searchQuery.toLowerCase();
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedEdificio, selectedGrupo, pageSize]);
+
+  const filteredProperties = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    const edFilter = selectedEdificio === 'ALL' ? null : parseInt(selectedEdificio, 10);
+    const grpFilter = selectedGrupo === 'ALL' ? null : parseInt(selectedGrupo, 10);
+
+    return propiedades.filter(prop => {
+      if (edFilter !== null && prop.edificio_id !== edFilter) return false;
+      if (grpFilter !== null && prop.grupo_id !== grpFilter) return false;
+
+      if (q) {
+        const edName = prop.edificio_nombre || getEdificioById(prop.edificio_id)?.nombre || '';
+        const ownerName = prop.owner_nombre ? `${prop.owner_nombre} ${prop.owner_apellido || ''}` : '';
+        const ownerEmail = prop.owner_email || '';
+        
         const matchName = prop.nombre.toLowerCase().includes(q);
-        const matchEd = edificio?.nombre.toLowerCase().includes(q);
-        const matchOwner = owner ? `${owner.nombre} ${owner.apellido}`.toLowerCase().includes(q) || owner.email.toLowerCase().includes(q) : false;
+        const matchEd = edName.toLowerCase().includes(q);
+        const matchOwner = ownerName.toLowerCase().includes(q) || ownerEmail.toLowerCase().includes(q);
         const matchImpuesto = prop.id_impuesto?.toLowerCase().includes(q);
         const matchMedidor = prop.medidor_electricidad?.toLowerCase().includes(q);
-        if (!matchName && !matchEd && !matchOwner && !matchImpuesto && !matchMedidor) return false;
-      }
+        const matchCoprop = prop.copropietarios?.toLowerCase().includes(q);
 
-      if (selectedEdificio !== 'ALL' && prop.edificio_id !== parseInt(selectedEdificio)) {
-        return false;
-      }
-
-      if (selectedGrupo !== 'ALL' && prop.grupo_id !== parseInt(selectedGrupo)) {
-        return false;
+        if (!matchName && !matchEd && !matchOwner && !matchImpuesto && !matchMedidor && !matchCoprop) {
+          return false;
+        }
       }
 
       return true;
-    })
-    .sort((a, b) => compareCondoNames(a.nombre, b.nombre));
+    });
+  }, [propiedades, searchQuery, selectedEdificio, selectedGrupo, getEdificioById]);
+
+  // Pagination calculations
+  const totalItems = filteredProperties.length;
+  const totalPages = pageSize === -1 ? 1 : Math.max(1, Math.ceil(totalItems / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+
+  const paginatedProperties = useMemo(() => {
+    if (pageSize === -1) return filteredProperties;
+    const start = (safePage - 1) * pageSize;
+    return filteredProperties.slice(start, start + pageSize);
+  }, [filteredProperties, safePage, pageSize]);
 
   // Clean formatted Grupo badge helper
   const getGrupoBadge = (grupoNombre?: string) => {
@@ -192,18 +219,26 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredProperties.length === 0 ? (
+                {paginatedProperties.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="py-12 text-center text-slate-400 font-medium">
                       No se encontraron condominios con estos filtros.
                     </td>
                   </tr>
                 ) : (
-                  filteredProperties.map(prop => {
-                    const ed = getEdificioById(prop.edificio_id);
-                    const owner = getOwnerByPropiedadId(prop.id);
-                    const grupo = getGrupoById(prop.grupo_id);
-                    const grupoBadge = getGrupoBadge(grupo?.nombre);
+                  paginatedProperties.map(prop => {
+                    const edNombre = prop.edificio_nombre || getEdificioById(prop.edificio_id)?.nombre;
+                    const owner = prop.owner_nombre ? {
+                      id: prop.owner_id || 0,
+                      nombre: prop.owner_nombre,
+                      apellido: prop.owner_apellido || '',
+                      email: prop.owner_email || '',
+                      rol: 'Dueño' as const,
+                      idioma: 'es',
+                      status: 'Active' as const
+                    } : getOwnerByPropiedadId(prop.id);
+                    const grupoNombre = prop.grupo_nombre || getGrupoById(prop.grupo_id)?.nombre;
+                    const grupoBadge = getGrupoBadge(grupoNombre);
 
                     return (
                       <tr key={prop.id} className="hover:bg-teal-50/40 transition-colors group">
@@ -214,7 +249,7 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
                             {prop.nombre}
                           </span>
                           <span className="block text-[10px] text-slate-500 mt-0.5">
-                            {ed?.nombre ? (ed.nombre.startsWith('Torre') ? ed.nombre : `Torre ${ed.nombre}`) : `Torre ${prop.edificio_id}`} • Piso {prop.piso}
+                            {edNombre ? (edNombre.startsWith('Torre') ? edNombre : `Torre ${edNombre}`) : `Torre ${prop.edificio_id}`} • Piso {prop.piso}
                           </span>
                         </td>
 
@@ -252,13 +287,11 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
                           )}
                         </td>
 
-
-
                         {/* Grupo */}
                         <td className="py-3 px-3.5 align-middle whitespace-nowrap">
                           <span
                             className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] whitespace-nowrap shadow-2xs ${grupoBadge.className}`}
-                            title={grupo?.nombre}
+                            title={grupoNombre}
                           >
                             {grupoBadge.label}
                           </span>
@@ -320,10 +353,18 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
       ) : (
         /* Cards Mode */
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredProperties.map(prop => {
-            const ed = getEdificioById(prop.edificio_id);
-            const owner = getOwnerByPropiedadId(prop.id);
-            const grupo = getGrupoById(prop.grupo_id);
+          {paginatedProperties.map(prop => {
+            const edNombre = prop.edificio_nombre || getEdificioById(prop.edificio_id)?.nombre;
+            const owner = prop.owner_nombre ? {
+              id: prop.owner_id || 0,
+              nombre: prop.owner_nombre,
+              apellido: prop.owner_apellido || '',
+              email: prop.owner_email || '',
+              rol: 'Dueño' as const,
+              idioma: 'es',
+              status: 'Active' as const
+            } : getOwnerByPropiedadId(prop.id);
+            const grupoNombre = prop.grupo_nombre || getGrupoById(prop.grupo_id)?.nombre;
 
             return (
               <div key={prop.id} className="p-5 rounded-xl bg-white border border-slate-200/90 shadow-xs space-y-3 hover:border-teal-300 transition-all">
@@ -332,13 +373,13 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
                     <div className="flex items-center gap-2">
                       <span className="text-xl font-black text-slate-900">{prop.nombre}</span>
                       <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-teal-50 border border-teal-200 text-teal-800">
-                        {ed?.nombre ? (ed.nombre.startsWith('Torre') ? ed.nombre : `Torre ${ed.nombre}`) : `Torre ${prop.edificio_id}`}
+                        {edNombre ? (edNombre.startsWith('Torre') ? edNombre : `Torre ${edNombre}`) : `Torre ${prop.edificio_id}`}
                       </span>
                     </div>
                     <p className="text-xs text-slate-500 mt-0.5">Piso {prop.piso} • Capacidad: {prop.capacidad_personas} personas</p>
                   </div>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] whitespace-nowrap shadow-2xs ${getGrupoBadge(grupo?.nombre).className}`}>
-                    {getGrupoBadge(grupo?.nombre).label}
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] whitespace-nowrap shadow-2xs ${getGrupoBadge(grupoNombre).className}`}>
+                    {getGrupoBadge(grupoNombre).label}
                   </span>
                 </div>
 
@@ -399,6 +440,71 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
           })}
         </div>
       )}
+
+      {/* Pagination Controls */}
+      <div className="p-3 rounded-xl bg-white border border-slate-200/90 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="text-slate-500 font-medium">
+          Mostrando <span className="font-bold text-slate-800">{totalItems === 0 ? 0 : pageSize === -1 ? 1 : (safePage - 1) * pageSize + 1}</span> a <span className="font-bold text-slate-800">{pageSize === -1 ? totalItems : Math.min(safePage * pageSize, totalItems)}</span> de <span className="font-bold text-slate-800">{totalItems}</span> condominios
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="text-slate-400">Por página:</span>
+            <select
+              value={pageSize}
+              onChange={(e) => setPageSize(parseInt(e.target.value, 10))}
+              className="h-8 px-2 text-xs rounded-lg form-input font-medium border-slate-200 cursor-pointer"
+            >
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+              <option value={-1}>Todos ({totalItems})</option>
+            </select>
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={safePage <= 1}
+                className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                title="Primera página"
+              >
+                <ChevronsLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={safePage <= 1}
+                className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                title="Página anterior"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              
+              <span className="px-3 py-1 font-semibold text-slate-700 select-none">
+                Página {safePage} de {totalPages}
+              </span>
+
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={safePage >= totalPages}
+                className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                title="Página siguiente"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={safePage >= totalPages}
+                className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                title="Última página"
+              >
+                <ChevronsRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Delete Property Modal with Motivo */}
       <DeleteConfirmModal

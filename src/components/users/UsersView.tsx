@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Usuario, RolUsuario } from '../../types';
 import { DeleteConfirmModal } from '../common/DeleteConfirmModal';
@@ -33,28 +33,50 @@ export const UsersView: React.FC<UsersViewProps> = ({
   const [userToDelete, setUserToDelete] = useState<Usuario | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  const filteredUsers = usuarios.filter(u => {
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      const matchName = `${u.nombre} ${u.apellido}`.toLowerCase().includes(q);
-      const matchEmail = u.email.toLowerCase().includes(q);
-      const matchRol = u.rol.toLowerCase().includes(q);
-      const matchId = `${u.id}`.includes(q);
-      if (!matchName && !matchEmail && !matchRol && !matchId) return false;
-    }
+  // Pre-indexed map of User ID -> Array of Condo Names in O(N)
+  const userCondosMap = useMemo(() => {
+    const map = new Map<number, string[]>();
+    propiedades.forEach(p => {
+      if (p.owner_id) {
+        const list = map.get(p.owner_id) || [];
+        if (!list.includes(p.nombre)) list.push(p.nombre);
+        map.set(p.owner_id, list);
+      }
+    });
+    const propMap = new Map(propiedades.map(p => [p.id, p.nombre]));
+    propiedadUsuarios.forEach(pu => {
+      const propName = propMap.get(pu.propiedad_id);
+      if (propName) {
+        const list = map.get(pu.usuario_id) || [];
+        if (!list.includes(propName)) {
+          list.push(propName);
+          map.set(pu.usuario_id, list);
+        }
+      }
+    });
+    return map;
+  }, [propiedades, propiedadUsuarios]);
 
-    if (roleFilter !== 'ALL' && u.rol !== roleFilter) return false;
-    if (statusFilter !== 'ALL' && u.status !== statusFilter) return false;
+  const filteredUsers = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return usuarios.filter(u => {
+      if (q) {
+        const matchName = `${u.nombre} ${u.apellido}`.toLowerCase().includes(q);
+        const matchEmail = u.email.toLowerCase().includes(q);
+        const matchRol = u.rol.toLowerCase().includes(q);
+        const matchId = `${u.id}`.includes(q);
+        if (!matchName && !matchEmail && !matchRol && !matchId) return false;
+      }
 
-    return true;
-  });
+      if (roleFilter !== 'ALL' && u.rol !== roleFilter) return false;
+      if (statusFilter !== 'ALL' && u.status !== statusFilter) return false;
+
+      return true;
+    });
+  }, [usuarios, searchQuery, roleFilter, statusFilter]);
 
   const getCondosForUser = (userId: number) => {
-    const rels = propiedadUsuarios.filter(pu => pu.usuario_id === userId);
-    return rels.map(rel => {
-      const prop = propiedades.find(p => p.id === rel.propiedad_id);
-      return prop ? prop.nombre : null;
-    }).filter(Boolean);
+    return userCondosMap.get(userId) || [];
   };
 
   const rolesList: RolUsuario[] = [

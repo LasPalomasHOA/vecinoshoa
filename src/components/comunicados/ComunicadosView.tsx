@@ -75,25 +75,52 @@ Las Palomas Seaside Golf Community`
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [historyDetailModal, setHistoryDetailModal] = useState<ComunicadoHistorial | null>(null);
 
-  // 1. Build Base Owners List
+  // 1. Build Base Owners List using O(1) indexed maps
   const todosDestinatarios = useMemo<DestinatarioComunicado[]>(() => {
     const ownersMap = new Map<number, DestinatarioComunicado>();
+    const edMap = new Map(edificios.map(e => [e.id, e.nombre]));
+    const propMap = new Map(propiedades.map(p => [p.id, p]));
 
-    usuarios.forEach(u => {
-      const userRels = propiedadUsuarios.filter(pu => pu.usuario_id === u.id);
-      const userProps = userRels.map(rel => {
-        const prop = propiedades.find(p => p.id === rel.propiedad_id);
-        if (!prop) return null;
-        const ed = edificios.find(e => e.id === prop.edificio_id);
-        return {
+    // Map user -> condominios list
+    const userCondosMap = new Map<number, DestinatarioComunicado['condominios']>();
+
+    // 1. From pre-joined properties
+    propiedades.forEach(prop => {
+      if (prop.owner_id) {
+        const list = userCondosMap.get(prop.owner_id) || [];
+        const edNombre = prop.edificio_nombre || edMap.get(prop.edificio_id) || `Torre #${prop.edificio_id}`;
+        list.push({
           propiedad_id: prop.id,
           propiedad_nombre: prop.nombre,
           edificio_id: prop.edificio_id,
-          edificio_nombre: ed?.nombre || `Torre #${prop.edificio_id}`,
+          edificio_nombre: edNombre,
           piso: prop.piso || 1
-        };
-      }).filter(Boolean) as DestinatarioComunicado['condominios'];
+        });
+        userCondosMap.set(prop.owner_id, list);
+      }
+    });
 
+    // 2. From propiedadUsuarios
+    propiedadUsuarios.forEach(pu => {
+      const prop = propMap.get(pu.propiedad_id);
+      if (prop) {
+        const list = userCondosMap.get(pu.usuario_id) || [];
+        if (!list.some(c => c.propiedad_id === prop.id)) {
+          const edNombre = prop.edificio_nombre || edMap.get(prop.edificio_id) || `Torre #${prop.edificio_id}`;
+          list.push({
+            propiedad_id: prop.id,
+            propiedad_nombre: prop.nombre,
+            edificio_id: prop.edificio_id,
+            edificio_nombre: edNombre,
+            piso: prop.piso || 1
+          });
+          userCondosMap.set(pu.usuario_id, list);
+        }
+      }
+    });
+
+    usuarios.forEach(u => {
+      const userProps = userCondosMap.get(u.id) || [];
       if (u.email && (u.rol === 'Dueño' || userProps.length > 0)) {
         ownersMap.set(u.id, {
           usuario_id: u.id,

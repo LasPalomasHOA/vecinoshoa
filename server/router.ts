@@ -114,7 +114,8 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
     // Health & System Check
     // -------------------------------------------------------------
     if (resource === 'health') {
-      const health = await hoaService.getDatabaseHealth();
+      const includeCounts = url.searchParams.get('counts') === 'true';
+      const health = await hoaService.getDatabaseHealth(includeCounts);
       sendJson(res, 200, health);
       return true;
     }

@@ -47,42 +47,9 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
     }
 
     const data = await response.json();
-    
-    // Cache successfully fetched collection locally for offline fallback
-    if ((!options || options.method === 'GET') && Array.isArray(data)) {
-      const table = endpoint.replace(/^\//, '').split('/')[0];
-      try {
-        localStorage.setItem(`${STORAGE_PREFIX}${table}`, JSON.stringify(data));
-      } catch {
-        // ignore storage quota errors
-      }
-    }
-
     return data;
   } catch (err: any) {
     console.warn(`[API Network/Server Warning] ${options?.method || 'GET'} ${url}:`, err.message);
-    
-    // In case of initial setup before tables are created in DB or temporary network issues,
-    // fallback gracefully to cached local storage
-    if (!options || options.method === 'GET') {
-      const table = endpoint.replace(/^\//, '').split('/')[0];
-      const cached = localStorage.getItem(`${STORAGE_PREFIX}${table}`);
-      if (cached) {
-        try {
-          const items = JSON.parse(cached);
-          const parts = endpoint.split('/');
-          if (parts.length > 2 && parts[2]) {
-            const id = parseInt(parts[2]);
-            const found = items.find((i: any) => i.id === id);
-            if (found) return found;
-          }
-          return items as T;
-        } catch {
-          // fallback failed
-        }
-      }
-    }
-
     throw err;
   }
 }
@@ -202,7 +169,7 @@ export const comunicadosApi = {
 
 // 11. Base de Datos Status & Health Check
 export const healthApi = {
-  check: () => request<{
+  check: (includeCounts = false) => request<{
     connected: boolean;
     message: string;
     tables: Record<string, number>;
@@ -211,7 +178,7 @@ export const healthApi = {
       hasDatabaseUrl: boolean;
       hasPostgresUrl: boolean;
     };
-  }>('/health'),
+  }>(`/health${includeCounts ? '?counts=true' : ''}`),
 };
 
 export const api = {
