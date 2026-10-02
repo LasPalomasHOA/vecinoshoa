@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Send, Mail, CheckCircle2, ShieldCheck, RefreshCw, Layers, Building } from 'lucide-react';
-import { DestinatarioComunicado } from '../../types';
+import { Loader2, CheckCircle2 } from 'lucide-react';
 
 interface DispatchProgressModalProps {
   isOpen: boolean;
@@ -10,14 +9,6 @@ interface DispatchProgressModalProps {
   isSuccess?: boolean;
 }
 
-const PHASES = [
-  'Inicializando conexión segura con servidor de correo...',
-  'Generando mensajes personalizados para cada propietario...',
-  'Despachando notificaciones y aplicando firmas oficiales...',
-  'Verificando confirmaciones de entrega y acuses...',
-  'Registrando folio oficial en bitácora general de acuerdos...'
-];
-
 export const DispatchProgressModal: React.FC<DispatchProgressModalProps> = ({
   isOpen,
   totalDestinatarios,
@@ -25,128 +16,81 @@ export const DispatchProgressModal: React.FC<DispatchProgressModalProps> = ({
   isTestMode,
   isSuccess = false
 }) => {
-  const [phaseIndex, setPhaseIndex] = useState(0);
-  const [simulatedPercent, setSimulatedPercent] = useState(15);
+  const [progress, setProgress] = useState(10);
 
   useEffect(() => {
     if (!isOpen) {
-      setPhaseIndex(0);
-      setSimulatedPercent(15);
+      setProgress(10);
       return;
     }
 
-    // Advance phases smoothly
-    const interval = setInterval(() => {
-      setPhaseIndex(prev => (prev < PHASES.length - 1 ? prev + 1 : prev));
-      setSimulatedPercent(prev => {
-        if (prev >= 92) return 92;
-        return prev + Math.floor(Math.random() * 18) + 8;
+    const timer = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 90) return 90;
+        return prev + Math.floor(Math.random() * 15) + 5;
       });
-    }, 1200);
+    }, 400);
 
-    return () => clearInterval(interval);
+    return () => clearInterval(timer);
   }, [isOpen]);
 
   useEffect(() => {
     if (isSuccess) {
-      setSimulatedPercent(100);
+      setProgress(100);
     }
   }, [isSuccess]);
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn select-none">
-      <div className="relative w-full max-w-lg bg-white border border-slate-200/90 rounded-3xl shadow-2xl overflow-hidden p-7 sm:p-9 text-center space-y-6 animate-scale-up">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm select-none">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-200 p-6 text-center space-y-5">
         
-        {/* Animated Icon / Radar */}
-        <div className="relative mx-auto w-20 h-20 flex items-center justify-center">
+        {/* State Icon */}
+        <div className="flex justify-center">
           {!isSuccess ? (
-            <>
-              {/* Outer pulsing ring */}
-              <div className="absolute inset-0 rounded-full bg-teal-500/20 animate-ping" />
-              <div className="absolute inset-1 rounded-full bg-teal-500/10 animate-pulse" />
-              <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-tr from-teal-600 to-emerald-500 text-white flex items-center justify-center shadow-lg shadow-teal-600/30">
-                <Send className="w-8 h-8 animate-bounce" />
-              </div>
-            </>
+            <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-700">
+              <Loader2 className="w-6 h-6 animate-spin text-teal-700" />
+            </div>
           ) : (
-            <div className="w-16 h-16 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30 animate-scale-up">
-              <CheckCircle2 className="w-10 h-10" />
+            <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <CheckCircle2 className="w-6 h-6" />
             </div>
           )}
         </div>
 
-        {/* Title & Subject */}
-        <div className="space-y-1.5">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-50 border border-teal-200 text-teal-800 text-[11px] font-bold">
-            <Building className="w-3.5 h-3.5 text-teal-600" />
-            <span>Las Palomas Seaside Golf Community</span>
-          </div>
-
-          <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
-            {!isSuccess ? 'Despachando Comunicado Oficial' : '¡Comunicado Emitido con Éxito!'}
+        {/* Text Details */}
+        <div className="space-y-1">
+          <h3 className="text-base font-semibold text-slate-900">
+            {!isSuccess
+              ? (isTestMode ? 'Guardando comunicado...' : `Enviando a ${totalDestinatarios} propietarios...`)
+              : 'Comunicado emitido correctamente'}
           </h3>
-
-          <p className="text-xs text-slate-600 font-medium max-w-sm mx-auto truncate">
-            Asunto: <span className="font-bold text-slate-900">{asunto}</span>
+          <p className="text-xs text-slate-500 max-w-xs mx-auto truncate">
+            {asunto}
           </p>
         </div>
 
-        {/* Progress Bar & Counter */}
-        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-3">
-          
-          <div className="flex items-center justify-between text-xs font-bold">
-            <span className="text-slate-600 flex items-center gap-1.5">
-              {!isSuccess ? (
-                <>
-                  <RefreshCw className="w-3.5 h-3.5 text-teal-600 animate-spin" />
-                  <span>Procesando entregas...</span>
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Entregas finalizadas</span>
-                </>
-              )}
-            </span>
-            <span className="text-teal-800 font-mono">
-              {totalDestinatarios} propietarios objetivo
-            </span>
-          </div>
-
-          {/* Bar */}
-          <div className="w-full h-3 bg-slate-200 rounded-full overflow-hidden p-0.5">
+        {/* Progress Bar */}
+        <div className="space-y-2">
+          <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
             <div
-              className={`h-full rounded-full transition-all duration-500 ${
-                isSuccess
-                  ? 'bg-emerald-500 w-full'
-                  : 'bg-gradient-to-r from-teal-600 via-emerald-500 to-teal-400'
-              }`}
-              style={{ width: `${isSuccess ? 100 : Math.min(simulatedPercent, 95)}%` }}
+              className="h-full bg-teal-700 rounded-full transition-all duration-300"
+              style={{ width: `${isSuccess ? 100 : progress}%` }}
             />
           </div>
-
-          {/* Current Phase Message */}
-          <div className="min-h-[20px] flex items-center justify-center">
-            <p className="text-[11px] text-slate-500 font-medium animate-pulse">
-              {!isSuccess ? PHASES[phaseIndex] : 'Registrado en bitácora e historial de acuerdos.'}
-            </p>
+          <div className="flex justify-between text-[11px] text-slate-400">
+            <span>{isTestMode ? 'Modo de registro interno' : 'Despachando correos'}</span>
+            <span>{isSuccess ? '100%' : `${progress}%`}</span>
           </div>
-
         </div>
 
-        {/* Do Not Close Alert */}
-        {!isSuccess ? (
-          <div className="p-3 rounded-xl bg-amber-50 border border-amber-200/90 flex items-center justify-center gap-2 text-amber-900 text-[11px]">
-            <span className="font-bold">⚠️ Atención:</span>
-            <span>Por favor no cierres ni recargues esta ventana mientras se completa el proceso.</span>
-          </div>
-        ) : (
-          <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200/90 flex items-center justify-center gap-2 text-emerald-900 text-[11px] font-bold">
-            <span>Redirigiendo automáticamente al historial...</span>
-          </div>
-        )}
+        {/* Bottom Hint */}
+        <p className="text-[11px] text-slate-400">
+          {!isSuccess
+            ? 'Por favor espera mientras finaliza el proceso de entrega.'
+            : 'Redirigiendo al historial de envíos...'}
+        </p>
 
       </div>
     </div>

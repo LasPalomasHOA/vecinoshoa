@@ -3,17 +3,11 @@ import {
   Clock,
   Mail,
   Search,
-  Filter,
   Download,
   Eye,
   RotateCcw,
   CheckCircle2,
-  Calendar,
-  Layers,
-  Building,
-  User,
-  Sparkles,
-  ChevronDown
+  Layers
 } from 'lucide-react';
 import { ComunicadoHistorial, CategoriaComunicado } from '../../types';
 
@@ -23,6 +17,16 @@ interface HistorialViewProps {
   onReuse: (comunicado: ComunicadoHistorial) => void;
   onNewBroadcast: () => void;
 }
+
+const CATEGORY_LABELS: Record<CategoriaComunicado, string> = {
+  AVISO_GENERAL: 'Aviso General',
+  MANTENIMIENTO: 'Mantenimiento',
+  ASAMBLEA: 'Asamblea',
+  SEGURIDAD: 'Seguridad',
+  PAGOS_HOA: 'Pagos HOA',
+  EVENTO: 'Evento',
+  URGENTE: 'Urgente'
+};
 
 export const HistorialView: React.FC<HistorialViewProps> = ({
   comunicados,
@@ -34,7 +38,6 @@ export const HistorialView: React.FC<HistorialViewProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string>('TODAS');
   const [selectedStatus, setSelectedStatus] = useState<string>('TODOS');
 
-  // Filtered list
   const filteredComunicados = useMemo(() => {
     return comunicados.filter(com => {
       const matchCat = selectedCategory === 'TODAS' || com.categoria === selectedCategory;
@@ -51,7 +54,6 @@ export const HistorialView: React.FC<HistorialViewProps> = ({
     });
   }, [comunicados, selectedCategory, selectedStatus, searchTerm]);
 
-  // Statistics
   const totalEnviados = comunicados.filter(c => c.estado === 'Enviado').length;
   const totalSimulados = comunicados.filter(c => c.estado === 'Simulado').length;
   const totalPropietariosImpactados = comunicados.reduce((acc, c) => acc + (c.total_destinatarios || 0), 0);

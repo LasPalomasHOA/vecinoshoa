@@ -2,7 +2,6 @@ import React, { useRef, useState } from 'react';
 import {
   FileText,
   Mail,
-  Eye,
   Send,
   Sparkles,
   Tag,
@@ -10,8 +9,7 @@ import {
   CheckCircle2,
   Bookmark,
   SendHorizontal,
-  RefreshCw,
-  HelpCircle
+  RefreshCw
 } from 'lucide-react';
 import { CategoriaComunicado, PlantillaComunicado, DestinatarioComunicado } from '../../types';
 import { api } from '../../services/api';
@@ -153,7 +151,7 @@ export const ComunicadoComposer: React.FC<ComunicadoComposerProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-800 font-bold text-xs">
-              2
+              <FileText className="w-4 h-4" />
             </div>
             <div>
               <h2 className="text-sm font-bold text-slate-900">Contenido del Comunicado</h2>
@@ -169,13 +167,13 @@ export const ComunicadoComposer: React.FC<ComunicadoComposerProps> = ({
               onChange={(e) => setCategoria(e.target.value as CategoriaComunicado)}
               className="px-3 py-1.5 rounded-xl form-input text-xs font-bold text-slate-800 shadow-2xs"
             >
-              <option value="AVISO_GENERAL">📢 Aviso General</option>
-              <option value="MANTENIMIENTO">🛠️ Mantenimiento</option>
-              <option value="ASAMBLEA">🏛️ Asamblea</option>
-              <option value="SEGURIDAD">🛡️ Seguridad</option>
-              <option value="PAGOS_HOA">💳 Pagos HOA</option>
-              <option value="EVENTO">🎉 Evento</option>
-              <option value="URGENTE">🚨 Urgente</option>
+              <option value="AVISO_GENERAL">Aviso General</option>
+              <option value="MANTENIMIENTO">Mantenimiento</option>
+              <option value="ASAMBLEA">Asamblea</option>
+              <option value="SEGURIDAD">Seguridad</option>
+              <option value="PAGOS_HOA">Pagos HOA</option>
+              <option value="EVENTO">Evento</option>
+              <option value="URGENTE">Urgente</option>
             </select>
           </div>
         </div>
@@ -286,7 +284,7 @@ export const ComunicadoComposer: React.FC<ComunicadoComposerProps> = ({
               <Mail className={`w-4 h-4 shrink-0 ${!isTestMode ? 'text-emerald-700' : 'text-amber-700'}`} />
               <div>
                 <span className="font-bold text-xs block">
-                  {!isTestMode ? '✉️ Modo: Envío Masivo Real (SMTP Gmail Activo)' : '🛡️ Modo: Registro Simulado (Sin Despacho Real)'}
+                  {!isTestMode ? 'Modo: Envío Masivo Real (SMTP Gmail Activo)' : 'Modo: Registro Simulado (Sin Despacho Real)'}
                 </span>
               </div>
             </div>

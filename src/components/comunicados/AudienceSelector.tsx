@@ -6,12 +6,8 @@ import {
   Hash,
   CheckSquare,
   Search,
-  Filter,
   Check,
-  CheckCircle2,
-  XCircle,
   Building,
-  Sparkles,
   AlertCircle
 } from 'lucide-react';
 import {
@@ -82,7 +78,6 @@ export const AudienceSelector: React.FC<AudienceSelectorProps> = ({
   const countCalculados = destinatariosCalculados.length;
   const coveragePercent = totalDueños > 0 ? Math.round((countCalculados / totalDueños) * 100) : 0;
 
-  // Visible filtered list
   const destinatariosVisibles = React.useMemo(() => {
     const baseList = criterio === 'PERSONALIZADO' ? todosDestinatarios : destinatariosCalculados;
     if (!recipientSearch.trim()) return baseList;
@@ -101,12 +96,12 @@ export const AudienceSelector: React.FC<AudienceSelectorProps> = ({
   return (
     <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-4">
       
-      {/* Step 1 Title & Audience Progress */}
+      {/* Title & Audience Progress */}
       <div className="border-b border-slate-100 pb-3.5 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-800 font-bold text-xs">
-              1
+              <Users className="w-4 h-4" />
             </div>
             <div>
               <h2 className="text-sm font-bold text-slate-900">Segmentación de Audiencia</h2>

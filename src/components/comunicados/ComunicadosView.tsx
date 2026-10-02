@@ -13,12 +13,7 @@ import {
   Send,
   Mail,
   Clock,
-  Bookmark,
-  Sparkles,
-  ShieldCheck,
-  Building,
-  Layers,
-  Users
+  Bookmark
 } from 'lucide-react';
 
 import { AudienceSelector } from './AudienceSelector';
@@ -55,6 +50,7 @@ export const ComunicadosView: React.FC = () => {
   const [manualSelectedUserIds, setManualSelectedUserIds] = useState<Set<number>>(new Set());
   const [recipientSearch, setRecipientSearch] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [isSendSuccess, setIsSendSuccess] = useState(false);
 
   // Composer Form State
   const [asunto, setAsunto] = useState('Comunicado Oficial – Las Palomas Seaside Golf Community');
@@ -73,13 +69,13 @@ Atentamente,
 Administración General & Consejo Directivo HOA
 Las Palomas Seaside Golf Community`
   );
-  const [isTestMode, setIsTestMode] = useState(false); // Default to real email dispatch
+  const [isTestMode, setIsTestMode] = useState(false);
 
   // Modals
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [historyDetailModal, setHistoryDetailModal] = useState<ComunicadoHistorial | null>(null);
 
-  // 1. Build Base Owners List with their properties and towers
+  // 1. Build Base Owners List
   const todosDestinatarios = useMemo<DestinatarioComunicado[]>(() => {
     const ownersMap = new Map<number, DestinatarioComunicado>();
 
@@ -117,7 +113,7 @@ Las Palomas Seaside Golf Community`
     );
   }, [usuarios, propiedades, propiedadUsuarios, edificios]);
 
-  // Extract all unique floors from properties
+  // Unique floors
   const pisosDisponibles = useMemo(() => {
     const set = new Set<number>();
     propiedades.forEach(p => {
@@ -183,7 +179,6 @@ Las Palomas Seaside Golf Community`
     manualSelectedUserIds
   ]);
 
-  // Toggle individual recipient
   const handleToggleRecipient = (userId: number) => {
     if (criterio === 'PERSONALIZADO') {
       setManualSelectedUserIds(prev => {
@@ -202,7 +197,6 @@ Las Palomas Seaside Golf Community`
     }
   };
 
-  // Toggle select all
   const handleSelectAll = () => {
     if (criterio === 'PERSONALIZADO') {
       const allIds = new Set(todosDestinatarios.map(d => d.usuario_id));
@@ -243,7 +237,6 @@ Las Palomas Seaside Golf Community`
     }
   };
 
-  // Apply template
   const handleApplyPlantilla = (plan: PlantillaComunicado) => {
     setAsunto(plan.asunto);
     setCategoria(plan.categoria);
@@ -251,7 +244,6 @@ Las Palomas Seaside Golf Community`
     setActiveTab('nuevo');
   };
 
-  // Reuse past announcement
   const handleReuseHistory = (com: ComunicadoHistorial) => {
     setAsunto(com.asunto);
     setCategoria(com.categoria);
@@ -260,7 +252,6 @@ Las Palomas Seaside Golf Community`
     setActiveTab('nuevo');
   };
 
-  // Generate friendly criteria description
   const getCriterioDetalle = () => {
     switch (criterio) {
       case 'GENERAL':
@@ -285,9 +276,6 @@ Las Palomas Seaside Golf Community`
   const senderName = currentUser ? `${currentUser.nombre} ${currentUser.apellido}` : 'Administración Las Palomas';
   const senderEmail = currentUser ? currentUser.email : 'admin@laspalomas.com';
 
-  const [isSendSuccess, setIsSendSuccess] = useState(false);
-
-  // Handle Send Confirmation
   const handleSendBroadcast = async () => {
     if (destinatariosCalculados.length === 0 || !asunto.trim() || !cuerpo.trim()) return;
 
@@ -297,7 +285,6 @@ Las Palomas Seaside Golf Community`
 
     try {
       if (!isTestMode) {
-        // Real SMTP dispatch
         const payload = {
           asunto: asunto.trim(),
           categoria,
@@ -312,7 +299,7 @@ Las Palomas Seaside Golf Community`
 
         const res = await api.comunicados.send(payload);
         if (res && res.failed > 0 && res.sent === 0) {
-          const firstErr = res.results?.find(r => !r.success)?.error || 'Error al conectar con servidor SMTP de Gmail';
+          const firstErr = res.results?.find(r => !r.success)?.error || 'Error al conectar con servidor SMTP';
           throw new Error(`Fallo de envío SMTP: ${firstErr}`);
         }
       }
@@ -336,7 +323,7 @@ Las Palomas Seaside Golf Community`
       });
 
       setIsSendSuccess(true);
-      await new Promise(resolve => setTimeout(resolve, 1600));
+      await new Promise(resolve => setTimeout(resolve, 1400));
       setIsSending(false);
       setIsSendSuccess(false);
       setActiveTab('historial');
@@ -505,7 +492,7 @@ Las Palomas Seaside Golf Community`
         onReuse={handleReuseHistory}
       />
 
-      {/* FULL SCREEN DISPATCH PROGRESS MODAL */}
+      {/* DISPATCH PROGRESS MODAL */}
       <DispatchProgressModal
         isOpen={isSending}
         totalDestinatarios={destinatariosCalculados.length}

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Bookmark, Sparkles, Plus, Trash2, Edit3, Check, Search, Filter, Tag, FileText, ArrowRight, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { Bookmark, Sparkles, Plus, Trash2, Search, ArrowRight, X } from 'lucide-react';
 import { PlantillaComunicado, CategoriaComunicado } from '../../types';
 
 export const DEFAULT_PLANTILLAS: PlantillaComunicado[] = [
@@ -119,27 +119,18 @@ Agradecemos su valiosa cooperación para mantener la seguridad de nuestras famil
 
 Atentamente,
 Comité de Seguridad & Vigilancia Las Palomas`
-  },
-  {
-    id: 'plan-7',
-    titulo: 'Reglamento de Albercas y Áreas Comunes',
-    categoria: 'AVISO_GENERAL',
-    asunto: 'Normativas de Convivencia y Uso de Albercas en Temporada Alta',
-    cuerpo: `Estimados Residentes y Propietarios ({condominio}),
-
-Les compartimos un atento recordatorio sobre las normas de uso de nuestras albercas y jacuzzis para asegurar una experiencia placentera para toda la comunidad:
-
-• Horario de albercas: 08:00 a.m. a 10:00 p.m.
-• Queda estrictamente prohibido el uso de envases o recipientes de vidrio en la zona de camastros y albercas.
-• El uso de bocinas portátiles debe mantenerse a un volumen moderado que respete el descanso de los vecinos.
-• Los menores de 12 años deben estar acompañados en todo momento por un adulto responsable.
-
-Disfrutemos juntos de nuestras instalaciones de primer nivel.
-
-Atentamente,
-Administración General Las Palomas HOA`
   }
 ];
+
+const CATEGORY_LABELS: Record<CategoriaComunicado, string> = {
+  AVISO_GENERAL: 'Aviso General',
+  MANTENIMIENTO: 'Mantenimiento',
+  ASAMBLEA: 'Asamblea',
+  SEGURIDAD: 'Seguridad',
+  PAGOS_HOA: 'Pagos HOA',
+  EVENTO: 'Evento',
+  URGENTE: 'Urgente'
+};
 
 interface PlantillasManagerProps {
   onSelectPlantilla: (plantilla: PlantillaComunicado) => void;
@@ -285,7 +276,7 @@ export const PlantillasManager: React.FC<PlantillasManagerProps> = ({ onSelectPl
                   : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200'
               }`}
             >
-              {cat === 'TODAS' ? 'Todas' : cat.replace('_', ' ')}
+              {cat === 'TODAS' ? 'Todas' : CATEGORY_LABELS[cat as CategoriaComunicado] || cat}
             </button>
           ))}
         </div>
