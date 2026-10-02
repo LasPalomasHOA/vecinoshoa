@@ -26,6 +26,7 @@ export type TipoAccionBitacora =
   | 'CAMBIO_ESTATUS'
   | 'ACCESO_SISTEMA'
   | 'CONFIGURACIÓN'
+  | 'ENVÍO_COMUNICADO'
   | 'NOTA_SUPERVISOR';
 
 export type ModuloBitacora = 
@@ -35,6 +36,7 @@ export type ModuloBitacora =
   | 'Torres'
   | 'Solicitudes de Acceso'
   | 'Grupos de Cobro'
+  | 'Comunicados'
   | 'Autenticación'
   | 'Sistema';
 
@@ -195,3 +197,71 @@ export interface SolicitudAcceso {
   estatus: 'Aprobado' | 'Permanente';
   created_at: string;
 }
+
+// ==========================================
+// COMUNICADOS & ENVÍO MASIVO A PROPIETARIOS
+// ==========================================
+
+export type TipoSeleccionComunicado = 
+  | 'GENERAL' 
+  | 'TORRE' 
+  | 'PISO' 
+  | 'RANGO' 
+  | 'PERSONALIZADO';
+
+export type CategoriaComunicado = 
+  | 'AVISO_GENERAL' 
+  | 'MANTENIMIENTO' 
+  | 'ASAMBLEA' 
+  | 'SEGURIDAD' 
+  | 'PAGOS_HOA' 
+  | 'EVENTO'
+  | 'URGENTE';
+
+export interface DestinatarioCondominioInfo {
+  propiedad_id: number;
+  propiedad_nombre: string;
+  edificio_id: number;
+  edificio_nombre: string;
+  piso: number;
+}
+
+export interface DestinatarioComunicado {
+  usuario_id: number;
+  nombre: string;
+  apellido: string;
+  email: string;
+  telefono?: string;
+  rol: RolUsuario | string;
+  condominios: DestinatarioCondominioInfo[];
+  seleccionado: boolean;
+}
+
+export interface ComunicadoHistorial {
+  id: string;
+  fecha: string; // ISO string
+  asunto: string;
+  categoria: CategoriaComunicado;
+  criterio_seleccion: TipoSeleccionComunicado;
+  criterio_detalle: string;
+  total_destinatarios: number;
+  destinatarios: Array<{
+    usuario_id: number;
+    nombre: string;
+    email: string;
+    condominios_resumen: string;
+  }>;
+  contenido: string;
+  remitente_nombre: string;
+  remitente_email: string;
+  estado: 'Enviado' | 'Borrador' | 'Simulado';
+}
+
+export interface PlantillaComunicado {
+  id: string;
+  titulo: string;
+  categoria: CategoriaComunicado;
+  asunto: string;
+  cuerpo: string;
+}
+

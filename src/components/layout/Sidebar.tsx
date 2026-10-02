@@ -15,7 +15,8 @@ import {
   LayoutDashboard,
   KeyRound,
   ShieldCheck,
-  ClipboardList
+  ClipboardList,
+  Mail
 } from 'lucide-react';
 
 import logoImg from '../../assets/logoDashboard.png';
@@ -83,6 +84,11 @@ export const Sidebar: React.FC = () => {
       id: 'reports' as const,
       label: 'Reportes de Entradas',
       icon: FileSpreadsheet,
+    },
+    {
+      id: 'comunicados' as const,
+      label: 'Comunicados & Avisos',
+      icon: Mail,
     },
     {
       id: 'bitacora' as const,

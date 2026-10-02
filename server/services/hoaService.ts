@@ -781,38 +781,11 @@ export async function deleteSolicitud(id: number): Promise<{ success: boolean; i
 // 9. BITÁCORA DE AUDITORÍA & CAMBIOS EN GESTIÓN RESIDENCIAL (POSTGRESQL DB)
 // ==============================================================================
 
-let bitacoraTableInitialized = false;
-async function ensureBitacoraTable(): Promise<void> {
-  if (bitacoraTableInitialized) return;
-  try {
-    await query(`
-      CREATE TABLE IF NOT EXISTS ${T.bitacora()} (
-        id VARCHAR(60) PRIMARY KEY,
-        timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        usuario_nombre VARCHAR(100) NOT NULL,
-        usuario_email VARCHAR(100) NOT NULL,
-        usuario_rol VARCHAR(50) NOT NULL,
-        accion VARCHAR(50) NOT NULL,
-        modulo VARCHAR(100) NOT NULL,
-        descripcion TEXT NOT NULL,
-        entidad_nombre VARCHAR(150),
-        entidad_id INT,
-        detalles JSONB
-      );
-      CREATE INDEX IF NOT EXISTS idx_bitacora_timestamp ON ${T.bitacora()}(timestamp DESC);
-    `);
-    bitacoraTableInitialized = true;
-  } catch (err: any) {
-    console.warn('[Bitacora Init]', err.message);
-  }
-}
-
 export async function getAllBitacora(): Promise<any[]> {
   try {
-    await ensureBitacoraTable();
     const events: any[] = [];
 
-    // 1. Obtener eventos guardados permanentemente en la tabla de bitácora
+    // Obtener exclusivamente eventos reales guardados en la tabla de bitácora
     const dbLogs = await query<any>(`
       SELECT 
         id, 
@@ -828,7 +801,7 @@ export async function getAllBitacora(): Promise<any[]> {
         detalles
       FROM ${T.bitacora()}
       ORDER BY timestamp DESC
-      LIMIT 200;
+      LIMIT 300;
     `);
 
     for (const row of dbLogs.rows) {
@@ -838,168 +811,6 @@ export async function getAllBitacora(): Promise<any[]> {
         detalles: typeof row.detalles === 'string' ? JSON.parse(row.detalles) : (row.detalles || {})
       });
     }
-
-    const existingIds = new Set(events.map(e => e.id));
-
-    // 2. Eventos de Reservaciones en gestion_residencial (Check-in, Check-out, Creaciones)
-    const res = await query<any>(`
-      SELECT 
-        r.id,
-        r.codigo,
-        r.propiedad_id,
-        p.nombre AS propiedad_nombre,
-        COALESCE(h.nombres, 'Huésped Registrado') AS huesped_nombre,
-        r.tipo_huesped,
-        TO_CHAR(r.fecha_checkin, 'YYYY-MM-DD') AS fecha_checkin,
-        TO_CHAR(r.fecha_checkout, 'YYYY-MM-DD') AS fecha_checkout,
-        r.brazaletes,
-        r.vehiculo_info,
-        r.estado,
-        r.created_at,
-        r.updated_at
-      FROM ${T.reservaciones()} r
-      LEFT JOIN ${T.propiedades()} p ON r.propiedad_id = p.id
-      LEFT JOIN ${T.huespedes()} h ON r.huesped_id = h.id
-      ORDER BY COALESCE(r.updated_at, r.created_at) DESC
-      LIMIT 30;
-    `);
-
-    for (const r of res.rows) {
-      if (r.estado === 'En Casa (Checked-in)') {
-        const id = `BIT-RES-IN-${r.id}`;
-        if (!existingIds.has(id)) {
-          events.push({
-            id,
-            timestamp: new Date(r.updated_at || r.created_at).toISOString(),
-            usuario_nombre: 'Francisco Amado',
-            usuario_email: 'admin@laspalomas.com',
-            usuario_rol: 'Administrador',
-            accion: 'CHECK-IN',
-            modulo: 'Reservaciones',
-            descripcion: `Completó Check-In en "${r.propiedad_nombre || 'Condominio'}" para ${r.huesped_nombre}. Brazaletes: "${r.brazaletes || 'Asignados'}"${r.vehiculo_info ? `, Vehículo: "${r.vehiculo_info}"` : ''}.`,
-            entidad_nombre: `${r.propiedad_nombre || 'Unidad'} / ${r.codigo || `#${r.id}`}`,
-            entidad_id: r.id,
-            detalles: {
-              codigo: r.codigo,
-              estado: r.estado,
-              brazaletes: r.brazaletes,
-              vehiculo: r.vehiculo_info,
-              esquema: 'gestion_residencial.reservaciones'
-            }
-          });
-        }
-      } else if (r.estado === 'Checked-out') {
-        const id = `BIT-RES-OUT-${r.id}`;
-        if (!existingIds.has(id)) {
-          events.push({
-            id,
-            timestamp: new Date(r.updated_at || r.created_at).toISOString(),
-            usuario_nombre: 'Francisco Amado',
-            usuario_email: 'admin@laspalomas.com',
-            usuario_rol: 'Administrador',
-            accion: 'CHECK-OUT',
-            modulo: 'Reservaciones',
-            descripcion: `Procesó Check-Out y liberación de la unidad "${r.propiedad_nombre || 'Condominio'}" para reservación #${r.codigo || r.id}.`,
-            entidad_nombre: `${r.propiedad_nombre || 'Unidad'} / ${r.codigo || `#${r.id}`}`,
-            entidad_id: r.id,
-            detalles: {
-              codigo: r.codigo,
-              estado: r.estado,
-              esquema: 'gestion_residencial.reservaciones'
-            }
-          });
-        }
-      }
-
-      const createId = `BIT-RES-CRE-${r.id}`;
-      if (!existingIds.has(createId)) {
-        events.push({
-          id: createId,
-          timestamp: new Date(r.created_at).toISOString(),
-          usuario_nombre: 'Francisco Amado',
-          usuario_email: 'admin@laspalomas.com',
-          usuario_rol: 'Administrador',
-          accion: 'CREACIÓN',
-          modulo: 'Reservaciones',
-          descripcion: `Registró reservación #${r.codigo || r.id} en "${r.propiedad_nombre || 'Condominio'}" para ${r.huesped_nombre} (${r.fecha_checkin} al ${r.fecha_checkout}, tipo: ${r.tipo_huesped || 'General'}).`,
-          entidad_nombre: `${r.propiedad_nombre || 'Unidad'} / ${r.codigo || `#${r.id}`}`,
-          entidad_id: r.id,
-          detalles: {
-            codigo: r.codigo,
-            fechas: `${r.fecha_checkin} al ${r.fecha_checkout}`,
-            tipo_huesped: r.tipo_huesped,
-            esquema: 'gestion_residencial.reservaciones'
-          }
-        });
-      }
-    }
-
-    // 3. Propiedades en gestion_residencial
-    const props = await query<any>(`
-      SELECT p.id, p.nombre, p.estado, e.nombre AS torre_nombre, p.created_at, p.updated_at
-      FROM ${T.propiedades()} p
-      LEFT JOIN ${T.edificios()} e ON p.edificio_id = e.id
-      ORDER BY p.created_at DESC
-      LIMIT 20;
-    `);
-
-    for (const p of props.rows) {
-      const propId = `BIT-PROP-${p.id}`;
-      if (!existingIds.has(propId)) {
-        events.push({
-          id: propId,
-          timestamp: new Date(p.created_at).toISOString(),
-          usuario_nombre: 'Carlos Méndez',
-          usuario_email: 'supervisor@laspalomas.com',
-          usuario_rol: 'Supervisor',
-          accion: 'CREACIÓN',
-          modulo: 'Propiedades',
-          descripcion: `Registró el condominio "${p.nombre}" en ${p.torre_nombre || 'Torre HOA'}.`,
-          entidad_nombre: p.nombre,
-          entidad_id: p.id,
-          detalles: {
-            torre: p.torre_nombre,
-            estado: p.estado,
-            esquema: 'gestion_residencial.propiedades'
-          }
-        });
-      }
-    }
-
-    // 4. Usuarios en gestion_residencial
-    const users = await query<any>(`
-      SELECT id, nombre, apellido, email, rol, status, created_at
-      FROM ${T.usuarios()}
-      ORDER BY created_at DESC, id DESC
-      LIMIT 20;
-    `);
-
-    for (const u of users.rows) {
-      const usrId = `BIT-USR-${u.id}`;
-      if (!existingIds.has(usrId)) {
-        events.push({
-          id: usrId,
-          timestamp: new Date(u.created_at).toISOString(),
-          usuario_nombre: 'Francisco Amado',
-          usuario_email: 'admin@laspalomas.com',
-          usuario_rol: 'Administrador',
-          accion: 'CREACIÓN',
-          modulo: 'Usuarios',
-          descripcion: `Registró al usuario "${u.nombre} ${u.apellido}" con rol "${u.rol}" (${u.email}).`,
-          entidad_nombre: `${u.nombre} ${u.apellido}`,
-          entidad_id: u.id,
-          detalles: {
-            email: u.email,
-            rol: u.rol,
-            status: u.status,
-            esquema: 'gestion_residencial.usuarios'
-          }
-        });
-      }
-    }
-
-    // Ordenar cronológicamente por timestamp descendente
-    events.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
     return events;
   } catch (err: any) {
@@ -1018,15 +829,24 @@ export async function createBitacoraLog(entry: {
   modulo: string;
   descripcion: string;
   entidad_nombre?: string;
-  entidad_id?: number;
+  entidad_id?: number | string;
   detalles?: any;
 }): Promise<any> {
-  await ensureBitacoraTable();
   const id = entry.id || `BIT-${Date.now()}`;
   const timestamp = entry.timestamp || new Date().toISOString();
   const actor = entry.usuario_nombre || 'Francisco Amado';
   const email = entry.usuario_email || 'admin@laspalomas.com';
   const role = entry.usuario_rol || 'Administrador';
+
+  let entidadIdNum: number | null = null;
+  if (entry.entidad_id !== undefined && entry.entidad_id !== null) {
+    if (typeof entry.entidad_id === 'number') {
+      entidadIdNum = isNaN(entry.entidad_id) ? null : entry.entidad_id;
+    } else if (typeof entry.entidad_id === 'string') {
+      const parsed = parseInt(entry.entidad_id.replace(/\D/g, ''), 10);
+      entidadIdNum = isNaN(parsed) ? null : parsed;
+    }
+  }
 
   const res = await query(`
     INSERT INTO ${T.bitacora()} (
@@ -1059,8 +879,8 @@ export async function createBitacoraLog(entry: {
     entry.modulo,
     entry.descripcion,
     entry.entidad_nombre || null,
-    entry.entidad_id || null,
-    entry.detalles ? JSON.stringify(entry.detalles) : null
+    entidadIdNum,
+    entry.detalles ? (typeof entry.detalles === 'object' ? JSON.stringify(entry.detalles) : entry.detalles) : null
   ]);
 
   const row = res.rows[0];

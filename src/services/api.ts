@@ -182,7 +182,25 @@ export const bitacoraApi = {
   create: (data: any) => request<any>('/bitacora', { method: 'POST', body: JSON.stringify(data) }),
 };
 
-// 10. Base de Datos Status & Health Check
+// 10. Comunicados & Email Broadcast API
+export const comunicadosApi = {
+  send: (data: {
+    asunto: string;
+    categoria: string;
+    contenido: string;
+    destinatarios: Array<{
+      nombre: string;
+      email: string;
+      condominio?: string;
+      torre?: string;
+    }>;
+  }) => request<{ total: number; sent: number; failed: number; results: any[] }>('/comunicados', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+};
+
+// 11. Base de Datos Status & Health Check
 export const healthApi = {
   check: () => request<{
     connected: boolean;
@@ -206,5 +224,6 @@ export const api = {
   reservaciones: reservacionesApi,
   solicitudes: solicitudesApi,
   bitacora: bitacoraApi,
+  comunicados: comunicadosApi,
   health: healthApi,
 };

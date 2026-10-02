@@ -14,6 +14,7 @@ import { PropertiesView } from './components/properties/PropertiesView';
 import { UsersView } from './components/users/UsersView';
 import { RequestsView } from './components/requests/RequestsView';
 import { ReportsView } from './components/reports/ReportsView';
+import { ComunicadosView } from './components/comunicados/ComunicadosView';
 import { BitacoraView } from './components/bitacora/BitacoraView';
 
 // Modals
@@ -200,6 +201,10 @@ export const App: React.FC = () => {
 
           {activeTab === 'reports' && (
             <ReportsView />
+          )}
+
+          {activeTab === 'comunicados' && (
+            <ComunicadosView />
           )}
 
           {activeTab === 'bitacora' && (

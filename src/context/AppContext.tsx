@@ -10,13 +10,14 @@ import {
   SolicitudAcceso,
   Acompanante,
   AcompananteAmenidad,
-  BitacoraEntry
+  BitacoraEntry,
+  ComunicadoHistorial
 } from '../types';
 import { api } from '../services/api';
 import { compareCondoNames } from '../utils/sortUtils';
 import { useAuth } from './AuthContext';
 
-export type ActiveTab = 'inicio' | 'frontdesk' | 'calendar' | 'properties' | 'users' | 'requests' | 'reports' | 'bitacora';
+export type ActiveTab = 'inicio' | 'frontdesk' | 'calendar' | 'properties' | 'users' | 'requests' | 'reports' | 'comunicados' | 'bitacora';
 
 interface Toast {
   id: string;
@@ -42,6 +43,10 @@ interface AppContextType {
   huespedes: Huesped[];
   reservaciones: Reservacion[];
   solicitudes: SolicitudAcceso[];
+
+  // Comunicados / Mensajería Masiva
+  comunicados: ComunicadoHistorial[];
+  enviarComunicado: (comunicado: Omit<ComunicadoHistorial, 'id' | 'fecha'>) => Promise<void>;
 
   // Bitácora / Audit Log State
   bitacora: BitacoraEntry[];
@@ -108,104 +113,8 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-// Registros históricos iniciales por defecto para la Bitácora
-const DEFAULT_BITACORA_LOGS: BitacoraEntry[] = [
-  {
-    id: 'BIT-2026-008',
-    timestamp: new Date(Date.now() - 1000 * 60 * 18).toISOString(), // Hace 18 min
-    usuario_nombre: 'Francisco Amado',
-    usuario_email: 'admin@laspalomas.com',
-    usuario_rol: 'Administrador',
-    accion: 'CHECK-IN',
-    modulo: 'Reservaciones',
-    descripcion: 'Realizó Check-In y entrega de brazaletes para la reservación #RES-202601 en Diamante 101 a nombre de Alejandro Vázquez.',
-    entidad_id: 1,
-    entidad_nombre: 'Diamante 101 / RES-202601',
-    detalles: {
-      nuevo: { estado: 'En Casa (Checked-in)', brazaletes: 'Azul Diamante 101A-101D', vehiculo: 'GMC Sierra Blanca Sonora UBN-892' },
-      notas: 'Entrega de 4 brazaletes y marbete de estacionamiento caseta norte.',
-      dispositivo: 'Terminal Front Desk #1 (Windows / Edge)'
-    }
-  },
-  {
-    id: 'BIT-2026-007',
-    timestamp: new Date(Date.now() - 1000 * 60 * 55).toISOString(), // Hace 55 min
-    usuario_nombre: 'Carlos Méndez',
-    usuario_email: 'supervisor@laspalomas.com',
-    usuario_rol: 'Supervisor',
-    accion: 'CAMBIO_ESTATUS',
-    modulo: 'Solicitudes de Acceso',
-    descripcion: 'Aprobó solicitud de acceso #1 para Climas del Desierto (Reparación A/C en Diamante 101). Técnico autorizado: José Luis Beltrán.',
-    entidad_id: 1,
-    entidad_nombre: 'Solicitud #1 (Diamante 101)',
-    detalles: {
-      previo: { estatus: 'Pendiente' },
-      nuevo: { estatus: 'Aprobado', comentario: 'Técnico autorizado: José Luis Beltrán con identificación oficial INE.' },
-      dispositivo: 'Módulo Supervisor (Windows / Chrome)'
-    }
-  },
-  {
-    id: 'BIT-2026-006',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(), // Hace 3 horas
-    usuario_nombre: 'Carlos Méndez',
-    usuario_email: 'supervisor@laspalomas.com',
-    usuario_rol: 'Supervisor',
-    accion: 'EDICIÓN',
-    modulo: 'Propiedades',
-    descripcion: 'Actualizó información y notas administrativas en Cristales 701 (Penthouse).',
-    entidad_id: 4,
-    entidad_nombre: 'Cristales 701 (Penthouse)',
-    detalles: {
-      cambios: ['Actualización de notas de inspección'],
-      dispositivo: 'Módulo Supervisor (Windows / Chrome)'
-    }
-  },
-  {
-    id: 'BIT-2026-005',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(), // Hace 8 horas
-    usuario_nombre: 'Francisco Amado',
-    usuario_email: 'admin@laspalomas.com',
-    usuario_rol: 'Administrador',
-    accion: 'CREACIÓN',
-    modulo: 'Reservaciones',
-    descripcion: 'Registró nueva reservación #RES-202603 para huésped Daniela Fernández en Rubi 202 (25 al 29 Sep 2026).',
-    entidad_id: 3,
-    entidad_nombre: 'RES-202603 / Rubi 202',
-    detalles: {
-      nuevo: { codigo: 'RES-202603', huesped: 'Daniela Fernández', propiedad: 'Rubi 202', fechas: '2026-09-25 a 2026-09-29' },
-      dispositivo: 'Portal Administrativo'
-    }
-  },
-  {
-    id: 'BIT-2026-004',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // Ayer
-    usuario_nombre: 'Francisco Amado',
-    usuario_email: 'admin@laspalomas.com',
-    usuario_rol: 'Administrador',
-    accion: 'CREACIÓN',
-    modulo: 'Usuarios',
-    descripcion: 'Registró al nuevo propietario Carlos Mendoza (carlos.mendoza@laspalomas.com) en el sistema.',
-    entidad_id: 3,
-    entidad_nombre: 'Carlos Mendoza',
-    detalles: {
-      nuevo: { nombre: 'Carlos Mendoza', rol: 'Dueño', email: 'carlos.mendoza@laspalomas.com', status: 'Active' },
-      dispositivo: 'Portal Administrativo'
-    }
-  },
-  {
-    id: 'BIT-2026-003',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 30).toISOString(), // Ayer
-    usuario_nombre: 'Carlos Méndez',
-    usuario_email: 'supervisor@laspalomas.com',
-    usuario_rol: 'Supervisor',
-    accion: 'NOTA_SUPERVISOR',
-    modulo: 'Sistema',
-    descripcion: 'Auditoría física y conteo de brazaletes de seguridad temporada 2026 completado en caseta principal y recepción sin diferencias.',
-    detalles: {
-      notas: 'Auditoría de seguridad y brazaletes aprobada.'
-    }
-  }
-];
+// Registros iniciales vacíos para la Bitácora (se alimenta 100% de la tabla de base de datos)
+const DEFAULT_BITACORA_LOGS: BitacoraEntry[] = [];
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { currentUser } = useAuth();
@@ -243,13 +152,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [reservaciones, setReservaciones] = useState<Reservacion[]>([]);
   const [solicitudes, setSolicitudes] = useState<SolicitudAcceso[]>([]);
 
-  // Bitácora State
+  // Bitácora State (Exclusivamente alimentada por la BD)
   const [bitacora, setBitacora] = useState<BitacoraEntry[]>(() => {
     try {
       const saved = localStorage.getItem('lp_bitacora_logs');
-      return saved ? JSON.parse(saved) : DEFAULT_BITACORA_LOGS;
+      return saved ? JSON.parse(saved) : [];
     } catch {
-      return DEFAULT_BITACORA_LOGS;
+      return [];
+    }
+  });
+
+  // Comunicados / Mensajería Masiva State
+  const [comunicados, setComunicados] = useState<ComunicadoHistorial[]>(() => {
+    try {
+      const saved = localStorage.getItem('lp_comunicados_historial');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
     }
   });
 
@@ -332,6 +251,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast('Bitácora restablecida a eventos de auditoría base', 'info');
   }, []);
 
+  const enviarComunicado = useCallback(async (data: Omit<ComunicadoHistorial, 'id' | 'fecha'>) => {
+    const newComunicado: ComunicadoHistorial = {
+      ...data,
+      id: `COM-${Date.now().toString().slice(-6)}`,
+      fecha: new Date().toISOString()
+    };
+
+    setComunicados(prev => {
+      const updated = [newComunicado, ...prev];
+      try {
+        localStorage.setItem('lp_comunicados_historial', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    registrarEventoBitacora({
+      accion: 'ENVÍO_COMUNICADO',
+      modulo: 'Comunicados',
+      descripcion: `Emitió comunicado "${newComunicado.asunto}" (${newComunicado.categoria}) dirigido a ${newComunicado.total_destinatarios} propietarios (${newComunicado.criterio_detalle}).`,
+      entidad_nombre: newComunicado.asunto,
+      detalles: {
+        comunicado_id: newComunicado.id,
+        asunto: newComunicado.asunto,
+        categoria: newComunicado.categoria,
+        criterio: newComunicado.criterio_seleccion,
+        criterio_detalle: newComunicado.criterio_detalle,
+        total_destinatarios: newComunicado.total_destinatarios,
+        destinatarios_muestra: newComunicado.destinatarios.slice(0, 10).map(d => `${d.nombre} (${d.email})`),
+        estado: newComunicado.estado
+      }
+    });
+
+    showToast(`Comunicado registrado exitosamente (${newComunicado.total_destinatarios} destinatarios)`, 'success');
+  }, [registrarEventoBitacora]);
+
   // Toast notifications
   const showToast = useCallback((message: string, type: Toast['type'] = 'success') => {
     const id = Math.random().toString(36).substring(2, 9);
@@ -406,7 +360,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setReservaciones(reservacionesData);
       setSolicitudes(solicitudesData);
 
-      if (Array.isArray(bitacoraData) && bitacoraData.length > 0) {
+      if (Array.isArray(bitacoraData)) {
         const sortedBitacora = bitacoraData.slice().sort((a, b) => 
           new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
         );
@@ -1007,6 +961,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         huespedes,
         reservaciones,
         solicitudes,
+        comunicados,
+        enviarComunicado,
         bitacora,
         registrarEventoBitacora,
         agregarNotaBitacora,

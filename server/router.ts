@@ -1,5 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import * as hoaService from './services/hoaService.ts';
+import { sendBroadcastEmail } from './services/emailService.ts';
 
 export interface ApiRequest extends IncomingMessage {
   body?: any;
@@ -95,7 +96,8 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
     'reservaciones',
     'solicitudes',
     'solicitudes_acceso',
-    'bitacora'
+    'bitacora',
+    'comunicados'
   ];
 
   if (!validResources.includes(resource)) {
@@ -387,6 +389,18 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
         const body = await parseJsonBody(req);
         const created = await hoaService.createBitacoraLog(body);
         sendJson(res, 201, created);
+        return true;
+      }
+    }
+
+    // -------------------------------------------------------------
+    // 10. COMUNICADOS & EMAIL BROADCAST
+    // -------------------------------------------------------------
+    if (resource === 'comunicados') {
+      if (method === 'POST') {
+        const body = await parseJsonBody(req);
+        const result = await sendBroadcastEmail(body);
+        sendJson(res, 200, result);
         return true;
       }
     }

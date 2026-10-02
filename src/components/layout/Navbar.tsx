@@ -25,6 +25,7 @@ export const Navbar: React.FC = () => {
       case 'users': return 'Residentes & Personal';
       case 'requests': return 'Solicitudes de Acceso';
       case 'reports': return 'Reportes de Entradas';
+      case 'comunicados': return 'Comunicados & Avisos a Dueños';
       case 'bitacora': return 'Bitácora & Auditoría de Operaciones';
     }
   };
