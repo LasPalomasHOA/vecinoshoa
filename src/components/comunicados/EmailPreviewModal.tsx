@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Mail, X, Smartphone, Monitor, Copy, Check, Sparkles, Building, User } from 'lucide-react';
 import { DestinatarioComunicado, CategoriaComunicado } from '../../types';
 
@@ -26,6 +26,17 @@ export const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
   const [deviceView, setDeviceView] = useState<'desktop' | 'mobile'>('desktop');
   const [selectedRecipientIndex, setSelectedRecipientIndex] = useState(0);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 

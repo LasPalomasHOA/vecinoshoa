@@ -48,6 +48,17 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({
     }
   }, [currentReservation, isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen || !currentReservation) return null;
 
   const prop = getPropiedadById(currentReservation.propiedad_id);

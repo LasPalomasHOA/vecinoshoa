@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BitacoraEntry } from '../../types';
 import { 
   X, 
@@ -29,6 +29,17 @@ export const BitacoraDetailModal: React.FC<BitacoraDetailModalProps> = ({
   onClose,
   entry
 }) => {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen || !entry) return null;
 
   const getActionBadge = (accion: BitacoraEntry['accion']) => {

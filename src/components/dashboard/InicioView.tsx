@@ -44,6 +44,7 @@ export const InicioView: React.FC<InicioViewProps> = ({
     propiedades,
     edificios,
     solicitudes,
+    searchQuery,
     getPropiedadById,
     getHuespedById
   } = useApp();
@@ -166,18 +167,40 @@ export const InicioView: React.FC<InicioViewProps> = ({
 
   // Upcoming Check-ins and Check-outs
   const upcomingArrivals = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
     return [...reservaciones]
-      .filter(r => r.estado === 'Confirmada' || r.estado === 'Pendiente')
+      .filter(r => {
+        if (r.estado !== 'Confirmada' && r.estado !== 'Pendiente') return false;
+        if (!q) return true;
+        const prop = getPropiedadById(r.propiedad_id);
+        const huesped = getHuespedById(r.huesped_id);
+        return (
+          (prop?.nombre || '').toLowerCase().includes(q) ||
+          (huesped?.nombres || '').toLowerCase().includes(q) ||
+          (r.codigo || '').toLowerCase().includes(q)
+        );
+      })
       .sort((a, b) => (a.fecha_checkin || '').localeCompare(b.fecha_checkin || ''))
       .slice(0, 5);
-  }, [reservaciones]);
+  }, [reservaciones, searchQuery, getPropiedadById, getHuespedById]);
 
   const upcomingDepartures = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
     return [...reservaciones]
-      .filter(r => r.estado === 'En Casa (Checked-in)')
+      .filter(r => {
+        if (r.estado !== 'En Casa (Checked-in)') return false;
+        if (!q) return true;
+        const prop = getPropiedadById(r.propiedad_id);
+        const huesped = getHuespedById(r.huesped_id);
+        return (
+          (prop?.nombre || '').toLowerCase().includes(q) ||
+          (huesped?.nombres || '').toLowerCase().includes(q) ||
+          (r.codigo || '').toLowerCase().includes(q)
+        );
+      })
       .sort((a, b) => (a.fecha_checkout || '').localeCompare(b.fecha_checkout || ''))
       .slice(0, 5);
-  }, [reservaciones]);
+  }, [reservaciones, searchQuery, getPropiedadById, getHuespedById]);
 
   // Today formatted
   const todayFormatted = new Intl.DateTimeFormat('es-MX', {
@@ -217,7 +240,7 @@ export const InicioView: React.FC<InicioViewProps> = ({
               </span>
               <span className="inline-flex items-center gap-1.5 text-xs font-black px-3 py-1 rounded-full bg-emerald-600/95 backdrop-blur-md text-white shadow-xs">
                 <span className="w-2 h-2 rounded-full bg-emerald-200 animate-pulse" />
-                Operaciones HOA 2026
+                Operaciones HOA {currentYear}
               </span>
               <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-800 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full border border-white/80 shadow-xs capitalize hidden sm:inline-flex">
                 <Calendar className="w-3.5 h-3.5 text-slate-500" /> {todayFormatted}

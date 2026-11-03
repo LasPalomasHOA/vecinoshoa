@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bookmark, Sparkles, Plus, Trash2, Search, ArrowRight, X } from 'lucide-react';
 import { PlantillaComunicado, CategoriaComunicado } from '../../types';
+import { useApp } from '../../context/AppContext';
 
 export const DEFAULT_PLANTILLAS: PlantillaComunicado[] = [
   {
@@ -137,6 +138,7 @@ interface PlantillasManagerProps {
 }
 
 export const PlantillasManager: React.FC<PlantillasManagerProps> = ({ onSelectPlantilla }) => {
+  const { searchQuery } = useApp();
   const [plantillas, setPlantillas] = useState<PlantillaComunicado[]>(() => {
     const saved = localStorage.getItem('lp_custom_plantillas');
     if (saved) {
@@ -153,6 +155,17 @@ export const PlantillasManager: React.FC<PlantillasManagerProps> = ({ onSelectPl
   const [selectedCategory, setSelectedCategory] = useState<string>('TODAS');
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreatingModal, setIsCreatingModal] = useState(false);
+
+  useEffect(() => {
+    if (!isCreatingModal) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsCreatingModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isCreatingModal]);
 
   // New Template Form
   const [nuevoTitulo, setNuevoTitulo] = useState('');
@@ -213,12 +226,15 @@ export const PlantillasManager: React.FC<PlantillasManagerProps> = ({ onSelectPl
     }
   };
 
+  const activeSearch = (searchTerm || searchQuery).trim();
+
   const filteredPlantillas = plantillas.filter(p => {
     const matchCat = selectedCategory === 'TODAS' || p.categoria === selectedCategory;
-    const matchSearch = !searchTerm.trim() || 
-      p.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.asunto.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.cuerpo.toLowerCase().includes(searchTerm.toLowerCase());
+    const q = activeSearch.toLowerCase();
+    const matchSearch = !q || 
+      p.titulo.toLowerCase().includes(q) ||
+      p.asunto.toLowerCase().includes(q) ||
+      p.cuerpo.toLowerCase().includes(q);
     return matchCat && matchSearch;
   });
 

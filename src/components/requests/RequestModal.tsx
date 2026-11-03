@@ -9,15 +9,31 @@ interface RequestModalProps {
   solicitudToEdit?: SolicitudAcceso | null;
 }
 
+const getLocalTodayStr = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 export const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose, solicitudToEdit }) => {
   const { propiedades, addSolicitud, updateSolicitud } = useApp();
 
   const [propiedadId, setPropiedadId] = useState<number>(propiedades[0]?.id || 0);
   const [creadorNombre, setCreadorNombre] = useState('');
   const [solicitud, setSolicitud] = useState('');
-  const [fechaEsperada, setFechaEsperada] = useState('2026-09-24');
+  const [fechaEsperada, setFechaEsperada] = useState(() => getLocalTodayStr());
   const [comentario, setComentario] = useState('');
   const [estatus, setEstatus] = useState<SolicitudAcceso['estatus']>('Aprobado');
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   useEffect(() => {
     if (isOpen) {
@@ -25,7 +41,7 @@ export const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose, sol
         setPropiedadId(solicitudToEdit.propiedad_id);
         setCreadorNombre(solicitudToEdit.creador_nombre || '');
         setSolicitud(solicitudToEdit.solicitud || '');
-        setFechaEsperada(solicitudToEdit.fecha_esperada || new Date().toISOString().split('T')[0]);
+        setFechaEsperada(solicitudToEdit.fecha_esperada || getLocalTodayStr());
         setComentario(solicitudToEdit.comentario || '');
         setEstatus(solicitudToEdit.estatus === 'Permanente' ? 'Permanente' : 'Aprobado');
       } else {
@@ -37,7 +53,7 @@ export const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose, sol
         }
         setCreadorNombre('');
         setSolicitud('');
-        setFechaEsperada(new Date().toISOString().split('T')[0]);
+        setFechaEsperada(getLocalTodayStr());
         setComentario('');
         setEstatus('Aprobado');
       }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Copy, Check, Printer, RotateCcw } from 'lucide-react';
 import { ComunicadoHistorial, CategoriaComunicado } from '../../types';
 
@@ -25,6 +25,17 @@ export const ComunicadoDetailModal: React.FC<ComunicadoDetailModalProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
   const [searchRecipient, setSearchRecipient] = useState('');
+
+  useEffect(() => {
+    if (!comunicado) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [comunicado, onClose]);
 
   if (!comunicado) return null;
 

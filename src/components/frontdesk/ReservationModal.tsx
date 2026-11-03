@@ -27,6 +27,12 @@ interface ReservationModalProps {
   } | null;
 }
 
+const getLocalDateStr = (daysOffset = 0) => {
+  const d = new Date();
+  d.setDate(d.getDate() + daysOffset);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 export const ReservationModal: React.FC<ReservationModalProps> = ({
   isOpen,
   onClose,
@@ -47,8 +53,8 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
 
   const [codigo, setCodigo] = useState('');
   const [tipoHuesped, setTipoHuesped] = useState<TipoHuesped>('Huésped sin Cobro (NPG)');
-  const [fechaCheckin, setFechaCheckin] = useState('2026-09-23');
-  const [fechaCheckout, setFechaCheckout] = useState('2026-09-26');
+  const [fechaCheckin, setFechaCheckin] = useState(() => getLocalDateStr(0));
+  const [fechaCheckout, setFechaCheckout] = useState(() => getLocalDateStr(3));
   const [numeroOcupantes, setNumeroOcupantes] = useState<number>(1);
   const [numeroAutos, setNumeroAutos] = useState<number>(1);
   const [brazaletes, setBrazaletes] = useState('');
@@ -104,7 +110,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
       setCodigo(`RES-${Math.floor(100000 + Math.random() * 900000)}`);
       setTipoHuesped('Huésped sin Cobro (NPG)');
       
-      const inDate = (typeof initialData?.fechaCheckin === 'string' && initialData.fechaCheckin) || '2026-09-23';
+      const inDate = (typeof initialData?.fechaCheckin === 'string' && initialData.fechaCheckin) || getLocalDateStr(0);
       let outDate = typeof initialData?.fechaCheckout === 'string' ? initialData.fechaCheckout : undefined;
       if (!outDate) {
         try {
@@ -112,7 +118,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
           d.setDate(d.getDate() + 3);
           outDate = d.toISOString().split('T')[0];
         } catch {
-          outDate = '2026-09-26';
+          outDate = getLocalDateStr(3);
         }
       }
       setFechaCheckin(inDate);
@@ -129,6 +135,17 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
       setAcompanantesAmenidades([]);
     }
   }, [reservationToEdit, isOpen, initialData, propiedades, getHuespedById]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   const nightsCount = useMemo(() => {
     if (!fechaCheckin || !fechaCheckout) return 0;

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 import { DestinatarioComunicado, TipoSeleccionComunicado, CategoriaComunicado } from '../../types';
 
@@ -31,6 +31,17 @@ export const ConfirmSendModal: React.FC<ConfirmSendModalProps> = ({
   remitenteNombre,
   remitenteEmail
 }) => {
+  useEffect(() => {
+    if (!isOpen || isSending) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, isSending, onClose]);
+
   if (!isOpen) return null;
 
   return (

@@ -31,6 +31,7 @@ export const ComunicadosView: React.FC = () => {
     propiedadUsuarios,
     edificios,
     comunicados,
+    searchQuery,
     enviarComunicado
   } = useApp();
 
@@ -449,7 +450,7 @@ Las Palomas Seaside Golf Community`
               setManualSelectedUserIds={setManualSelectedUserIds}
               todosDestinatarios={todosDestinatarios}
               destinatariosCalculados={destinatariosCalculados}
-              recipientSearch={recipientSearch}
+              recipientSearch={recipientSearch || searchQuery}
               setRecipientSearch={setRecipientSearch}
               edificios={edificios}
               propiedades={propiedades}

@@ -339,13 +339,22 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
     reservaciones, 
     edificios, 
     huespedes,
+    searchQuery,
     getEdificioById,
     checkReservationOverlap
   } = useApp();
 
+  // Real current date values
+  const now = new Date();
+  const todayYear = now.getFullYear();
+  const todayMonth = now.getMonth();
+  const todayDay = now.getDate();
+  const todayDateStr = `${todayYear}-${String(todayMonth + 1).padStart(2, '0')}-${String(todayDay).padStart(2, '0')}`;
+  const todayShortLabel = `${todayDay} ${MONTH_NAMES[todayMonth].slice(0, 3)}`;
+
   // Range and View Mode State
-  const [currentYear, setCurrentYear] = useState(2026);
-  const [currentMonth, setCurrentMonth] = useState(8); // September (0-indexed: 8 = Sept)
+  const [currentYear, setCurrentYear] = useState(todayYear);
+  const [currentMonth, setCurrentMonth] = useState(todayMonth);
   const [viewMode, setViewMode] = useState<'3months' | '1month'>('3months'); // Default 3 months
   const [dayColWidth, setDayColWidth] = useState<number>(40); // 32 (Compacto), 40 (Normal), or 52 (Amplio) px
   
@@ -415,7 +424,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
           dayOfWeek: dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1, 3),
           dateStr,
           isWeekend,
-          isToday: dateStr === '2026-09-23',
+          isToday: dateStr === todayDateStr,
           monthIndex: mIdx,
           monthName: MONTH_NAMES[mIdx],
           year: yr,
@@ -517,9 +526,9 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
 
   // Quick Scroll to Today
   const handleScrollToToday = () => {
-    if (viewMode === '1month' && currentMonth !== 8) {
-      setCurrentMonth(8);
-      setCurrentYear(2026);
+    if (viewMode === '1month' && (currentMonth !== todayMonth || currentYear !== todayYear)) {
+      setCurrentMonth(todayMonth);
+      setCurrentYear(todayYear);
     }
     setTimeout(() => {
       if (tableScrollRef.current) {
@@ -592,14 +601,15 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
   };
 
   const handleToday = () => {
-    setCurrentYear(2026);
-    setCurrentMonth(8);
+    setCurrentYear(todayYear);
+    setCurrentMonth(todayMonth);
     handleScrollToToday();
   };
 
   // Filtered properties (Sorted naturally: A-101 before A-1001, A then B then C)
   const filteredProperties = useMemo(() => {
-    const searchRange = parseCondoRangeString(localSearch);
+    const activeSearch = (localSearch || searchQuery).trim();
+    const searchRange = parseCondoRangeString(activeSearch);
     const effectiveFrom = rangeFrom || searchRange?.from || '';
     const effectiveTo = rangeTo || searchRange?.to || '';
 
@@ -608,8 +618,8 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
         if (selectedEdificioId !== 'ALL' && prop.edificio_id !== parseInt(selectedEdificioId)) {
           return false;
         }
-        if (localSearch && !searchRange) {
-          const q = localSearch.toLowerCase();
+        if (activeSearch && !searchRange) {
+          const q = activeSearch.toLowerCase();
           const matchProp = prop.nombre.toLowerCase().includes(q);
           const ed = edificioMap.get(prop.edificio_id);
           const matchEd = ed?.nombre.toLowerCase().includes(q);
@@ -623,7 +633,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
         return true;
       })
       .sort((a, b) => compareCondoNames(a.nombre, b.nombre));
-  }, [propiedades, selectedEdificioId, localSearch, rangeFrom, rangeTo, edificioMap]);
+  }, [propiedades, selectedEdificioId, localSearch, searchQuery, rangeFrom, rangeTo, edificioMap]);
 
   // All condo names for datalist / autocompletion
   const allCondoOptions = useMemo(() => {
@@ -678,7 +688,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
       if (res.estado === 'Pendiente') counts.pendiente++;
       if (res.estado === 'En Casa (Checked-in)') counts.checkedIn++;
 
-      if (res.fecha_checkin === '2026-09-23') {
+      if (res.fecha_checkin === todayDateStr) {
         checkInsToday++;
       }
 
@@ -848,7 +858,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
 
         <div className="p-3.5 rounded-xl glass-card flex items-center justify-between">
           <div>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Llegadas Hoy (23 Sep)</p>
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Llegadas Hoy ({todayShortLabel})</p>
             <div className="mt-0.5 flex items-baseline gap-1.5">
               <span className="text-xl font-black text-amber-700">{rangeStats.checkInsToday}</span>
               <span className="text-[11px] text-amber-600 font-semibold">check-ins</span>
@@ -930,12 +940,12 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
           <button
             onClick={handleToday}
             className={`h-9 px-3.5 rounded-lg font-bold text-xs border transition-colors duration-150 cursor-pointer flex items-center gap-1.5 ${
-              currentMonth === 8 && currentYear === 2026
+              currentMonth === todayMonth && currentYear === todayYear
                 ? 'bg-teal-600 text-white border-teal-600 shadow-xs'
                 : 'bg-teal-50 hover:bg-teal-100 text-teal-800 border-teal-200'
             }`}
           >
-            <span>Hoy (23 Sep)</span>
+            <span>Hoy ({todayShortLabel})</span>
           </button>
 
           {/* View Mode Toggle (1 Month vs 3 Months) */}

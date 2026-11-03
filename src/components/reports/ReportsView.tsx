@@ -17,12 +17,20 @@ export const ReportsView: React.FC = () => {
   const { 
     reservaciones, 
     edificios, 
+    searchQuery,
     getPropiedadById, 
     getHuespedById 
   } = useApp();
 
-  const [startDate, setStartDate] = useState('2026-09-01');
-  const [endDate, setEndDate] = useState('2026-09-30');
+  const [startDate, setStartDate] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+  });
+  const [endDate, setEndDate] = useState(() => {
+    const now = new Date();
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+  });
   const [edificioFilter, setEdificioFilter] = useState('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const [tipoFilter, setTipoFilter] = useState('ALL');
@@ -83,8 +91,9 @@ export const ReportsView: React.FC = () => {
         if (formatTipo(res.tipo_huesped) !== tipoFilter) return false;
       }
       // Search term
-      if (searchTerm) {
-        const q = searchTerm.toLowerCase();
+      const activeSearch = (searchTerm || searchQuery).trim();
+      if (activeSearch) {
+        const q = activeSearch.toLowerCase();
         const prop = getPropiedadById(res.propiedad_id);
         const huesped = getHuespedById(res.huesped_id);
         const matchCode = `${res.codigo || res.id}`.toLowerCase().includes(q);
@@ -95,7 +104,7 @@ export const ReportsView: React.FC = () => {
       }
       return true;
     }).sort((a, b) => a.fecha_checkin.localeCompare(b.fecha_checkin));
-  }, [reservaciones, startDate, endDate, edificioFilter, tipoFilter, searchTerm, getPropiedadById, getHuespedById]);
+  }, [reservaciones, startDate, endDate, edificioFilter, tipoFilter, searchTerm, searchQuery, getPropiedadById, getHuespedById]);
 
   // Statistics for KPIs
   const totalOccupants = useMemo(() => {

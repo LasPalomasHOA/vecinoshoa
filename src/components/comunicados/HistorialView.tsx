@@ -10,6 +10,7 @@ import {
   Layers
 } from 'lucide-react';
 import { ComunicadoHistorial, CategoriaComunicado } from '../../types';
+import { useApp } from '../../context/AppContext';
 
 interface HistorialViewProps {
   comunicados: ComunicadoHistorial[];
@@ -34,16 +35,19 @@ export const HistorialView: React.FC<HistorialViewProps> = ({
   onReuse,
   onNewBroadcast
 }) => {
+  const { searchQuery } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('TODAS');
   const [selectedStatus, setSelectedStatus] = useState<string>('TODOS');
+
+  const activeSearch = (searchTerm || searchQuery).trim();
 
   const filteredComunicados = useMemo(() => {
     return comunicados.filter(com => {
       const matchCat = selectedCategory === 'TODAS' || com.categoria === selectedCategory;
       const matchStatus = selectedStatus === 'TODOS' || com.estado === selectedStatus;
       
-      const q = searchTerm.toLowerCase().trim();
+      const q = activeSearch.toLowerCase();
       const matchSearch = !q ||
         com.asunto.toLowerCase().includes(q) ||
         com.criterio_detalle.toLowerCase().includes(q) ||
@@ -52,7 +56,7 @@ export const HistorialView: React.FC<HistorialViewProps> = ({
 
       return matchCat && matchStatus && matchSearch;
     });
-  }, [comunicados, selectedCategory, selectedStatus, searchTerm]);
+  }, [comunicados, selectedCategory, selectedStatus, activeSearch]);
 
   const totalEnviados = comunicados.filter(c => c.estado === 'Enviado').length;
   const totalSimulados = comunicados.filter(c => c.estado === 'Simulado').length;

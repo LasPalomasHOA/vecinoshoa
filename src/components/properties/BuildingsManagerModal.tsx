@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Edificio } from '../../types';
 import { DeleteConfirmModal } from '../common/DeleteConfirmModal';
@@ -17,6 +17,17 @@ export const BuildingsManagerModal: React.FC<BuildingsManagerModalProps> = ({
   const [newNombre, setNewNombre] = useState('');
   const [buildingToDelete, setBuildingToDelete] = useState<Edificio | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen || isDeleteModalOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, isDeleteModalOpen, onClose]);
 
   if (!isOpen) return null;
 

@@ -5,17 +5,14 @@ import {
   Building2,
   Calendar as CalendarIcon,
   Users,
-  Home,
   FileSpreadsheet,
   FileCheck,
-  RotateCcw,
   LogOut,
   ChevronLeft,
   ChevronRight,
   LayoutDashboard,
   KeyRound,
   ShieldCheck,
-  ClipboardList,
   Mail
 } from 'lucide-react';
 
@@ -30,7 +27,6 @@ export const Sidebar: React.FC = () => {
     solicitudes,
     propiedades,
     bitacora,
-    resetToDefaults,
     isSidebarCollapsed,
     toggleSidebar
   } = useApp();
@@ -160,7 +156,7 @@ export const Sidebar: React.FC = () => {
           </div>
           <div className="min-w-0">
             <p className="text-xs font-bold text-teal-950 truncate">Puerto Peñasco, SON</p>
-            <p className="text-[10px] text-teal-700 font-semibold">Temporada Activa 2026</p>
+            <p className="text-[10px] text-teal-700 font-semibold">Temporada Activa {new Date().getFullYear()}</p>
           </div>
         </div>
       ) : (
@@ -178,7 +174,7 @@ export const Sidebar: React.FC = () => {
             <div className="relative px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs whitespace-nowrap shadow-2xl border border-slate-700/80">
               <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 rotate-45 border-l border-b border-slate-700/80" />
               <p className="font-bold text-white">Las Palomas Resort</p>
-              <p className="text-[10px] text-teal-300 font-semibold">Puerto Peñasco • 2026</p>
+              <p className="text-[10px] text-teal-300 font-semibold">Puerto Peñasco • {new Date().getFullYear()}</p>
             </div>
           </div>
         </div>
@@ -290,13 +286,6 @@ export const Sidebar: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-1 shrink-0">
-              <button
-                onClick={resetToDefaults}
-                title="Restablecer catálogo demo oficial"
-                className="p-1.5 rounded-lg text-slate-400 hover:text-teal-700 hover:bg-teal-50 transition-colors cursor-pointer"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-              </button>
               <button
                 onClick={logout}
                 title="Cerrar sesión"
