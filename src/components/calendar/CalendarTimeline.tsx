@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback, memo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Reservacion, Propiedad, Huesped, Edificio } from '../../types';
-import { compareCondoNames } from '../../utils/sortUtils';
+import { compareCondoNames, isCondoInRange, parseCondoRangeString } from '../../utils/sortUtils';
 import { CalendarLegend } from './CalendarLegend';
 import { 
   ChevronLeft, 
@@ -17,7 +17,10 @@ import {
   Clock, 
   CheckCircle2, 
   AlertCircle,
-  Layers
+  Layers,
+  SlidersHorizontal,
+  ArrowRight,
+  X
 } from 'lucide-react';
 
 interface CalendarTimelineProps {
@@ -348,6 +351,8 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
   
   const [selectedEdificioId, setSelectedEdificioId] = useState<string>('ALL');
   const [localSearch, setLocalSearch] = useState<string>('');
+  const [rangeFrom, setRangeFrom] = useState<string>('');
+  const [rangeTo, setRangeTo] = useState<string>('');
 
   // Interactive 2-day selection state
   const [selection, setSelection] = useState<SelectionState | null>(null);
@@ -594,22 +599,40 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
 
   // Filtered properties (Sorted naturally: A-101 before A-1001, A then B then C)
   const filteredProperties = useMemo(() => {
+    const searchRange = parseCondoRangeString(localSearch);
+    const effectiveFrom = rangeFrom || searchRange?.from || '';
+    const effectiveTo = rangeTo || searchRange?.to || '';
+
     return propiedades
       .filter(prop => {
         if (selectedEdificioId !== 'ALL' && prop.edificio_id !== parseInt(selectedEdificioId)) {
           return false;
         }
-        if (localSearch) {
+        if (localSearch && !searchRange) {
           const q = localSearch.toLowerCase();
           const matchProp = prop.nombre.toLowerCase().includes(q);
           const ed = edificioMap.get(prop.edificio_id);
           const matchEd = ed?.nombre.toLowerCase().includes(q);
           if (!matchProp && !matchEd) return false;
         }
+        if (effectiveFrom || effectiveTo) {
+          if (!isCondoInRange(prop.nombre, effectiveFrom, effectiveTo)) {
+            return false;
+          }
+        }
         return true;
       })
       .sort((a, b) => compareCondoNames(a.nombre, b.nombre));
-  }, [propiedades, selectedEdificioId, localSearch, edificioMap]);
+  }, [propiedades, selectedEdificioId, localSearch, rangeFrom, rangeTo, edificioMap]);
+
+  // All condo names for datalist / autocompletion
+  const allCondoOptions = useMemo(() => {
+    const relevant = selectedEdificioId === 'ALL'
+      ? propiedades
+      : propiedades.filter(p => p.edificio_id === parseInt(selectedEdificioId));
+    const unique = Array.from(new Set(relevant.map(p => p.nombre.trim()))).filter(Boolean);
+    return unique.sort(compareCondoNames);
+  }, [propiedades, selectedEdificioId]);
 
   // Statistics for the visible range (3 months or 1 month)
   const rangeStats = useMemo(() => {
@@ -989,12 +1012,113 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
 
       </div>
 
-      {/* Legend with interactive counters & Compacto / Normal / Amplio Density Selector */}
-      <CalendarLegend 
-        counts={rangeStats.counts} 
-        dayColWidth={dayColWidth}
-        onDayColWidthChange={setDayColWidth}
-      />
+      {/* Condo Range Filter Bar (Replaces former position of legend) */}
+      <div className="flex flex-wrap items-center justify-between gap-3 py-2.5 px-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs text-xs">
+        {/* Left Side: Inputs and active indicator */}
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal className="w-4 h-4 text-teal-700 shrink-0" />
+            <span className="font-extrabold text-slate-800 text-[11px] sm:text-xs uppercase tracking-wide">
+              Rango de Condos:
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg p-1">
+            <label className="text-[11px] font-bold text-slate-500 pl-1.5">Desde:</label>
+            <input
+              type="text"
+              list="condos-desde-list"
+              value={rangeFrom}
+              onChange={(e) => setRangeFrom(e.target.value.toUpperCase())}
+              placeholder="ej. A-101"
+              className="h-7 w-20 sm:w-24 px-2 text-xs font-bold text-slate-900 bg-white border border-slate-200 rounded-md focus:border-teal-500 focus:outline-none uppercase"
+            />
+            <datalist id="condos-desde-list">
+              {allCondoOptions.map((name) => (
+                <option key={`desde-${name}`} value={name} />
+              ))}
+            </datalist>
+
+            <ArrowRight className="w-3.5 h-3.5 text-slate-400 mx-0.5 shrink-0" />
+
+            <label className="text-[11px] font-bold text-slate-500">Hasta:</label>
+            <input
+              type="text"
+              list="condos-hasta-list"
+              value={rangeTo}
+              onChange={(e) => setRangeTo(e.target.value.toUpperCase())}
+              placeholder="ej. A-108"
+              className="h-7 w-20 sm:w-24 px-2 text-xs font-bold text-slate-900 bg-white border border-slate-200 rounded-md focus:border-teal-500 focus:outline-none uppercase"
+            />
+            <datalist id="condos-hasta-list">
+              {allCondoOptions.map((name) => (
+                <option key={`hasta-${name}`} value={name} />
+              ))}
+            </datalist>
+
+            {(rangeFrom || rangeTo) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setRangeFrom('');
+                  setRangeTo('');
+                }}
+                title="Limpiar filtro de rango"
+                className="ml-1 px-2 py-0.5 text-[11px] font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-md transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <X className="w-3 h-3" />
+                <span>Limpiar</span>
+              </button>
+            )}
+          </div>
+
+          {(rangeFrom || rangeTo) && (
+            <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-teal-50 text-teal-800 border border-teal-200">
+              {filteredProperties.length} {filteredProperties.length === 1 ? 'condo visible' : 'condos visibles'}
+            </span>
+          )}
+        </div>
+
+        {/* Density / Day Width Selector (Compacto | Normal | Amplio) */}
+        <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+          <button
+            type="button"
+            onClick={() => setDayColWidth(32)}
+            title="Vista compacta (más días visibles)"
+            className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+              dayColWidth === 32
+                ? 'bg-white text-teal-800 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Compacto
+          </button>
+          <button
+            type="button"
+            onClick={() => setDayColWidth(40)}
+            title="Vista normal"
+            className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+              dayColWidth === 40
+                ? 'bg-white text-teal-800 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Normal
+          </button>
+          <button
+            type="button"
+            onClick={() => setDayColWidth(52)}
+            title="Vista amplia"
+            className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+              dayColWidth === 52
+                ? 'bg-white text-teal-800 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Amplio
+          </button>
+        </div>
+      </div>
 
       {/* TIMELINE CONTAINER WITH DEDICATED TOP SCROLLBAR */}
       <div className="rounded-xl glass-panel overflow-hidden border border-slate-200/90 shadow-sm">
@@ -1162,6 +1286,11 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Legend with interactive counters & status colors (Positioned below the calendar) */}
+      <CalendarLegend 
+        counts={rangeStats.counts} 
+      />
 
       {/* Floating Glass Ribbon when date selection is in progress */}
       {selection && selectionPreview && (
