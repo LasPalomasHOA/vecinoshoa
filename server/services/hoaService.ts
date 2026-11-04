@@ -263,7 +263,20 @@ export async function deleteUsuario(id: number): Promise<{ success: boolean; id:
 // ==============================================================================
 // 4. PROPIEDADES (CONDOMINIOS)
 // ==============================================================================
-export async function getAllPropiedades(): Promise<Propiedad[]> {
+export async function getAllPropiedades(lean = false): Promise<Propiedad[]> {
+  if (lean) {
+    const res = await query<any>(`
+      SELECT 
+        p.id, p.nombre, p.edificio_id, p.grupo_id, p.piso, p.area, p.tipo_cuarto, 
+        p.dormitorios, CAST(p.banos AS FLOAT) as banos, p.capacidad_personas, p.max_carros, 
+        p.id_impuesto, p.medidor_agua, p.medidor_electricidad, p.empresa_manejadora, 
+        p.estado, p.copropietarios, p.notas
+      FROM ${T.propiedades()} p
+      ORDER BY p.nombre ASC;
+    `);
+    return res.rows;
+  }
+
   const res = await query<any>(`
     SELECT 
       p.id, p.nombre, p.edificio_id, p.grupo_id, p.piso, p.area, p.tipo_cuarto, 
@@ -450,9 +463,15 @@ export async function deletePropiedadUsuario(id: number): Promise<{ success: boo
 
 export async function getAllHuespedes(): Promise<Huesped[]> {
   const res = await query<Huesped>(`
-    SELECT id, nombres, created_at, updated_at
+    SELECT id, nombres
     FROM ${T.huespedes()}
-    ORDER BY nombres ASC;
+    WHERE id IN (
+      SELECT huesped_id
+      FROM ${T.reservaciones()}
+      ORDER BY fecha_checkin DESC, id DESC
+      LIMIT 250
+    )
+    ORDER BY id DESC;
   `);
   return res.rows;
 }
@@ -508,21 +527,25 @@ export async function checkReservationOverlap(
   checkout: string,
   excludeId?: number
 ): Promise<Reservacion | null> {
+  const params: any[] = [propiedadId, checkin, checkout];
+  let excludeClause = '';
+  if (excludeId) {
+    params.push(excludeId);
+    excludeClause = `AND id != $4`;
+  }
   const queryText = `
-    SELECT id, codigo, propiedad_id, huesped_id, tipo_huesped, 
+    SELECT id, codigo, propiedad_id, huesped_id,
            TO_CHAR(fecha_checkin, 'YYYY-MM-DD') AS fecha_checkin, 
-           TO_CHAR(fecha_checkout, 'YYYY-MM-DD') AS fecha_checkout, 
-           numero_ocupantes, numero_autos, notas, brazaletes, vehiculo_info, 
-           estado, created_at, updated_at
+           TO_CHAR(fecha_checkout, 'YYYY-MM-DD') AS fecha_checkout
     FROM ${T.reservaciones()}
     WHERE propiedad_id = $1
       AND estado NOT IN ('Cancelada', 'Checked-out')
       AND fecha_checkin < $3::date 
       AND fecha_checkout > $2::date
-      ${excludeId ? `AND id != ${excludeId}` : ''}
+      ${excludeClause}
     LIMIT 1;
   `;
-  return queryOne<Reservacion>(queryText, [propiedadId, checkin, checkout]);
+  return queryOne<Reservacion>(queryText, params);
 }
 
 export async function getAllReservaciones(): Promise<Reservacion[]> {
@@ -614,19 +637,35 @@ export async function createReservacion(
   return res.rows[0];
 }
 
-export async function updateReservacion(id: number, data: Partial<Reservacion>): Promise<Reservacion | null> {
-  const current = await getReservacionById(id);
-  if (!current) throw new Error(`Reservación con ID ${id} no encontrada`);
+export async function updateReservacion(
+  id: number,
+  data: Partial<Reservacion>,
+  huespedData?: Partial<Huesped>
+): Promise<Reservacion | null> {
+  if (data.propiedad_id !== undefined || data.fecha_checkin !== undefined || data.fecha_checkout !== undefined) {
+    const current = await queryOne<{ propiedad_id: number; huesped_id: number; fecha_checkin: string; fecha_checkout: string }>(`
+      SELECT propiedad_id, huesped_id,
+             TO_CHAR(fecha_checkin, 'YYYY-MM-DD') AS fecha_checkin,
+             TO_CHAR(fecha_checkout, 'YYYY-MM-DD') AS fecha_checkout
+      FROM ${T.reservaciones()}
+      WHERE id = $1;
+    `, [id]);
+    if (!current) throw new Error(`Reservación con ID ${id} no encontrada`);
 
-  const propId = data.propiedad_id !== undefined ? data.propiedad_id : current.propiedad_id;
-  const checkin = data.fecha_checkin || current.fecha_checkin;
-  const checkout = data.fecha_checkout || current.fecha_checkout;
+    const propId = data.propiedad_id !== undefined ? data.propiedad_id : current.propiedad_id;
+    const checkin = data.fecha_checkin || current.fecha_checkin;
+    const checkout = data.fecha_checkout || current.fecha_checkout;
 
-  if (data.propiedad_id || data.fecha_checkin || data.fecha_checkout) {
     const overlap = await checkReservationOverlap(propId, checkin, checkout, id);
     if (overlap) {
       throw new Error(`Conflicto de fechas: La unidad ya está reservada del ${overlap.fecha_checkin} al ${overlap.fecha_checkout}`);
     }
+
+    if (huespedData?.nombres && (data.huesped_id || current.huesped_id)) {
+      await updateHuesped(data.huesped_id || current.huesped_id, { nombres: huespedData.nombres });
+    }
+  } else if (huespedData?.nombres && data.huesped_id) {
+    await updateHuesped(data.huesped_id, { nombres: huespedData.nombres });
   }
 
   const fields: string[] = ['updated_at = CURRENT_TIMESTAMP'];
@@ -788,11 +827,15 @@ export async function deleteSolicitud(id: number): Promise<{ success: boolean; i
 // 9. BITÁCORA DE AUDITORÍA & CAMBIOS EN GESTIÓN RESIDENCIAL (POSTGRESQL DB)
 // ==============================================================================
 
-export async function getAllBitacora(): Promise<any[]> {
+export async function getAllBitacora(lean = false): Promise<any[]> {
   try {
     const events: any[] = [];
 
-    // Obtener exclusivamente eventos reales guardados en la tabla de bitácora
+    // En modo lean (bootstrap inicial), no descargamos los snapshots pesados (previo/nuevo) dentro de detalles
+    const selectDetalles = lean
+      ? `CASE WHEN detalles IS NOT NULL THEN jsonb_strip_nulls(detalles - 'previo' - 'nuevo') ELSE '{}'::jsonb END AS detalles`
+      : `detalles`;
+
     const dbLogs = await query<any>(`
       SELECT 
         id, 
@@ -805,10 +848,10 @@ export async function getAllBitacora(): Promise<any[]> {
         descripcion, 
         entidad_nombre, 
         entidad_id, 
-        detalles
+        ${selectDetalles}
       FROM ${T.bitacora()}
       ORDER BY timestamp DESC
-      LIMIT 300;
+      LIMIT ${lean ? 150 : 300};
     `);
 
     for (const row of dbLogs.rows) {
@@ -824,6 +867,42 @@ export async function getAllBitacora(): Promise<any[]> {
     console.error('Error fetching bitacora from gestion_residencial:', err.message);
     return [];
   }
+}
+
+export async function getBootstrapData() {
+  const [
+    edificios,
+    grupos,
+    usuarios,
+    propiedades,
+    propiedadUsuarios,
+    huespedes,
+    reservaciones,
+    solicitudes,
+    bitacora
+  ] = await Promise.all([
+    getAllEdificios(),
+    getAllGrupos(),
+    getAllUsuarios(),
+    getAllPropiedades(true),
+    getAllPropiedadUsuarios(),
+    getAllHuespedes(),
+    getAllReservaciones(),
+    getAllSolicitudes(),
+    getAllBitacora(true).catch(() => [])
+  ]);
+
+  return {
+    edificios,
+    grupos,
+    usuarios,
+    propiedades,
+    propiedadUsuarios,
+    huespedes,
+    reservaciones,
+    solicitudes,
+    bitacora
+  };
 }
 
 export async function createBitacoraLog(entry: {

@@ -86,6 +86,7 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
   // Recognized resources in our system
   const validResources = [
     'health',
+    'bootstrap',
     'edificios',
     'grupos_propiedad',
     'grupos',
@@ -110,6 +111,15 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
   }
 
   try {
+    // -------------------------------------------------------------
+    // 0. Bootstrap / Initial Unified Data Load
+    // -------------------------------------------------------------
+    if (resource === 'bootstrap' && method === 'GET') {
+      const data = await hoaService.getBootstrapData();
+      sendJson(res, 200, data);
+      return true;
+    }
+
     // -------------------------------------------------------------
     // Health & System Check
     // -------------------------------------------------------------
@@ -338,7 +348,8 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
       }
       if ((method === 'PUT' || method === 'PATCH') && id) {
         const body = await parseJsonBody(req);
-        const updated = await hoaService.updateReservacion(id, body);
+        const { huespedData, ...resData } = body;
+        const updated = await hoaService.updateReservacion(id, resData, huespedData);
         sendJson(res, 200, updated);
         return true;
       }

@@ -289,7 +289,19 @@ async function deleteUsuario(id) {
   await query(`DELETE FROM ${T.usuarios()} WHERE id = $1`, [id]);
   return { success: true, id };
 }
-async function getAllPropiedades() {
+async function getAllPropiedades(lean = false) {
+  if (lean) {
+    const res2 = await query(`
+      SELECT 
+        p.id, p.nombre, p.edificio_id, p.grupo_id, p.piso, p.area, p.tipo_cuarto, 
+        p.dormitorios, CAST(p.banos AS FLOAT) as banos, p.capacidad_personas, p.max_carros, 
+        p.id_impuesto, p.medidor_agua, p.medidor_electricidad, p.empresa_manejadora, 
+        p.estado, p.copropietarios, p.notas
+      FROM ${T.propiedades()} p
+      ORDER BY p.nombre ASC;
+    `);
+    return res2.rows;
+  }
   const res = await query(`
     SELECT 
       p.id, p.nombre, p.edificio_id, p.grupo_id, p.piso, p.area, p.tipo_cuarto, 
@@ -503,9 +515,15 @@ async function deletePropiedadUsuario(id) {
 }
 async function getAllHuespedes() {
   const res = await query(`
-    SELECT id, nombres, created_at, updated_at
+    SELECT id, nombres
     FROM ${T.huespedes()}
-    ORDER BY nombres ASC;
+    WHERE id IN (
+      SELECT huesped_id
+      FROM ${T.reservaciones()}
+      ORDER BY fecha_checkin DESC, id DESC
+      LIMIT 250
+    )
+    ORDER BY id DESC;
   `);
   return res.rows;
 }
@@ -548,21 +566,25 @@ async function deleteHuesped(id) {
   return { success: true, id };
 }
 async function checkReservationOverlap(propiedadId, checkin, checkout, excludeId) {
+  const params = [propiedadId, checkin, checkout];
+  let excludeClause = "";
+  if (excludeId) {
+    params.push(excludeId);
+    excludeClause = `AND id != $4`;
+  }
   const queryText = `
-    SELECT id, codigo, propiedad_id, huesped_id, tipo_huesped, 
+    SELECT id, codigo, propiedad_id, huesped_id,
            TO_CHAR(fecha_checkin, 'YYYY-MM-DD') AS fecha_checkin, 
-           TO_CHAR(fecha_checkout, 'YYYY-MM-DD') AS fecha_checkout, 
-           numero_ocupantes, numero_autos, notas, brazaletes, vehiculo_info, 
-           estado, created_at, updated_at
+           TO_CHAR(fecha_checkout, 'YYYY-MM-DD') AS fecha_checkout
     FROM ${T.reservaciones()}
     WHERE propiedad_id = $1
       AND estado NOT IN ('Cancelada', 'Checked-out')
       AND fecha_checkin < $3::date 
       AND fecha_checkout > $2::date
-      ${excludeId ? `AND id != ${excludeId}` : ""}
+      ${excludeClause}
     LIMIT 1;
   `;
-  return queryOne(queryText, [propiedadId, checkin, checkout]);
+  return queryOne(queryText, params);
 }
 async function getAllReservaciones() {
   const res = await query(`
@@ -643,17 +665,28 @@ async function createReservacion(data, huespedData) {
   ]);
   return res.rows[0];
 }
-async function updateReservacion(id, data) {
-  const current = await getReservacionById(id);
-  if (!current) throw new Error(`Reservaci\xF3n con ID ${id} no encontrada`);
-  const propId = data.propiedad_id !== void 0 ? data.propiedad_id : current.propiedad_id;
-  const checkin = data.fecha_checkin || current.fecha_checkin;
-  const checkout = data.fecha_checkout || current.fecha_checkout;
-  if (data.propiedad_id || data.fecha_checkin || data.fecha_checkout) {
+async function updateReservacion(id, data, huespedData) {
+  if (data.propiedad_id !== void 0 || data.fecha_checkin !== void 0 || data.fecha_checkout !== void 0) {
+    const current = await queryOne(`
+      SELECT propiedad_id, huesped_id,
+             TO_CHAR(fecha_checkin, 'YYYY-MM-DD') AS fecha_checkin,
+             TO_CHAR(fecha_checkout, 'YYYY-MM-DD') AS fecha_checkout
+      FROM ${T.reservaciones()}
+      WHERE id = $1;
+    `, [id]);
+    if (!current) throw new Error(`Reservaci\xF3n con ID ${id} no encontrada`);
+    const propId = data.propiedad_id !== void 0 ? data.propiedad_id : current.propiedad_id;
+    const checkin = data.fecha_checkin || current.fecha_checkin;
+    const checkout = data.fecha_checkout || current.fecha_checkout;
     const overlap = await checkReservationOverlap(propId, checkin, checkout, id);
     if (overlap) {
       throw new Error(`Conflicto de fechas: La unidad ya est\xE1 reservada del ${overlap.fecha_checkin} al ${overlap.fecha_checkout}`);
     }
+    if (huespedData?.nombres && (data.huesped_id || current.huesped_id)) {
+      await updateHuesped(data.huesped_id || current.huesped_id, { nombres: huespedData.nombres });
+    }
+  } else if (huespedData?.nombres && data.huesped_id) {
+    await updateHuesped(data.huesped_id, { nombres: huespedData.nombres });
   }
   const fields = ["updated_at = CURRENT_TIMESTAMP"];
   const values = [];
@@ -818,9 +851,10 @@ async function deleteSolicitud(id) {
   await query(`DELETE FROM ${T.solicitudes()} WHERE id = $1`, [id]);
   return { success: true, id };
 }
-async function getAllBitacora() {
+async function getAllBitacora(lean = false) {
   try {
     const events = [];
+    const selectDetalles = lean ? `CASE WHEN detalles IS NOT NULL THEN jsonb_strip_nulls(detalles - 'previo' - 'nuevo') ELSE '{}'::jsonb END AS detalles` : `detalles`;
     const dbLogs = await query(`
       SELECT 
         id, 
@@ -833,10 +867,10 @@ async function getAllBitacora() {
         descripcion, 
         entidad_nombre, 
         entidad_id, 
-        detalles
+        ${selectDetalles}
       FROM ${T.bitacora()}
       ORDER BY timestamp DESC
-      LIMIT 300;
+      LIMIT ${lean ? 150 : 300};
     `);
     for (const row of dbLogs.rows) {
       events.push({
@@ -850,6 +884,40 @@ async function getAllBitacora() {
     console.error("Error fetching bitacora from gestion_residencial:", err.message);
     return [];
   }
+}
+async function getBootstrapData() {
+  const [
+    edificios,
+    grupos,
+    usuarios,
+    propiedades,
+    propiedadUsuarios,
+    huespedes,
+    reservaciones,
+    solicitudes,
+    bitacora
+  ] = await Promise.all([
+    getAllEdificios(),
+    getAllGrupos(),
+    getAllUsuarios(),
+    getAllPropiedades(true),
+    getAllPropiedadUsuarios(),
+    getAllHuespedes(),
+    getAllReservaciones(),
+    getAllSolicitudes(),
+    getAllBitacora(true).catch(() => [])
+  ]);
+  return {
+    edificios,
+    grupos,
+    usuarios,
+    propiedades,
+    propiedadUsuarios,
+    huespedes,
+    reservaciones,
+    solicitudes,
+    bitacora
+  };
 }
 async function createBitacoraLog(entry) {
   const id = entry.id || `BIT-${Date.now()}`;
@@ -1164,6 +1232,7 @@ async function handleApiRequest(req, res) {
   const id = idStr && !isNaN(parseInt(idStr, 10)) ? parseInt(idStr, 10) : void 0;
   const validResources = [
     "health",
+    "bootstrap",
     "edificios",
     "grupos_propiedad",
     "grupos",
@@ -1185,6 +1254,11 @@ async function handleApiRequest(req, res) {
     return true;
   }
   try {
+    if (resource === "bootstrap" && method === "GET") {
+      const data = await getBootstrapData();
+      sendJson(res, 200, data);
+      return true;
+    }
     if (resource === "health") {
       const includeCounts = url.searchParams.get("counts") === "true";
       const health = await getDatabaseHealth(includeCounts);
@@ -1382,7 +1456,8 @@ async function handleApiRequest(req, res) {
       }
       if ((method === "PUT" || method === "PATCH") && id) {
         const body = await parseJsonBody(req);
-        const updated = await updateReservacion(id, body);
+        const { huespedData, ...resData } = body;
+        const updated = await updateReservacion(id, resData, huespedData);
         sendJson(res, 200, updated);
         return true;
       }

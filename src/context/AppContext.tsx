@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { 
   Edificio, 
   GrupoPropiedad, 
@@ -299,87 +299,120 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setToasts(prev => prev.filter(t => t.id !== id));
   }, []);
 
-  // Fetch all data from Database Service
+  // Fetch all data from Database Service (1 unified bootstrap request + deduplication)
+  const inFlightRefreshRef = useRef<Promise<void> | null>(null);
+  const fullBitacoraLoadedRef = useRef<boolean>(false);
+
   const refreshAllData = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const [
-        edificiosData,
-        gruposData,
-        usuariosData,
-        propiedadesData,
-        propiedadUsuariosData,
-        huespedesData,
-        reservacionesData,
-        solicitudesData,
-        bitacoraData
-      ] = await Promise.all([
-        api.edificios.getAll(),
-        api.grupos.getAll(),
-        api.usuarios.getAll(),
-        api.propiedades.getAll(),
-        api.propiedadUsuarios.getAll(),
-        api.huespedes.getAll(),
-        api.reservaciones.getAll(),
-        api.solicitudes.getAll(),
-        api.bitacora.getAll().catch(() => [])
-      ]);
-
-      setEdificios(edificiosData);
-      setGrupos(gruposData);
-
-      // Asegurar que el usuario Supervisor esté visible en la lista de usuarios
-      const hasSupervisor = usuariosData.some(u => u.email === 'supervisor@laspalomas.com' || u.rol === 'Supervisor');
-      let combinedUsers = [...usuariosData];
-      if (!hasSupervisor) {
-        combinedUsers.push({
-          id: 6,
-          email: 'supervisor@laspalomas.com',
-          nombre: 'Carlos',
-          apellido: 'Méndez',
-          rol: 'Supervisor',
-          telefono: '638-382-9900',
-          idioma: 'es',
-          ciudad: 'Puerto Peñasco',
-          estado_geo: 'Sonora',
-          codigo_postal: '83550',
-          status: 'Active',
-          created_at: '2026-01-15T09:00:00Z',
-        });
-      }
-      setUsuarios(combinedUsers);
-
-      // Sort properties naturally (e.g. A-101 before A-1001, A then B then C)
-      const sortedPropiedades = (propiedadesData || []).slice().sort((a, b) => 
-        compareCondoNames(a.nombre, b.nombre)
-      );
-      setPropiedades(sortedPropiedades);
-      setPropiedadUsuarios(propiedadUsuariosData);
-      setHuespedes(huespedesData);
-      setReservaciones(reservacionesData);
-      setSolicitudes(solicitudesData);
-
-      if (Array.isArray(bitacoraData)) {
-        const sortedBitacora = bitacoraData.slice().sort((a, b) => 
-          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-        );
-        setBitacora(sortedBitacora);
-        try {
-          localStorage.setItem('lp_bitacora_logs', JSON.stringify(sortedBitacora));
-        } catch {}
-      }
-    } catch (err: any) {
-      console.error('Error fetching database records:', err);
-      setError(err.message || 'Error al conectar con la base de datos');
-    } finally {
-      setIsLoading(false);
+    if (inFlightRefreshRef.current) {
+      return inFlightRefreshRef.current;
     }
+
+    const promise = (async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const data = await api.bootstrap.getAll();
+        const {
+          edificios: edificiosData,
+          grupos: gruposData,
+          usuarios: usuariosData,
+          propiedades: propiedadesData,
+          propiedadUsuarios: propiedadUsuariosData,
+          huespedes: huespedesData,
+          reservaciones: reservacionesData,
+          solicitudes: solicitudesData,
+          bitacora: bitacoraData
+        } = data;
+
+        setEdificios(edificiosData);
+        setGrupos(gruposData);
+
+        // Asegurar que el usuario Supervisor esté visible en la lista de usuarios
+        const hasSupervisor = usuariosData.some(u => u.email === 'supervisor@laspalomas.com' || u.rol === 'Supervisor');
+        const combinedUsers = [...usuariosData];
+        if (!hasSupervisor) {
+          combinedUsers.push({
+            id: 6,
+            email: 'supervisor@laspalomas.com',
+            nombre: 'Carlos',
+            apellido: 'Méndez',
+            rol: 'Supervisor',
+            telefono: '638-382-9900',
+            idioma: 'es',
+            ciudad: 'Puerto Peñasco',
+            estado_geo: 'Sonora',
+            codigo_postal: '83550',
+            status: 'Active',
+            created_at: '2026-01-15T09:00:00Z',
+          });
+        }
+        setUsuarios(combinedUsers);
+
+        // Sort properties naturally (e.g. A-101 before A-1001, A then B then C)
+        const sortedPropiedades = (propiedadesData || []).slice().sort((a, b) => 
+          compareCondoNames(a.nombre, b.nombre)
+        );
+        setPropiedades(sortedPropiedades);
+        setPropiedadUsuarios(propiedadUsuariosData);
+        setHuespedes(huespedesData);
+        setReservaciones(reservacionesData);
+        setSolicitudes(solicitudesData);
+
+        if (Array.isArray(bitacoraData)) {
+          const sortedBitacora = bitacoraData.slice().sort((a, b) => 
+            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+          );
+          setBitacora(sortedBitacora);
+          try {
+            localStorage.setItem('lp_bitacora_logs', JSON.stringify(sortedBitacora));
+          } catch {}
+        }
+      } catch (err: any) {
+        console.error('Error fetching database records:', err);
+        setError(err.message || 'Error al conectar con la base de datos');
+      } finally {
+        setIsLoading(false);
+        inFlightRefreshRef.current = null;
+      }
+    })();
+
+    inFlightRefreshRef.current = promise;
+    return promise;
   }, []);
 
+  // Solo consultar la base de datos cuando el usuario ha iniciado sesión
+  const isAuthenticated = !!currentUser;
   useEffect(() => {
+    if (!isAuthenticated) {
+      setIsLoading(false);
+      return;
+    }
     refreshAllData();
-  }, [refreshAllData]);
+  }, [isAuthenticated, refreshAllData]);
+
+  // Cargar los detalles completos de bitácora bajo demanda solo cuando el usuario abre la pestaña Bitácora
+  useEffect(() => {
+    if (activeTab === 'bitacora' && isAuthenticated && !fullBitacoraLoadedRef.current) {
+      fullBitacoraLoadedRef.current = true;
+      api.bitacora.getAll()
+        .then(fullLogs => {
+          if (Array.isArray(fullLogs) && fullLogs.length > 0) {
+            const sorted = fullLogs.slice().sort((a, b) =>
+              new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+            );
+            setBitacora(sorted);
+            try {
+              localStorage.setItem('lp_bitacora_logs', JSON.stringify(sorted));
+            } catch {}
+          }
+        })
+        .catch(() => {
+          fullBitacoraLoadedRef.current = false;
+        });
+    }
+  }, [activeTab, isAuthenticated]);
 
   // CRUD Actions
   const addPropiedad = async (propData: Omit<Propiedad, 'id'>, ownerId?: number) => {
@@ -622,27 +655,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         throw new Error('Conflicto de superposición de fechas');
       }
 
-      let targetHuespedId = resData.huesped_id;
       let huespedName = '';
       if (huespedData && huespedData.nombres) {
-        const newHuesped = await api.huespedes.create({
-          nombres: huespedData.nombres.trim()
-        });
-        setHuespedes(prev => [newHuesped, ...prev]);
-        targetHuespedId = newHuesped.id;
-        huespedName = newHuesped.nombres.trim();
+        huespedName = huespedData.nombres.trim();
       } else {
-        const existingH = huespedes.find(h => h.id === targetHuespedId);
+        const existingH = huespedes.find(h => h.id === resData.huesped_id);
         if (existingH) huespedName = existingH.nombres.trim();
       }
 
       const generatedCode = `RES-${Math.floor(100000 + Math.random() * 900000)}`;
-      const newRes = await api.reservaciones.create({
-        ...resData,
-        codigo: resData.codigo || generatedCode,
-        huesped_id: targetHuespedId,
-        estado: resData.estado || 'Confirmada'
-      });
+      const newRes = await api.reservaciones.create(
+        {
+          ...resData,
+          codigo: resData.codigo || generatedCode,
+          huesped_id: resData.huesped_id,
+          estado: resData.estado || 'Confirmada'
+        },
+        huespedData && huespedData.nombres ? { nombres: huespedData.nombres.trim() } : undefined
+      );
+
+      if (huespedData && huespedData.nombres && newRes.huesped_id) {
+        setHuespedes(prev => [
+          { id: newRes.huesped_id, nombres: huespedData.nombres!.trim() },
+          ...prev.filter(h => h.id !== newRes.huesped_id)
+        ]);
+      }
 
       setReservaciones(prev => [newRes, ...prev]);
 
@@ -684,21 +721,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       }
 
-      // Update guest name if provided
-      if (huespedData && huespedData.nombres && current?.huesped_id) {
-        try {
-          const updatedGuest = await api.huespedes.update(current.huesped_id, {
-            nombres: huespedData.nombres.trim()
-          });
-          if (updatedGuest) {
-            setHuespedes(prev => prev.map(h => h.id === updatedGuest.id ? updatedGuest : h));
-          }
-        } catch (e) {
-          console.warn('Error updating guest record:', e);
-        }
-      }
+      const cleanHuespedData = huespedData && huespedData.nombres
+        ? { nombres: huespedData.nombres.trim() }
+        : undefined;
 
-      const updated = await api.reservaciones.update(id, resData);
+      const updated = await api.reservaciones.update(id, resData, cleanHuespedData);
+      if (cleanHuespedData && updated.huesped_id) {
+        setHuespedes(prev => {
+          const exists = prev.some(h => h.id === updated.huesped_id);
+          if (exists) {
+            return prev.map(h => h.id === updated.huesped_id ? { ...h, nombres: cleanHuespedData.nombres } : h);
+          }
+          return [{ id: updated.huesped_id, nombres: cleanHuespedData.nombres }, ...prev];
+        });
+      }
       setReservaciones(prev => prev.map(r => (r.id === id ? updated : r)));
 
       const propTarget = propiedades.find(p => p.id === updated.propiedad_id);
@@ -941,7 +977,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const edificiosMap = useMemo(() => new Map(edificios.map(e => [e.id, e])), [edificios]);
   const gruposMap = useMemo(() => new Map(grupos.map(g => [g.id, g])), [grupos]);
   const usuariosMap = useMemo(() => new Map(usuarios.map(u => [u.id, u])), [usuarios]);
-  const propiedadesMap = useMemo(() => new Map(propiedades.map(p => [p.id, p])), [propiedades]);
   const huespedesMap = useMemo(() => new Map(huespedes.map(h => [h.id, h])), [huespedes]);
 
   const propiedadOwnerMap = useMemo(() => {
@@ -970,6 +1005,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
     return map;
   }, [propiedades, propiedadUsuarios, usuariosMap]);
+
+  // Enriquecer propiedades en memoria O(1) para evitar transmitir strings duplicados 841 veces por red
+  const hydratedPropiedades = useMemo(() => {
+    return propiedades.map(p => {
+      const ed = edificiosMap.get(p.edificio_id);
+      const gr = p.grupo_id ? gruposMap.get(p.grupo_id) : undefined;
+      const owner = propiedadOwnerMap.get(p.id);
+      return {
+        ...p,
+        edificio_nombre: p.edificio_nombre || ed?.nombre,
+        grupo_nombre: p.grupo_nombre || gr?.nombre,
+        owner_id: owner?.id ?? p.owner_id,
+        owner_nombre: owner?.nombre ?? p.owner_nombre,
+        owner_apellido: owner?.apellido ?? p.owner_apellido,
+        owner_email: owner?.email ?? p.owner_email,
+        owner_telefono: owner?.telefono ?? p.owner_telefono,
+      };
+    });
+  }, [propiedades, edificiosMap, gruposMap, propiedadOwnerMap]);
+
+  const propiedadesMap = useMemo(() => new Map(hydratedPropiedades.map(p => [p.id, p])), [hydratedPropiedades]);
 
   // Fast O(1) Helpers
   const getPropiedadById = useCallback((id: number) => {
@@ -1009,7 +1065,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         edificios,
         grupos,
         usuarios,
-        propiedades,
+        propiedades: hydratedPropiedades,
         propiedadUsuarios,
         huespedes,
         reservaciones,

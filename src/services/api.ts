@@ -114,13 +114,16 @@ export const huespedesApi = {
 export const reservacionesApi = {
   getAll: () => request<Reservacion[]>('/reservaciones'),
   getById: (id: number) => request<Reservacion>(`/reservaciones/${id}`),
-  create: (data: Omit<Reservacion, 'id'>, huespedData?: Omit<Huesped, 'id'>) => 
+  create: (data: Omit<Reservacion, 'id'>, huespedData?: Partial<Huesped>) => 
     request<Reservacion>('/reservaciones', { 
       method: 'POST', 
       body: JSON.stringify({ ...data, huespedData }) 
     }),
-  update: (id: number, data: Partial<Reservacion>) => 
-    request<Reservacion>(`/reservaciones/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  update: (id: number, data: Partial<Reservacion>, huespedData?: Partial<Huesped>) => 
+    request<Reservacion>(`/reservaciones/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(huespedData ? { ...data, huespedData } : data)
+    }),
   delete: (id: number) => request<{ success: boolean; id: number }>(`/reservaciones/${id}`, { method: 'DELETE' }),
 };
 
@@ -181,7 +184,23 @@ export const healthApi = {
   }>(`/health${includeCounts ? '?counts=true' : ''}`),
 };
 
+// 12. Bootstrap unificado (1 sola petición para carga inicial)
+export const bootstrapApi = {
+  getAll: () => request<{
+    edificios: Edificio[];
+    grupos: GrupoPropiedad[];
+    usuarios: Usuario[];
+    propiedades: Propiedad[];
+    propiedadUsuarios: PropiedadUsuario[];
+    huespedes: Huesped[];
+    reservaciones: Reservacion[];
+    solicitudes: SolicitudAcceso[];
+    bitacora: any[];
+  }>('/bootstrap'),
+};
+
 export const api = {
+  bootstrap: bootstrapApi,
   edificios: edificiosApi,
   grupos: gruposApi,
   usuarios: usuariosApi,

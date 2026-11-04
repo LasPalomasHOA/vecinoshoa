@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { useApp } from './context/AppContext';
 import { useAuth } from './context/AuthContext';
 import { Sidebar } from './components/layout/Sidebar';
@@ -6,26 +6,28 @@ import { Navbar } from './components/layout/Navbar';
 import { ToastContainer } from './components/common/ToastContainer';
 import { LoginView } from './components/auth/LoginView';
 
-// Views
+// Views (Primary eager, secondary lazy-loaded to reduce initial bundle egress)
 import { InicioView } from './components/dashboard/InicioView';
 import { FrontDeskView } from './components/frontdesk/FrontDeskView';
-import { CalendarTimeline } from './components/calendar/CalendarTimeline';
-import { PropertiesView } from './components/properties/PropertiesView';
-import { UsersView } from './components/users/UsersView';
-import { RequestsView } from './components/requests/RequestsView';
-import { ReportsView } from './components/reports/ReportsView';
-import { ComunicadosView } from './components/comunicados/ComunicadosView';
-import { BitacoraView } from './components/bitacora/BitacoraView';
+
+const CalendarTimeline = lazy(() => import('./components/calendar/CalendarTimeline').then(m => ({ default: m.CalendarTimeline })));
+const PropertiesView = lazy(() => import('./components/properties/PropertiesView').then(m => ({ default: m.PropertiesView })));
+const UsersView = lazy(() => import('./components/users/UsersView').then(m => ({ default: m.UsersView })));
+const RequestsView = lazy(() => import('./components/requests/RequestsView').then(m => ({ default: m.RequestsView })));
+const ReportsView = lazy(() => import('./components/reports/ReportsView').then(m => ({ default: m.ReportsView })));
+const ComunicadosView = lazy(() => import('./components/comunicados/ComunicadosView').then(m => ({ default: m.ComunicadosView })));
+const BitacoraView = lazy(() => import('./components/bitacora/BitacoraView').then(m => ({ default: m.BitacoraView })));
 
 // Modals
 import { ReservationModal } from './components/frontdesk/ReservationModal';
 import { CheckInModal } from './components/frontdesk/CheckInModal';
 import { ReservationDetailModal } from './components/frontdesk/ReservationDetailModal';
-import { GuestQrModal } from './components/frontdesk/GuestQrModal';
 import { PropertyFormModal } from './components/properties/PropertyFormModal';
 import { BuildingsManagerModal } from './components/properties/BuildingsManagerModal';
 import { UserFormModal } from './components/users/UserFormModal';
 import { RequestModal } from './components/requests/RequestModal';
+
+const GuestQrModal = lazy(() => import('./components/frontdesk/GuestQrModal').then(m => ({ default: m.GuestQrModal })));
 
 import { Reservacion, Propiedad, Usuario, SolicitudAcceso } from './types';
 
@@ -150,66 +152,72 @@ export const App: React.FC = () => {
         {/* Content Container */}
         <main className="flex-1 p-6 max-w-7xl w-full mx-auto print:p-0 print:m-0 print:max-w-none print:w-full print:block">
           
-          {/* Module Views */}
-          {activeTab === 'inicio' && (
-            <InicioView
-              onOpenNewReservation={handleOpenNewReservation}
-              onViewReservationDetail={handleViewReservationDetail}
-              onOpenQrPass={handleOpenQrPass}
-              onNavigateTab={setActiveTab}
-            />
-          )}
+          <Suspense fallback={
+            <div className="flex items-center justify-center py-20 text-xs font-semibold text-slate-400">
+              Cargando módulo...
+            </div>
+          }>
+            {/* Module Views */}
+            {activeTab === 'inicio' && (
+              <InicioView
+                onOpenNewReservation={handleOpenNewReservation}
+                onViewReservationDetail={handleViewReservationDetail}
+                onOpenQrPass={handleOpenQrPass}
+                onNavigateTab={setActiveTab}
+              />
+            )}
 
-          {activeTab === 'frontdesk' && (
-            <FrontDeskView
-              onOpenNewReservation={handleOpenNewReservation}
-              onEditReservation={handleEditReservation}
-              onViewReservationDetail={handleViewReservationDetail}
-              onCheckIn={handleCheckIn}
-              onOpenQrPass={handleOpenQrPass}
-            />
-          )}
+            {activeTab === 'frontdesk' && (
+              <FrontDeskView
+                onOpenNewReservation={handleOpenNewReservation}
+                onEditReservation={handleEditReservation}
+                onViewReservationDetail={handleViewReservationDetail}
+                onCheckIn={handleCheckIn}
+                onOpenQrPass={handleOpenQrPass}
+              />
+            )}
 
-          {activeTab === 'calendar' && (
-            <CalendarTimeline
-              onSelectReservation={handleViewReservationDetail}
-              onNewReservation={handleOpenNewReservation}
-            />
-          )}
+            {activeTab === 'calendar' && (
+              <CalendarTimeline
+                onSelectReservation={handleViewReservationDetail}
+                onNewReservation={handleOpenNewReservation}
+              />
+            )}
 
-          {activeTab === 'properties' && (
-            <PropertiesView
-              onOpenNewProperty={handleOpenNewProperty}
-              onEditProperty={handleEditProperty}
-              onOpenBuildingsManager={() => setIsBuildingsModalOpen(true)}
-            />
-          )}
+            {activeTab === 'properties' && (
+              <PropertiesView
+                onOpenNewProperty={handleOpenNewProperty}
+                onEditProperty={handleEditProperty}
+                onOpenBuildingsManager={() => setIsBuildingsModalOpen(true)}
+              />
+            )}
 
-          {activeTab === 'users' && (
-            <UsersView
-              onOpenNewUser={handleOpenNewUser}
-              onEditUser={handleEditUser}
-            />
-          )}
+            {activeTab === 'users' && (
+              <UsersView
+                onOpenNewUser={handleOpenNewUser}
+                onEditUser={handleEditUser}
+              />
+            )}
 
-          {activeTab === 'requests' && (
-            <RequestsView
-              onOpenNewRequest={handleOpenNewRequest}
-              onEditRequest={handleEditRequest}
-            />
-          )}
+            {activeTab === 'requests' && (
+              <RequestsView
+                onOpenNewRequest={handleOpenNewRequest}
+                onEditRequest={handleEditRequest}
+              />
+            )}
 
-          {activeTab === 'reports' && (
-            <ReportsView />
-          )}
+            {activeTab === 'reports' && (
+              <ReportsView />
+            )}
 
-          {activeTab === 'comunicados' && (
-            <ComunicadosView />
-          )}
+            {activeTab === 'comunicados' && (
+              <ComunicadosView />
+            )}
 
-          {activeTab === 'bitacora' && (
-            <BitacoraView />
-          )}
+            {activeTab === 'bitacora' && (
+              <BitacoraView />
+            )}
+          </Suspense>
 
         </main>
 
@@ -242,15 +250,19 @@ export const App: React.FC = () => {
         onOpenQrPass={handleOpenQrPass}
       />
 
-      <GuestQrModal
-        isOpen={isQrPassModalOpen}
-        onClose={() => {
-          setIsQrPassModalOpen(false);
-          setQrPassRes(null);
-        }}
-        reservation={qrPassRes}
-        onCheckIn={handleCheckIn}
-      />
+      {isQrPassModalOpen && (
+        <Suspense fallback={null}>
+          <GuestQrModal
+            isOpen={isQrPassModalOpen}
+            onClose={() => {
+              setIsQrPassModalOpen(false);
+              setQrPassRes(null);
+            }}
+            reservation={qrPassRes}
+            onCheckIn={handleCheckIn}
+          />
+        </Suspense>
+      )}
 
       <PropertyFormModal
         isOpen={isPropModalOpen}
