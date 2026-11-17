@@ -172,6 +172,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   });
 
+  // Toast notifications
+  const showToast = useCallback((message: string, type: Toast['type'] = 'success') => {
+    const id = Math.random().toString(36).substring(2, 9);
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 4500);
+  }, []);
+
+  const removeToast = useCallback((id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
   // Registrador central de auditoría y bitácora
   const registrarEventoBitacora = useCallback((
     entry: Omit<BitacoraEntry, 'id' | 'timestamp' | 'usuario_nombre' | 'usuario_email' | 'usuario_rol'> & {
@@ -185,8 +198,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const actorEmail = entry.usuario_email || (currentUser ? currentUser.email : 'sistema@laspalomas.com');
     const actorRol = entry.usuario_rol || (currentUser ? currentUser.rol : 'Administrador');
 
+    const uniqueSuffix = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID().slice(0, 8)
+      : Math.random().toString(36).slice(2, 10);
+
     const newLog: BitacoraEntry = {
-      id: `BIT-${Date.now().toString().slice(-6)}`,
+      id: `BIT-${Date.now()}-${uniqueSuffix}`,
       timestamp: entry.timestamp || new Date().toISOString(),
       usuario_id: currentUser?.id,
       usuario_nombre: actorNombre,
@@ -241,7 +258,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     });
     showToast('Nota registrada en la Bitácora de Auditoría y Base de Datos', 'success');
-  }, [registrarEventoBitacora]);
+  }, [registrarEventoBitacora, showToast]);
 
   const limpiarBitacora = useCallback(() => {
     setBitacora(DEFAULT_BITACORA_LOGS);
@@ -249,7 +266,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       localStorage.setItem('lp_bitacora_logs', JSON.stringify(DEFAULT_BITACORA_LOGS));
     } catch {}
     showToast('Bitácora restablecida a eventos de auditoría base', 'info');
-  }, []);
+  }, [showToast]);
 
   const enviarComunicado = useCallback(async (data: Omit<ComunicadoHistorial, 'id' | 'fecha'>) => {
     const newComunicado: ComunicadoHistorial = {
@@ -284,20 +301,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
 
     showToast(`Comunicado registrado exitosamente (${newComunicado.total_destinatarios} destinatarios)`, 'success');
-  }, [registrarEventoBitacora]);
-
-  // Toast notifications
-  const showToast = useCallback((message: string, type: Toast['type'] = 'success') => {
-    const id = Math.random().toString(36).substring(2, 9);
-    setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
-    }, 4500);
-  }, []);
-
-  const removeToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
-  }, []);
+  }, [registrarEventoBitacora, showToast]);
 
   // Fetch all data from Database Service (1 unified bootstrap request + deduplication)
   const inFlightRefreshRef = useRef<Promise<void> | null>(null);

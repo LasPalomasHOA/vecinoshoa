@@ -110,9 +110,15 @@ CREATE TABLE IF NOT EXISTS gestion_residencial.reservaciones (
     brazaletes VARCHAR(100),
     vehiculo_info VARCHAR(150),
     estado VARCHAR(30) DEFAULT 'Confirmada', -- Confirmada, En Casa (Checked-in), Checked-out, Pendiente, Cancelada
+    acompanantes JSONB DEFAULT '[]'::jsonb,
+    acompanantes_amenidades JSONB DEFAULT '[]'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Asegurar columnas JSONB si la tabla ya existe
+ALTER TABLE gestion_residencial.reservaciones ADD COLUMN IF NOT EXISTS acompanantes JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE gestion_residencial.reservaciones ADD COLUMN IF NOT EXISTS acompanantes_amenidades JSONB DEFAULT '[]'::jsonb;
 
 -- 8. Solicitudes de Acceso / Pases de Trabajo
 CREATE TABLE IF NOT EXISTS gestion_residencial.solicitudes_acceso (
@@ -148,11 +154,15 @@ CREATE INDEX IF NOT EXISTS idx_propiedades_grupo ON gestion_residencial.propieda
 CREATE INDEX IF NOT EXISTS idx_reservaciones_propiedad ON gestion_residencial.reservaciones(propiedad_id);
 CREATE INDEX IF NOT EXISTS idx_reservaciones_huesped ON gestion_residencial.reservaciones(huesped_id);
 CREATE INDEX IF NOT EXISTS idx_reservaciones_fechas ON gestion_residencial.reservaciones(fecha_checkin, fecha_checkout);
+CREATE INDEX IF NOT EXISTS idx_reservaciones_checkin_desc ON gestion_residencial.reservaciones(fecha_checkin DESC, id DESC);
+CREATE INDEX IF NOT EXISTS idx_reservaciones_activas_overlap ON gestion_residencial.reservaciones(propiedad_id, fecha_checkin, fecha_checkout) WHERE estado NOT IN ('Cancelada', 'Checked-out');
 CREATE INDEX IF NOT EXISTS idx_reservaciones_estado ON gestion_residencial.reservaciones(estado);
 CREATE INDEX IF NOT EXISTS idx_propiedad_usuarios_prop ON gestion_residencial.propiedad_usuarios(propiedad_id);
 CREATE INDEX IF NOT EXISTS idx_propiedad_usuarios_user ON gestion_residencial.propiedad_usuarios(usuario_id);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_propiedad_owner_principal ON gestion_residencial.propiedad_usuarios(propiedad_id) WHERE es_principal = true;
 CREATE INDEX IF NOT EXISTS idx_solicitudes_propiedad ON gestion_residencial.solicitudes_acceso(propiedad_id);
 CREATE INDEX IF NOT EXISTS idx_solicitudes_estatus ON gestion_residencial.solicitudes_acceso(estatus);
+CREATE INDEX IF NOT EXISTS idx_solicitudes_created_desc ON gestion_residencial.solicitudes_acceso(created_at DESC, id DESC);
 CREATE INDEX IF NOT EXISTS idx_bitacora_timestamp ON gestion_residencial.bitacora(timestamp DESC);
 
 -- ==============================================================================

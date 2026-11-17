@@ -43,8 +43,8 @@ export function getDbPool(): any {
 
   // Limpiar parámetros para evitar conflictos con el driver pg
   const cleanUrl = rawUrl
-    .replace(/[\?&]sslmode=[^&]+/, '')
-    .replace(/[\?&]supa=[^&]+/, '');
+    .replace(/[?&]sslmode=[^&]+/, '')
+    .replace(/[?&]supa=[^&]+/, '');
 
   const connectionString = cleanUrl
     ? cleanUrl.includes('?')
@@ -74,13 +74,35 @@ export async function query<T = any>(
   params: any[] = []
 ): Promise<{ rows: T[]; rowCount: number | null }> {
   const p = getDbPool();
-  const start = Date.now();
   try {
     const res = await p.query(text, params);
     return res;
   } catch (err: any) {
     console.error(`[DB Error] ${err.message}\nSQL: ${text}\nParams:`, params);
     throw err;
+  }
+}
+
+export interface DbClient {
+  query: <T = any>(text: string, params?: any[]) => Promise<{ rows: T[]; rowCount: number | null }>;
+}
+
+/**
+ * Ejecuta un bloque de operaciones dentro de una transacción PostgreSQL (BEGIN/COMMIT/ROLLBACK).
+ */
+export async function withTransaction<T>(fn: (client: DbClient) => Promise<T>): Promise<T> {
+  const p = getDbPool();
+  const client = await p.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await fn(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
   }
 }
 

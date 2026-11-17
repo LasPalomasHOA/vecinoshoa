@@ -240,12 +240,18 @@ const CondoRow: React.FC<CondoRowProps> = memo(({
               return null;
             }
 
-            let startIdx = dateToIndexMap.get(checkinStr) ?? 0;
-            let endIdx = dateToIndexMap.get(checkoutStr) ?? totalDays;
+            let startIdx = dateToIndexMap.get(checkinStr);
+            if (startIdx === undefined) {
+              startIdx = checkinStr < viewStartStr ? 0 : totalDays - 1;
+            }
+            let endIdx = dateToIndexMap.get(checkoutStr);
+            if (endIdx === undefined) {
+              endIdx = checkoutStr > viewEndStr ? totalDays - 1 : 0;
+            }
 
-            const nightsInView = Math.max(1, endIdx - startIdx);
+            const spanCols = Math.max(1, endIdx - startIdx + 1);
             const leftPct = (startIdx / totalDays) * 100;
-            const widthPct = (nightsInView / totalDays) * 100;
+            const widthPct = (spanCols / totalDays) * 100;
 
             return (
               <div

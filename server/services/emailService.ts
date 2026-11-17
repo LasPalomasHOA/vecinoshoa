@@ -5,6 +5,15 @@ if (typeof dotenv?.config === 'function') {
   dotenv.config();
 }
 
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export async function sendBroadcastEmail(payload: {
   asunto: string;
   categoria: string;
@@ -19,8 +28,13 @@ export async function sendBroadcastEmail(payload: {
   const host = process.env.SMTP_HOST?.trim();
   const port = parseInt(process.env.SMTP_PORT || '465', 10);
   const secure = process.env.SMTP_SECURE === 'false' ? false : (port === 465 || !process.env.SMTP_SECURE);
-  const user = (process.env.SMTP_USER || 'integradorpro.yec@gmail.com').trim();
-  const pass = (process.env.SMTP_PASS || 'qheulhyenjwsmnxa').replace(/\s+/g, '');
+  const user = (process.env.SMTP_USER || '').trim();
+  const pass = (process.env.SMTP_PASS || '').replace(/\s+/g, '');
+
+  if (!user || !pass) {
+    throw new Error('Faltan las variables de entorno SMTP_USER y SMTP_PASS para enviar correos.');
+  }
+
   const from = process.env.SMTP_FROM?.trim() || `"Las Palomas HOA" <${user}>`;
   const replyTo = process.env.SMTP_REPLY_TO?.trim() || user;
   const delayMs = parseInt(process.env.SMTP_DELAY_MS || '1200', 10);
@@ -67,13 +81,14 @@ export async function sendBroadcastEmail(payload: {
       .replace(/{administrador}/g, 'Administración Las Palomas');
 
     // Extract first 120 chars for preheader snippet
-    const previewSnippet = personalizedBody.replace(/\s+/g, ' ').substring(0, 120);
+    const previewSnippet = escapeHtml(personalizedBody.replace(/\s+/g, ' ').substring(0, 120));
+    const safeSubject = escapeHtml(finalSubject);
 
     // Clean plain text version (Crucial for SpamAssassin and filters that check multipart/alternative balance)
     const plainText = `${finalSubject}\n\nEstimado(a) ${dest.nombre || 'Propietario(a)'}:\n\n${personalizedBody}\n\n---\nAsociación de Condóminos Las Palomas Seaside Golf Community\nAdministración HOA\nBlvd. Costero 150, Sandy Beach, C.P. 83550, Puerto Peñasco, Sonora, México.\nPara actualizar tus preferencias de notificación o aclarar dudas, responde directamente a este correo.`;
 
-    // Formatear párrafos limpios
-    const formattedParagraphs = personalizedBody
+    // Formatear párrafos limpios (escapando HTML antes de insertar etiquetas <p> y <br/>)
+    const formattedParagraphs = escapeHtml(personalizedBody)
       .split('\n\n')
       .map(p => `<p style="margin: 0 0 16px 0; line-height: 1.6; color: #1e293b; font-size: 15px;">${p.replace(/\n/g, '<br/>')}</p>`)
       .join('');
@@ -87,7 +102,7 @@ export async function sendBroadcastEmail(payload: {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="color-scheme" content="light">
-  <title>${finalSubject}</title>
+  <title>${safeSubject}</title>
 </head>
 <body style="margin: 0; padding: 20px 10px; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: 100%;">
   
@@ -109,7 +124,7 @@ export async function sendBroadcastEmail(payload: {
     <!-- Barra de Asunto -->
     <tr>
       <td style="padding: 14px 24px; background-color: #f8fafc; border-bottom: 1px solid #e2e8f0; font-size: 13px; color: #475569;">
-        <strong style="color: #0f766e;">Asunto:</strong> ${finalSubject}
+        <strong style="color: #0f766e;">Asunto:</strong> ${safeSubject}
       </td>
     </tr>
 

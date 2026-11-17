@@ -84,7 +84,7 @@ export const ReportsView: React.FC = () => {
       // Tower/Edificio filter
       if (edificioFilter !== 'ALL') {
         const prop = getPropiedadById(res.propiedad_id);
-        if (prop && prop.edificio_id !== parseInt(edificioFilter)) return false;
+        if (!prop || prop.edificio_id !== parseInt(edificioFilter, 10)) return false;
       }
       // Tipo filter
       if (tipoFilter !== 'ALL') {
@@ -120,6 +120,14 @@ export const ReportsView: React.FC = () => {
   }, [filteredReservations]);
 
   // Export report to Excel confined strictly to the 10 table columns (no horizontal color bleed)
+  const escapeHtml = (value: string) =>
+    value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+
   const handleExport = () => {
     const title = 'Entradas – Reporte de Reservaciones';
     const subtitle = 'Las Palomas Seaside Golf Community';
@@ -134,7 +142,7 @@ export const ReportsView: React.FC = () => {
       
       const rawComps = Array.isArray(res.acompanantes) ? res.acompanantes.filter(a => a.id !== 'titular') : [];
       const numExtra = rawComps.length > 0 ? rawComps.length : (res.numero_ocupantes > 1 ? res.numero_ocupantes - 1 : 0);
-      let guestText = `${guestName}${numExtra > 0 ? ` +${numExtra}` : ''}`;
+      let guestText = `${escapeHtml(guestName)}${numExtra > 0 ? ` +${numExtra}` : ''}`;
       if (res.codigo === '2551222' || res.notas?.includes('Breneida Camacho')) {
         guestText = 'Breneida Camacho +6<br/>BRAZALETES ONLY';
       } else if (res.codigo === '2551271' || res.notas?.includes('Karely Hernandez')) {
@@ -150,22 +158,22 @@ export const ReportsView: React.FC = () => {
       } else if (res.codigo === '2566312' || res.notas?.includes('Roberto Dominguez')) {
         guestText = 'Roberto Dominguez +<br/>1';
       } else if (res.notas && (res.notas.includes('BRAZALETES') || res.notas.includes('SOLO'))) {
-        guestText = res.notas;
+        guestText = escapeHtml(res.notas);
       }
 
       const tipoFormatted = formatTipo(res.tipo_huesped);
-      const tipoHtml = tipoFormatted === 'Resort Amenity Usage' ? 'Resort Amenity<br/>Usage' : tipoFormatted;
+      const tipoHtml = tipoFormatted === 'Resort Amenity Usage' ? 'Resort Amenity<br/>Usage' : escapeHtml(tipoFormatted);
 
       tableRowsHtml += `
         <tr>
-          <td class="${cellClass}" style="mso-number-format:'\\@';">${res.codigo || res.id}</td>
-          <td class="${cellClass}" style="mso-number-format:'\\@';">${prop?.nombre || `ID: ${res.propiedad_id}`}</td>
-          <td class="${cellClass}" style="mso-number-format:'\\@';">${formatReportDate(res.fecha_checkin)}</td>
-          <td class="${cellClass}" style="mso-number-format:'\\@';">${formatReportDate(res.fecha_checkout)}</td>
+          <td class="${cellClass}" style="mso-number-format:'\\@';">${escapeHtml(String(res.codigo || res.id))}</td>
+          <td class="${cellClass}" style="mso-number-format:'\\@';">${escapeHtml(prop?.nombre || `ID: ${res.propiedad_id}`)}</td>
+          <td class="${cellClass}" style="mso-number-format:'\\@';">${escapeHtml(formatReportDate(res.fecha_checkin))}</td>
+          <td class="${cellClass}" style="mso-number-format:'\\@';">${escapeHtml(formatReportDate(res.fecha_checkout))}</td>
           <td class="${cellClass}">${guestText}</td>
           <td class="${cellClass}">${tipoHtml}</td>
-          <td class="${cellClass}">${res.estado === 'En Casa (Checked-in)' ? 'En Casa' : res.estado}</td>
-          <td class="${cellClass}" style="mso-number-format:'\\@';">${formatReportDateTime(res.created_at)}</td>
+          <td class="${cellClass}">${escapeHtml(res.estado === 'En Casa (Checked-in)' ? 'En Casa' : res.estado)}</td>
+          <td class="${cellClass}" style="mso-number-format:'\\@';">${escapeHtml(formatReportDateTime(res.created_at))}</td>
         </tr>
       `;
     });

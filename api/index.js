@@ -26,7 +26,7 @@ function getDbPool() {
     console.error(`[DB Error] ${msg}`);
     throw new Error(msg);
   }
-  const cleanUrl = rawUrl.replace(/[\?&]sslmode=[^&]+/, "").replace(/[\?&]supa=[^&]+/, "");
+  const cleanUrl = rawUrl.replace(/[?&]sslmode=[^&]+/, "").replace(/[?&]supa=[^&]+/, "");
   const connectionString = cleanUrl ? cleanUrl.includes("?") ? `${cleanUrl}&sslmode=no-verify` : `${cleanUrl}?sslmode=no-verify` : "";
   pool = new Pool({
     connectionString,
@@ -42,7 +42,6 @@ function getDbPool() {
 }
 async function query(text, params = []) {
   const p = getDbPool();
-  const start = Date.now();
   try {
     const res = await p.query(text, params);
     return res;
@@ -51,6 +50,22 @@ async function query(text, params = []) {
 SQL: ${text}
 Params:`, params);
     throw err;
+  }
+}
+async function withTransaction(fn) {
+  const p = getDbPool();
+  const client = await p.connect();
+  try {
+    await client.query("BEGIN");
+    const result = await fn(client);
+    await client.query("COMMIT");
+    return result;
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {
+    });
+    throw err;
+  } finally {
+    client.release();
   }
 }
 async function queryOne(text, params = []) {
@@ -326,8 +341,8 @@ async function getAllPropiedades(lean = false) {
   `);
   return res.rows.sort((a, b) => a.nombre.localeCompare(b.nombre, void 0, { numeric: true, sensitivity: "base" }));
 }
-async function getPropiedadById(id) {
-  return queryOne(`
+async function getPropiedadById(id, client) {
+  const sql = `
     SELECT 
       p.id, p.nombre, p.edificio_id, p.grupo_id, p.piso, p.area, p.tipo_cuarto, 
       p.dormitorios, CAST(p.banos AS FLOAT) as banos, p.capacidad_personas, p.max_carros, 
@@ -348,47 +363,54 @@ async function getPropiedadById(id) {
     LEFT JOIN ${T.propiedadUsuarios()} pu ON pu.propiedad_id = p.id AND pu.es_principal = true
     LEFT JOIN ${T.usuarios()} u ON u.id = pu.usuario_id
     WHERE p.id = $1;
-  `, [id]);
+  `;
+  if (client) {
+    const res = await client.query(sql, [id]);
+    return res.rows[0] || null;
+  }
+  return queryOne(sql, [id]);
 }
 async function createPropiedad(data, ownerId) {
-  const res = await query(`
-    INSERT INTO ${T.propiedades()} (
-      nombre, edificio_id, grupo_id, piso, area, tipo_cuarto,
-      dormitorios, banos, capacidad_personas, max_carros,
-      id_impuesto, medidor_agua, medidor_electricidad, empresa_manejadora,
-      estado, copropietarios, notas
-    )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
-    RETURNING id;
-  `, [
-    data.nombre.trim(),
-    data.edificio_id,
-    data.grupo_id || null,
-    data.piso || 1,
-    data.area || null,
-    data.tipo_cuarto || null,
-    data.dormitorios || 0,
-    data.banos || 0,
-    data.capacidad_personas || 0,
-    data.max_carros || 1,
-    data.id_impuesto || null,
-    data.medidor_agua || null,
-    data.medidor_electricidad || null,
-    data.empresa_manejadora || null,
-    data.estado || "Active",
-    data.copropietarios || null,
-    data.notas || null
-  ]);
-  const createdId = res.rows[0].id;
-  if (ownerId && ownerId > 0) {
-    await query(`
-      INSERT INTO ${T.propiedadUsuarios()} (propiedad_id, usuario_id, tipo_relacion, es_principal)
-      VALUES ($1, $2, 'Owner', true)
-      ON CONFLICT (propiedad_id, usuario_id) DO UPDATE SET es_principal = true;
-    `, [createdId, ownerId]);
-  }
-  const fullProp = await getPropiedadById(createdId);
-  return fullProp;
+  return withTransaction(async (client) => {
+    const res = await client.query(`
+      INSERT INTO ${T.propiedades()} (
+        nombre, edificio_id, grupo_id, piso, area, tipo_cuarto,
+        dormitorios, banos, capacidad_personas, max_carros,
+        id_impuesto, medidor_agua, medidor_electricidad, empresa_manejadora,
+        estado, copropietarios, notas
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+      RETURNING id;
+    `, [
+      data.nombre.trim(),
+      data.edificio_id,
+      data.grupo_id || null,
+      data.piso || 1,
+      data.area || null,
+      data.tipo_cuarto || null,
+      data.dormitorios || 0,
+      data.banos || 0,
+      data.capacidad_personas || 0,
+      data.max_carros || 1,
+      data.id_impuesto || null,
+      data.medidor_agua || null,
+      data.medidor_electricidad || null,
+      data.empresa_manejadora || null,
+      data.estado || "Active",
+      data.copropietarios || null,
+      data.notas || null
+    ]);
+    const createdId = res.rows[0].id;
+    if (ownerId && ownerId > 0) {
+      await client.query(`
+        INSERT INTO ${T.propiedadUsuarios()} (propiedad_id, usuario_id, tipo_relacion, es_principal)
+        VALUES ($1, $2, 'Owner', true)
+        ON CONFLICT (propiedad_id, usuario_id) DO UPDATE SET es_principal = true;
+      `, [createdId, ownerId]);
+    }
+    const fullProp = await getPropiedadById(createdId, client);
+    return fullProp;
+  });
 }
 async function updatePropiedad(id, data, ownerId) {
   const fields = ["updated_at = CURRENT_TIMESTAMP"];
@@ -462,25 +484,27 @@ async function updatePropiedad(id, data, ownerId) {
     fields.push(`notas = $${idx++}`);
     values.push(data.notas);
   }
-  if (fields.length > 1) {
-    values.push(id);
-    await query(`
-      UPDATE ${T.propiedades()}
-      SET ${fields.join(", ")}
-      WHERE id = $${idx};
-    `, values);
-  }
-  if (ownerId !== void 0) {
-    await query(`DELETE FROM ${T.propiedadUsuarios()} WHERE propiedad_id = $1 AND es_principal = true;`, [id]);
-    if (ownerId > 0) {
-      await query(`
-        INSERT INTO ${T.propiedadUsuarios()} (propiedad_id, usuario_id, tipo_relacion, es_principal)
-        VALUES ($1, $2, 'Owner', true)
-        ON CONFLICT (propiedad_id, usuario_id) DO UPDATE SET es_principal = true;
-      `, [id, ownerId]);
+  return withTransaction(async (client) => {
+    if (fields.length > 1) {
+      values.push(id);
+      await client.query(`
+        UPDATE ${T.propiedades()}
+        SET ${fields.join(", ")}
+        WHERE id = $${idx};
+      `, values);
     }
-  }
-  return getPropiedadById(id);
+    if (ownerId !== void 0) {
+      await client.query(`DELETE FROM ${T.propiedadUsuarios()} WHERE propiedad_id = $1 AND es_principal = true;`, [id]);
+      if (ownerId > 0) {
+        await client.query(`
+          INSERT INTO ${T.propiedadUsuarios()} (propiedad_id, usuario_id, tipo_relacion, es_principal)
+          VALUES ($1, $2, 'Owner', true)
+          ON CONFLICT (propiedad_id, usuario_id) DO UPDATE SET es_principal = true;
+        `, [id, ownerId]);
+      }
+    }
+    return getPropiedadById(id, client);
+  });
 }
 async function deletePropiedad(id) {
   await query(`DELETE FROM ${T.propiedades()} WHERE id = $1`, [id]);
@@ -515,15 +539,15 @@ async function deletePropiedadUsuario(id) {
 }
 async function getAllHuespedes() {
   const res = await query(`
-    SELECT id, nombres
-    FROM ${T.huespedes()}
-    WHERE id IN (
-      SELECT huesped_id
+    SELECT h.id, h.nombres
+    FROM ${T.huespedes()} h
+    INNER JOIN (
+      SELECT DISTINCT ON (huesped_id) huesped_id, fecha_checkin, id AS res_id
       FROM ${T.reservaciones()}
-      ORDER BY fecha_checkin DESC, id DESC
-      LIMIT 250
-    )
-    ORDER BY id DESC;
+      ORDER BY huesped_id, fecha_checkin DESC, id DESC
+    ) r ON r.huesped_id = h.id
+    ORDER BY r.fecha_checkin DESC, r.res_id DESC
+    LIMIT 250;
   `);
   return res.rows;
 }
@@ -534,17 +558,17 @@ async function getHuespedById(id) {
     WHERE id = $1;
   `, [id]);
 }
-async function createHuesped(data) {
-  const res = await query(`
+async function createHuesped(data, client) {
+  const sql = `
     INSERT INTO ${T.huespedes()} (nombres)
     VALUES ($1)
     RETURNING id, nombres, created_at, updated_at;
-  `, [
-    data.nombres.trim()
-  ]);
+  `;
+  const params = [data.nombres.trim()];
+  const res = client ? await client.query(sql, params) : await query(sql, params);
   return res.rows[0];
 }
-async function updateHuesped(id, data) {
+async function updateHuesped(id, data, client) {
   const fields = ["updated_at = CURRENT_TIMESTAMP"];
   const values = [];
   let idx = 1;
@@ -553,19 +577,20 @@ async function updateHuesped(id, data) {
     values.push(data.nombres.trim());
   }
   values.push(id);
-  const res = await query(`
+  const sql = `
     UPDATE ${T.huespedes()}
     SET ${fields.join(", ")}
     WHERE id = $${idx}
     RETURNING id, nombres, created_at, updated_at;
-  `, values);
+  `;
+  const res = client ? await client.query(sql, values) : await query(sql, values);
   return res.rows[0] || null;
 }
 async function deleteHuesped(id) {
   await query(`DELETE FROM ${T.huespedes()} WHERE id = $1`, [id]);
   return { success: true, id };
 }
-async function checkReservationOverlap(propiedadId, checkin, checkout, excludeId) {
+async function checkReservationOverlap(propiedadId, checkin, checkout, excludeId, client) {
   const params = [propiedadId, checkin, checkout];
   let excludeClause = "";
   if (excludeId) {
@@ -584,9 +609,33 @@ async function checkReservationOverlap(propiedadId, checkin, checkout, excludeId
       ${excludeClause}
     LIMIT 1;
   `;
+  if (client) {
+    const res = await client.query(queryText, params);
+    return res.rows[0] || null;
+  }
   return queryOne(queryText, params);
 }
-async function getAllReservaciones() {
+async function getAllReservaciones(filters) {
+  const conditions = [];
+  const params = [];
+  let idx = 1;
+  if (filters?.startDate) {
+    conditions.push(`fecha_checkout >= $${idx++}::date`);
+    params.push(filters.startDate);
+  }
+  if (filters?.endDate) {
+    conditions.push(`fecha_checkin <= $${idx++}::date`);
+    params.push(filters.endDate);
+  }
+  if (filters?.estado) {
+    conditions.push(`estado = $${idx++}`);
+    params.push(filters.estado);
+  }
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+  const defaultLimit = filters?.startDate || filters?.endDate ? 1e3 : 250;
+  const limit = Math.min(Math.max(filters?.limit || defaultLimit, 1), 2e3);
+  const offset = Math.max(filters?.offset || 0, 0);
+  params.push(limit, offset);
   const res = await query(`
     SELECT 
       id, codigo, propiedad_id, huesped_id, tipo_huesped, 
@@ -598,9 +647,10 @@ async function getAllReservaciones() {
       COALESCE(acompanantes_amenidades, '[]'::jsonb) AS acompanantes_amenidades,
       created_at, updated_at
     FROM ${T.reservaciones()}
+    ${whereClause}
     ORDER BY fecha_checkin DESC, id DESC
-    LIMIT 250;
-  `);
+    LIMIT $${idx++} OFFSET $${idx};
+  `, params);
   return res.rows;
 }
 async function getReservacionById(id) {
@@ -619,165 +669,185 @@ async function getReservacionById(id) {
   `, [id]);
 }
 async function createReservacion(data, huespedData) {
-  const overlap = await checkReservationOverlap(data.propiedad_id, data.fecha_checkin, data.fecha_checkout);
-  if (overlap) {
-    throw new Error(`Conflicto de fechas: La unidad ya est\xE1 reservada del ${overlap.fecha_checkin} al ${overlap.fecha_checkout}`);
-  }
-  let finalHuespedId = data.huesped_id;
-  if (huespedData && huespedData.nombres) {
-    const createdGuest = await createHuesped(huespedData);
-    finalHuespedId = createdGuest.id;
-  }
-  const generatedCode = data.codigo || `RES-${Math.floor(1e5 + Math.random() * 9e5)}`;
-  const acompanantesJson = JSON.stringify(data.acompanantes || []);
-  const acompanantesAmenidadesJson = JSON.stringify(data.acompanantes_amenidades || []);
-  const res = await query(`
-    INSERT INTO ${T.reservaciones()} (
-      codigo, propiedad_id, huesped_id, tipo_huesped, 
-      fecha_checkin, fecha_checkout, numero_ocupantes, numero_autos, 
-      notas, brazaletes, vehiculo_info, estado, acompanantes, acompanantes_amenidades
-    )
-    VALUES ($1, $2, $3, $4, $5::date, $6::date, $7, $8, $9, $10, $11, $12, $13::jsonb, $14::jsonb)
-    RETURNING 
-      id, codigo, propiedad_id, huesped_id, tipo_huesped, 
-      TO_CHAR(fecha_checkin, 'YYYY-MM-DD') AS fecha_checkin, 
-      TO_CHAR(fecha_checkout, 'YYYY-MM-DD') AS fecha_checkout, 
-      numero_ocupantes, numero_autos, notas, brazaletes, vehiculo_info, 
-      estado, 
-      COALESCE(acompanantes, '[]'::jsonb) AS acompanantes,
-      COALESCE(acompanantes_amenidades, '[]'::jsonb) AS acompanantes_amenidades,
-      created_at, updated_at;
-  `, [
-    generatedCode,
-    data.propiedad_id,
-    finalHuespedId,
-    data.tipo_huesped || "Due\xF1o",
-    data.fecha_checkin,
-    data.fecha_checkout,
-    data.numero_ocupantes || 1,
-    data.numero_autos || 0,
-    data.notas || null,
-    data.brazaletes || null,
-    data.vehiculo_info || null,
-    data.estado || "Confirmada",
-    acompanantesJson,
-    acompanantesAmenidadesJson
-  ]);
-  return res.rows[0];
-}
-async function updateReservacion(id, data, huespedData) {
-  if (data.propiedad_id !== void 0 || data.fecha_checkin !== void 0 || data.fecha_checkout !== void 0) {
-    const current = await queryOne(`
-      SELECT propiedad_id, huesped_id,
-             TO_CHAR(fecha_checkin, 'YYYY-MM-DD') AS fecha_checkin,
-             TO_CHAR(fecha_checkout, 'YYYY-MM-DD') AS fecha_checkout
-      FROM ${T.reservaciones()}
-      WHERE id = $1;
-    `, [id]);
-    if (!current) throw new Error(`Reservaci\xF3n con ID ${id} no encontrada`);
-    const propId = data.propiedad_id !== void 0 ? data.propiedad_id : current.propiedad_id;
-    const checkin = data.fecha_checkin || current.fecha_checkin;
-    const checkout = data.fecha_checkout || current.fecha_checkout;
-    const overlap = await checkReservationOverlap(propId, checkin, checkout, id);
+  return withTransaction(async (client) => {
+    await client.query(`SELECT id FROM ${T.propiedades()} WHERE id = $1 FOR UPDATE;`, [data.propiedad_id]);
+    const overlap = await checkReservationOverlap(data.propiedad_id, data.fecha_checkin, data.fecha_checkout, void 0, client);
     if (overlap) {
       throw new Error(`Conflicto de fechas: La unidad ya est\xE1 reservada del ${overlap.fecha_checkin} al ${overlap.fecha_checkout}`);
     }
-    if (huespedData?.nombres && (data.huesped_id || current.huesped_id)) {
-      await updateHuesped(data.huesped_id || current.huesped_id, { nombres: huespedData.nombres });
+    let finalHuespedId = data.huesped_id;
+    if (huespedData && huespedData.nombres) {
+      const createdGuest = await createHuesped(huespedData, client);
+      finalHuespedId = createdGuest.id;
     }
-  } else if (huespedData?.nombres && data.huesped_id) {
-    await updateHuesped(data.huesped_id, { nombres: huespedData.nombres });
-  }
-  const fields = ["updated_at = CURRENT_TIMESTAMP"];
-  const values = [];
-  let idx = 1;
-  if (data.codigo !== void 0) {
-    fields.push(`codigo = $${idx++}`);
-    values.push(data.codigo);
-  }
-  if (data.propiedad_id !== void 0) {
-    fields.push(`propiedad_id = $${idx++}`);
-    values.push(data.propiedad_id);
-  }
-  if (data.huesped_id !== void 0) {
-    fields.push(`huesped_id = $${idx++}`);
-    values.push(data.huesped_id);
-  }
-  if (data.tipo_huesped !== void 0) {
-    fields.push(`tipo_huesped = $${idx++}`);
-    values.push(data.tipo_huesped);
-  }
-  if (data.fecha_checkin !== void 0) {
-    fields.push(`fecha_checkin = $${idx++}::date`);
-    values.push(data.fecha_checkin);
-  }
-  if (data.fecha_checkout !== void 0) {
-    fields.push(`fecha_checkout = $${idx++}::date`);
-    values.push(data.fecha_checkout);
-  }
-  if (data.numero_ocupantes !== void 0) {
-    fields.push(`numero_ocupantes = $${idx++}`);
-    values.push(data.numero_ocupantes);
-  }
-  if (data.numero_autos !== void 0) {
-    fields.push(`numero_autos = $${idx++}`);
-    values.push(data.numero_autos);
-  }
-  if (data.notas !== void 0) {
-    fields.push(`notas = $${idx++}`);
-    values.push(data.notas);
-  }
-  if (data.brazaletes !== void 0) {
-    fields.push(`brazaletes = $${idx++}`);
-    values.push(data.brazaletes);
-  }
-  if (data.vehiculo_info !== void 0) {
-    fields.push(`vehiculo_info = $${idx++}`);
-    values.push(data.vehiculo_info);
-  }
-  if (data.estado !== void 0) {
-    fields.push(`estado = $${idx++}`);
-    values.push(data.estado);
-  }
-  if (data.acompanantes !== void 0) {
-    fields.push(`acompanantes = $${idx++}::jsonb`);
-    values.push(JSON.stringify(data.acompanantes || []));
-  }
-  if (data.acompanantes_amenidades !== void 0) {
-    fields.push(`acompanantes_amenidades = $${idx++}::jsonb`);
-    values.push(JSON.stringify(data.acompanantes_amenidades || []));
-  }
-  values.push(id);
-  const res = await query(`
-    UPDATE ${T.reservaciones()}
-    SET ${fields.join(", ")}
-    WHERE id = $${idx}
-    RETURNING 
-      id, codigo, propiedad_id, huesped_id, tipo_huesped, 
-      TO_CHAR(fecha_checkin, 'YYYY-MM-DD') AS fecha_checkin, 
-      TO_CHAR(fecha_checkout, 'YYYY-MM-DD') AS fecha_checkout, 
-      numero_ocupantes, numero_autos, notas, brazaletes, vehiculo_info, 
-      estado, 
-      COALESCE(acompanantes, '[]'::jsonb) AS acompanantes,
-      COALESCE(acompanantes_amenidades, '[]'::jsonb) AS acompanantes_amenidades,
-      created_at, updated_at;
-  `, values);
-  return res.rows[0] || null;
+    const generatedCode = data.codigo || `RES-${Math.floor(1e5 + Math.random() * 9e5)}`;
+    const acompanantesJson = JSON.stringify(data.acompanantes || []);
+    const acompanantesAmenidadesJson = JSON.stringify(data.acompanantes_amenidades || []);
+    const res = await client.query(`
+      INSERT INTO ${T.reservaciones()} (
+        codigo, propiedad_id, huesped_id, tipo_huesped, 
+        fecha_checkin, fecha_checkout, numero_ocupantes, numero_autos, 
+        notas, brazaletes, vehiculo_info, estado, acompanantes, acompanantes_amenidades
+      )
+      VALUES ($1, $2, $3, $4, $5::date, $6::date, $7, $8, $9, $10, $11, $12, $13::jsonb, $14::jsonb)
+      RETURNING 
+        id, codigo, propiedad_id, huesped_id, tipo_huesped, 
+        TO_CHAR(fecha_checkin, 'YYYY-MM-DD') AS fecha_checkin, 
+        TO_CHAR(fecha_checkout, 'YYYY-MM-DD') AS fecha_checkout, 
+        numero_ocupantes, numero_autos, notas, brazaletes, vehiculo_info, 
+        estado, 
+        COALESCE(acompanantes, '[]'::jsonb) AS acompanantes,
+        COALESCE(acompanantes_amenidades, '[]'::jsonb) AS acompanantes_amenidades,
+        created_at, updated_at;
+    `, [
+      generatedCode,
+      data.propiedad_id,
+      finalHuespedId,
+      data.tipo_huesped || "Due\xF1o",
+      data.fecha_checkin,
+      data.fecha_checkout,
+      data.numero_ocupantes || 1,
+      data.numero_autos || 0,
+      data.notas || null,
+      data.brazaletes || null,
+      data.vehiculo_info || null,
+      data.estado || "Confirmada",
+      acompanantesJson,
+      acompanantesAmenidadesJson
+    ]);
+    return res.rows[0];
+  });
+}
+async function updateReservacion(id, data, huespedData) {
+  return withTransaction(async (client) => {
+    if (data.propiedad_id !== void 0 || data.fecha_checkin !== void 0 || data.fecha_checkout !== void 0) {
+      const currentRes = await client.query(`
+        SELECT propiedad_id, huesped_id,
+               TO_CHAR(fecha_checkin, 'YYYY-MM-DD') AS fecha_checkin,
+               TO_CHAR(fecha_checkout, 'YYYY-MM-DD') AS fecha_checkout
+        FROM ${T.reservaciones()}
+        WHERE id = $1
+        FOR UPDATE;
+      `, [id]);
+      const current = currentRes.rows[0];
+      if (!current) throw new Error(`Reservaci\xF3n con ID ${id} no encontrada`);
+      const propId = data.propiedad_id !== void 0 ? data.propiedad_id : current.propiedad_id;
+      const checkin = data.fecha_checkin || current.fecha_checkin;
+      const checkout = data.fecha_checkout || current.fecha_checkout;
+      await client.query(`SELECT id FROM ${T.propiedades()} WHERE id = $1 FOR UPDATE;`, [propId]);
+      const overlap = await checkReservationOverlap(propId, checkin, checkout, id, client);
+      if (overlap) {
+        throw new Error(`Conflicto de fechas: La unidad ya est\xE1 reservada del ${overlap.fecha_checkin} al ${overlap.fecha_checkout}`);
+      }
+      if (huespedData?.nombres && (data.huesped_id || current.huesped_id)) {
+        await updateHuesped(data.huesped_id || current.huesped_id, { nombres: huespedData.nombres }, client);
+      }
+    } else if (huespedData?.nombres && data.huesped_id) {
+      await updateHuesped(data.huesped_id, { nombres: huespedData.nombres }, client);
+    }
+    const fields = ["updated_at = CURRENT_TIMESTAMP"];
+    const values = [];
+    let idx = 1;
+    if (data.codigo !== void 0) {
+      fields.push(`codigo = $${idx++}`);
+      values.push(data.codigo);
+    }
+    if (data.propiedad_id !== void 0) {
+      fields.push(`propiedad_id = $${idx++}`);
+      values.push(data.propiedad_id);
+    }
+    if (data.huesped_id !== void 0) {
+      fields.push(`huesped_id = $${idx++}`);
+      values.push(data.huesped_id);
+    }
+    if (data.tipo_huesped !== void 0) {
+      fields.push(`tipo_huesped = $${idx++}`);
+      values.push(data.tipo_huesped);
+    }
+    if (data.fecha_checkin !== void 0) {
+      fields.push(`fecha_checkin = $${idx++}::date`);
+      values.push(data.fecha_checkin);
+    }
+    if (data.fecha_checkout !== void 0) {
+      fields.push(`fecha_checkout = $${idx++}::date`);
+      values.push(data.fecha_checkout);
+    }
+    if (data.numero_ocupantes !== void 0) {
+      fields.push(`numero_ocupantes = $${idx++}`);
+      values.push(data.numero_ocupantes);
+    }
+    if (data.numero_autos !== void 0) {
+      fields.push(`numero_autos = $${idx++}`);
+      values.push(data.numero_autos);
+    }
+    if (data.notas !== void 0) {
+      fields.push(`notas = $${idx++}`);
+      values.push(data.notas);
+    }
+    if (data.brazaletes !== void 0) {
+      fields.push(`brazaletes = $${idx++}`);
+      values.push(data.brazaletes);
+    }
+    if (data.vehiculo_info !== void 0) {
+      fields.push(`vehiculo_info = $${idx++}`);
+      values.push(data.vehiculo_info);
+    }
+    if (data.estado !== void 0) {
+      fields.push(`estado = $${idx++}`);
+      values.push(data.estado);
+    }
+    if (data.acompanantes !== void 0) {
+      fields.push(`acompanantes = $${idx++}::jsonb`);
+      values.push(JSON.stringify(data.acompanantes || []));
+    }
+    if (data.acompanantes_amenidades !== void 0) {
+      fields.push(`acompanantes_amenidades = $${idx++}::jsonb`);
+      values.push(JSON.stringify(data.acompanantes_amenidades || []));
+    }
+    values.push(id);
+    const res = await client.query(`
+      UPDATE ${T.reservaciones()}
+      SET ${fields.join(", ")}
+      WHERE id = $${idx}
+      RETURNING 
+        id, codigo, propiedad_id, huesped_id, tipo_huesped, 
+        TO_CHAR(fecha_checkin, 'YYYY-MM-DD') AS fecha_checkin, 
+        TO_CHAR(fecha_checkout, 'YYYY-MM-DD') AS fecha_checkout, 
+        numero_ocupantes, numero_autos, notas, brazaletes, vehiculo_info, 
+        estado, 
+        COALESCE(acompanantes, '[]'::jsonb) AS acompanantes,
+        COALESCE(acompanantes_amenidades, '[]'::jsonb) AS acompanantes_amenidades,
+        created_at, updated_at;
+    `, values);
+    return res.rows[0] || null;
+  });
 }
 async function deleteReservacion(id) {
   await query(`DELETE FROM ${T.reservaciones()} WHERE id = $1`, [id]);
   return { success: true, id };
 }
-async function getAllSolicitudes() {
+async function getAllSolicitudes(filters) {
+  const conditions = [];
+  const params = [];
+  let idx = 1;
+  if (filters?.estatus) {
+    conditions.push(`estatus = $${idx++}`);
+    params.push(filters.estatus);
+  }
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+  const limit = Math.min(Math.max(filters?.limit || 200, 1), 1e3);
+  const offset = Math.max(filters?.offset || 0, 0);
+  params.push(limit, offset);
   const res = await query(`
     SELECT 
       id, propiedad_id, creador_nombre, solicitud, procesador_nombre,
       TO_CHAR(fecha_esperada, 'YYYY-MM-DD') AS fecha_esperada,
       comentario, estatus, created_at
     FROM ${T.solicitudes()}
+    ${whereClause}
     ORDER BY created_at DESC, id DESC
-    LIMIT 200;
-  `);
+    LIMIT $${idx++} OFFSET $${idx};
+  `, params);
   return res.rows;
 }
 async function createSolicitud(data) {
@@ -1015,7 +1085,7 @@ async function getDatabaseHealth(includeCounts = false) {
       tableCounts["huespedes"] = parseInt(row.huespedes || "0", 10);
       tableCounts["reservaciones"] = parseInt(row.reservaciones || "0", 10);
       tableCounts["solicitudes_acceso"] = parseInt(row.solicitudes_acceso || "0", 10);
-    } catch (err) {
+    } catch {
       const tables = ["edificios", "grupos_propiedad", "usuarios", "propiedades", "propiedad_usuarios", "huespedes", "reservaciones", "solicitudes_acceso"];
       tables.forEach((t) => {
         tableCounts[t] = -1;
@@ -1036,12 +1106,18 @@ import dotenv2 from "dotenv";
 if (typeof dotenv2?.config === "function") {
   dotenv2.config();
 }
+function escapeHtml(text) {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
 async function sendBroadcastEmail(payload) {
   const host = process.env.SMTP_HOST?.trim();
   const port = parseInt(process.env.SMTP_PORT || "465", 10);
   const secure = process.env.SMTP_SECURE === "false" ? false : port === 465 || !process.env.SMTP_SECURE;
-  const user = (process.env.SMTP_USER || "integradorpro.yec@gmail.com").trim();
-  const pass = (process.env.SMTP_PASS || "qheulhyenjwsmnxa").replace(/\s+/g, "");
+  const user = (process.env.SMTP_USER || "").trim();
+  const pass = (process.env.SMTP_PASS || "").replace(/\s+/g, "");
+  if (!user || !pass) {
+    throw new Error("Faltan las variables de entorno SMTP_USER y SMTP_PASS para enviar correos.");
+  }
   const from = process.env.SMTP_FROM?.trim() || `"Las Palomas HOA" <${user}>`;
   const replyTo = process.env.SMTP_REPLY_TO?.trim() || user;
   const delayMs = parseInt(process.env.SMTP_DELAY_MS || "1200", 10);
@@ -1074,7 +1150,8 @@ async function sendBroadcastEmail(payload) {
     const rawSubject = (payload.asunto || "").trim();
     const finalSubject = rawSubject || "Comunicado Oficial \u2014 Las Palomas Seaside Golf Community";
     const personalizedBody = payload.contenido.replace(/{nombre_propietario}/g, dest.nombre || "Propietario(a)").replace(/{condominio}/g, dest.condominio || "Condominio").replace(/{torre}/g, dest.torre || "Torre").replace(/{fecha_actual}/g, (/* @__PURE__ */ new Date()).toLocaleDateString("es-MX", { dateStyle: "long" })).replace(/{administrador}/g, "Administraci\xF3n Las Palomas");
-    const previewSnippet = personalizedBody.replace(/\s+/g, " ").substring(0, 120);
+    const previewSnippet = escapeHtml(personalizedBody.replace(/\s+/g, " ").substring(0, 120));
+    const safeSubject = escapeHtml(finalSubject);
     const plainText = `${finalSubject}
 
 Estimado(a) ${dest.nombre || "Propietario(a)"}:
@@ -1086,7 +1163,7 @@ Asociaci\xF3n de Cond\xF3minos Las Palomas Seaside Golf Community
 Administraci\xF3n HOA
 Blvd. Costero 150, Sandy Beach, C.P. 83550, Puerto Pe\xF1asco, Sonora, M\xE9xico.
 Para actualizar tus preferencias de notificaci\xF3n o aclarar dudas, responde directamente a este correo.`;
-    const formattedParagraphs = personalizedBody.split("\n\n").map((p) => `<p style="margin: 0 0 16px 0; line-height: 1.6; color: #1e293b; font-size: 15px;">${p.replace(/\n/g, "<br/>")}</p>`).join("");
+    const formattedParagraphs = escapeHtml(personalizedBody).split("\n\n").map((p) => `<p style="margin: 0 0 16px 0; line-height: 1.6; color: #1e293b; font-size: 15px;">${p.replace(/\n/g, "<br/>")}</p>`).join("");
     const html = `<!DOCTYPE html>
 <html lang="es" xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -1094,7 +1171,7 @@ Para actualizar tus preferencias de notificaci\xF3n o aclarar dudas, responde di
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="color-scheme" content="light">
-  <title>${finalSubject}</title>
+  <title>${safeSubject}</title>
 </head>
 <body style="margin: 0; padding: 20px 10px; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: 100%;">
   
@@ -1116,7 +1193,7 @@ Para actualizar tus preferencias de notificaci\xF3n o aclarar dudas, responde di
     <!-- Barra de Asunto -->
     <tr>
       <td style="padding: 14px 24px; background-color: #f8fafc; border-bottom: 1px solid #e2e8f0; font-size: 13px; color: #475569;">
-        <strong style="color: #0f766e;">Asunto:</strong> ${finalSubject}
+        <strong style="color: #0f766e;">Asunto:</strong> ${safeSubject}
       </td>
     </tr>
 
@@ -1437,7 +1514,18 @@ async function handleApiRequest(req, res) {
     }
     if (resource === "reservaciones") {
       if (method === "GET" && !id) {
-        const data = await getAllReservaciones();
+        const startDate = url.searchParams.get("startDate") || void 0;
+        const endDate = url.searchParams.get("endDate") || void 0;
+        const estado = url.searchParams.get("estado") || void 0;
+        const limitParam = url.searchParams.get("limit");
+        const offsetParam = url.searchParams.get("offset");
+        const data = await getAllReservaciones({
+          startDate,
+          endDate,
+          estado,
+          limit: limitParam ? parseInt(limitParam, 10) : void 0,
+          offset: offsetParam ? parseInt(offsetParam, 10) : void 0
+        });
         sendJson(res, 200, data);
         return true;
       }
@@ -1469,7 +1557,14 @@ async function handleApiRequest(req, res) {
     }
     if (resource === "solicitudes" || resource === "solicitudes_acceso") {
       if (method === "GET" && !id) {
-        const data = await getAllSolicitudes();
+        const estatus = url.searchParams.get("estatus") || void 0;
+        const limitParam = url.searchParams.get("limit");
+        const offsetParam = url.searchParams.get("offset");
+        const data = await getAllSolicitudes({
+          estatus,
+          limit: limitParam ? parseInt(limitParam, 10) : void 0,
+          offset: offsetParam ? parseInt(offsetParam, 10) : void 0
+        });
         sendJson(res, 200, data);
         return true;
       }

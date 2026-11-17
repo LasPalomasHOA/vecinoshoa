@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Reservacion, TipoHuesped } from '../../types';
+import { Reservacion } from '../../types';
 import { DeleteConfirmModal } from '../common/DeleteConfirmModal';
 import { 
   KeyRound, 
@@ -11,10 +11,8 @@ import {
   Car, 
   CheckCircle, 
   Eye, 
-  Filter, 
   Edit3, 
   Trash2, 
-  Phone, 
   Plus, 
   Users,
   QrCode,
@@ -53,43 +51,55 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
   const [reservationToDelete, setReservationToDelete] = useState<Reservacion | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  const filteredReservations = reservaciones.filter(res => {
-    const prop = getPropiedadById(res.propiedad_id);
-    const huesped = getHuespedById(res.huesped_id);
+  const filteredReservations = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    const targetEdificioId = edificioFilter !== 'ALL' ? parseInt(edificioFilter, 10) : null;
 
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      const matchCode = res.codigo?.toLowerCase().includes(q) || `${res.id}`.includes(q);
-      const matchProp = prop?.nombre.toLowerCase().includes(q);
-      const matchHuesped = huesped?.nombres ? huesped.nombres.toLowerCase().includes(q) : false;
-      const matchAcompanantes = Array.isArray(res.acompanantes) 
-        ? res.acompanantes.some(a => a.nombre_completo.toLowerCase().includes(q))
-        : false;
-      const matchBrazaletes = res.brazaletes?.toLowerCase().includes(q);
-      const matchVehiculo = res.vehiculo_info?.toLowerCase().includes(q);
-      if (!matchCode && !matchProp && !matchHuesped && !matchAcompanantes && !matchBrazaletes && !matchVehiculo) {
-        return false;
+    return reservaciones.filter(res => {
+      const prop = getPropiedadById(res.propiedad_id);
+      const huesped = getHuespedById(res.huesped_id);
+
+      if (q) {
+        const matchCode = res.codigo?.toLowerCase().includes(q) || `${res.id}`.includes(q);
+        const matchProp = prop?.nombre.toLowerCase().includes(q);
+        const matchHuesped = huesped?.nombres ? huesped.nombres.toLowerCase().includes(q) : false;
+        const matchAcompanantes = Array.isArray(res.acompanantes) 
+          ? res.acompanantes.some(a => a.nombre_completo.toLowerCase().includes(q))
+          : false;
+        const matchBrazaletes = res.brazaletes?.toLowerCase().includes(q);
+        const matchVehiculo = res.vehiculo_info?.toLowerCase().includes(q);
+        if (!matchCode && !matchProp && !matchHuesped && !matchAcompanantes && !matchBrazaletes && !matchVehiculo) {
+          return false;
+        }
       }
+
+      if (statusFilter !== 'ALL') {
+        if (statusFilter === 'IN_HOUSE' && res.estado !== 'En Casa (Checked-in)') return false;
+        if (statusFilter === 'CHECKED_OUT' && res.estado !== 'Checked-out') return false;
+        if (statusFilter === 'PENDING' && res.estado !== 'Pendiente' && res.estado !== 'Confirmada') return false;
+      }
+
+      if (tipoFilter !== 'ALL' && res.tipo_huesped !== tipoFilter) return false;
+
+      if (targetEdificioId !== null) {
+        if (!prop || prop.edificio_id !== targetEdificioId) return false;
+      }
+
+      return true;
+    });
+  }, [reservaciones, searchQuery, statusFilter, tipoFilter, edificioFilter, getPropiedadById, getHuespedById]);
+
+  const { inHouseCount, pendingCount, checkedOutCount } = useMemo(() => {
+    let inHouse = 0;
+    let pending = 0;
+    let checkedOut = 0;
+    for (const r of reservaciones) {
+      if (r.estado === 'En Casa (Checked-in)') inHouse++;
+      else if (r.estado === 'Confirmada' || r.estado === 'Pendiente') pending++;
+      else if (r.estado === 'Checked-out') checkedOut++;
     }
-
-    if (statusFilter !== 'ALL') {
-      if (statusFilter === 'IN_HOUSE' && res.estado !== 'En Casa (Checked-in)') return false;
-      if (statusFilter === 'CHECKED_OUT' && res.estado !== 'Checked-out') return false;
-      if (statusFilter === 'PENDING' && res.estado !== 'Pendiente' && res.estado !== 'Confirmada') return false;
-    }
-
-    if (tipoFilter !== 'ALL' && res.tipo_huesped !== tipoFilter) return false;
-
-    if (edificioFilter !== 'ALL') {
-      if (prop && prop.edificio_id !== parseInt(edificioFilter)) return false;
-    }
-
-    return true;
-  });
-
-  const inHouseCount = reservaciones.filter(r => r.estado === 'En Casa (Checked-in)').length;
-  const pendingCount = reservaciones.filter(r => r.estado === 'Confirmada' || r.estado === 'Pendiente').length;
-  const checkedOutCount = reservaciones.filter(r => r.estado === 'Checked-out').length;
+    return { inHouseCount: inHouse, pendingCount: pending, checkedOutCount: checkedOut };
+  }, [reservaciones]);
 
   return (
     <div className="space-y-5">
@@ -336,7 +346,6 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
                   const estadoBadge = getEstadoBadge();
 
                   // Clean Brazaletes text
-                  const hasValidBrazaletes = res.brazaletes && res.brazaletes !== 'x' && res.brazaletes !== 'X';
                   const isBrazaletesPendiente = res.brazaletes === 'Pendiente';
 
                   // Clean Vehículo text

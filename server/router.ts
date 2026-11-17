@@ -329,7 +329,18 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
     // -------------------------------------------------------------
     if (resource === 'reservaciones') {
       if (method === 'GET' && !id) {
-        const data = await hoaService.getAllReservaciones();
+        const startDate = url.searchParams.get('startDate') || undefined;
+        const endDate = url.searchParams.get('endDate') || undefined;
+        const estado = url.searchParams.get('estado') || undefined;
+        const limitParam = url.searchParams.get('limit');
+        const offsetParam = url.searchParams.get('offset');
+        const data = await hoaService.getAllReservaciones({
+          startDate,
+          endDate,
+          estado,
+          limit: limitParam ? parseInt(limitParam, 10) : undefined,
+          offset: offsetParam ? parseInt(offsetParam, 10) : undefined,
+        });
         sendJson(res, 200, data);
         return true;
       }
@@ -365,7 +376,14 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
     // -------------------------------------------------------------
     if (resource === 'solicitudes' || resource === 'solicitudes_acceso') {
       if (method === 'GET' && !id) {
-        const data = await hoaService.getAllSolicitudes();
+        const estatus = url.searchParams.get('estatus') || undefined;
+        const limitParam = url.searchParams.get('limit');
+        const offsetParam = url.searchParams.get('offset');
+        const data = await hoaService.getAllSolicitudes({
+          estatus,
+          limit: limitParam ? parseInt(limitParam, 10) : undefined,
+          offset: offsetParam ? parseInt(offsetParam, 10) : undefined,
+        });
         sendJson(res, 200, data);
         return true;
       }
