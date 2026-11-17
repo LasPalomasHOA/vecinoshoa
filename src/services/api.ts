@@ -112,7 +112,16 @@ export const huespedesApi = {
 
 // 7. Reservaciones API
 export const reservacionesApi = {
-  getAll: () => request<Reservacion[]>('/reservaciones'),
+  getAll: (params?: { startDate?: string; endDate?: string; estado?: string; limit?: number; offset?: number }) => {
+    const qs = new URLSearchParams();
+    if (params?.startDate) qs.set('startDate', params.startDate);
+    if (params?.endDate) qs.set('endDate', params.endDate);
+    if (params?.estado) qs.set('estado', params.estado);
+    if (params?.limit !== undefined) qs.set('limit', String(params.limit));
+    if (params?.offset !== undefined) qs.set('offset', String(params.offset));
+    const queryStr = qs.toString();
+    return request<Reservacion[]>(`/reservaciones${queryStr ? `?${queryStr}` : ''}`);
+  },
   getById: (id: number) => request<Reservacion>(`/reservaciones/${id}`),
   create: (data: Omit<Reservacion, 'id'>, huespedData?: Partial<Huesped>) => 
     request<Reservacion>('/reservaciones', { 

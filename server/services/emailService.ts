@@ -39,14 +39,23 @@ export async function sendBroadcastEmail(payload: {
   const replyTo = process.env.SMTP_REPLY_TO?.trim() || user;
   const delayMs = parseInt(process.env.SMTP_DELAY_MS || '1200', 10);
 
-  // Configuración de transporte
+  const userDomain = user.split('@')[1]?.toLowerCase();
+  const fromDomain = (from.match(/@([^\s>]+)/)?.[1] || '').toLowerCase();
+  if ((!host || host.includes('gmail')) && userDomain && fromDomain && userDomain !== fromDomain) {
+    console.warn(`[SMTP Warning] SMTP_FROM (${fromDomain}) no coincide con SMTP_USER (${userDomain}); esto puede provocar fallos DMARC y envío a spam.`);
+  }
+
+  // Configuración de transporte con pool SMTP para reutilizar la conexión en envíos múltiples
   let transporter: any;
 
-  if (host && process.env.SMTP_USER && process.env.SMTP_PASS) {
+  if (host) {
     transporter = nodemailer.createTransport({
       host,
       port,
       secure,
+      pool: true,
+      maxConnections: 3,
+      maxMessages: 50,
       auth: {
         user,
         pass
@@ -58,6 +67,9 @@ export async function sendBroadcastEmail(payload: {
   } else {
     transporter = nodemailer.createTransport({
       service: 'gmail',
+      pool: true,
+      maxConnections: 3,
+      maxMessages: 50,
       auth: {
         user,
         pass
@@ -65,10 +77,15 @@ export async function sendBroadcastEmail(payload: {
     });
   }
 
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const results: Array<{ email: string; success: boolean; error?: string }> = [];
 
-  for (const dest of payload.destinatarios) {
-    if (!dest.email || !dest.email.includes('@')) continue;
+  try {
+    for (const dest of payload.destinatarios) {
+      if (!dest.email || !emailRegex.test(dest.email.trim())) {
+        results.push({ email: dest.email || '', success: false, error: 'Correo electrónico inválido' });
+        continue;
+      }
 
     const rawSubject = (payload.asunto || '').trim();
     const finalSubject = rawSubject || 'Comunicado Oficial — Las Palomas Seaside Golf Community';
@@ -84,8 +101,8 @@ export async function sendBroadcastEmail(payload: {
     const previewSnippet = escapeHtml(personalizedBody.replace(/\s+/g, ' ').substring(0, 120));
     const safeSubject = escapeHtml(finalSubject);
 
-    // Clean plain text version (Crucial for SpamAssassin and filters that check multipart/alternative balance)
-    const plainText = `${finalSubject}\n\nEstimado(a) ${dest.nombre || 'Propietario(a)'}:\n\n${personalizedBody}\n\n---\nAsociación de Condóminos Las Palomas Seaside Golf Community\nAdministración HOA\nBlvd. Costero 150, Sandy Beach, C.P. 83550, Puerto Peñasco, Sonora, México.\nPara actualizar tus preferencias de notificación o aclarar dudas, responde directamente a este correo.`;
+    // Clean plain text version aligned 1:1 with HTML body
+    const plainText = `${finalSubject}\n\n${personalizedBody}\n\n---\nAsociación de Condóminos Las Palomas Seaside Golf Community\nAdministración HOA\nBlvd. Costero 150, Sandy Beach, C.P. 83550, Puerto Peñasco, Sonora, México.\nRecibes este comunicado oficial como propietario o residente registrado en Las Palomas.\nSi deseas modificar tus canales de contacto o consideras que recibiste esto por error, responde directamente a este correo.`;
 
     // Formatear párrafos limpios (escapando HTML antes de insertar etiquetas <p> y <br/>)
     const formattedParagraphs = escapeHtml(personalizedBody)
@@ -155,20 +172,16 @@ export async function sendBroadcastEmail(payload: {
     const uniqueMessageId = `<hoanotif-${Date.now()}-${Math.random().toString(36).substring(2, 9)}@${senderDomain}>`;
 
     try {
-      // Envío con cabeceras estándar requeridas por Gmail y Yahoo (RFC 2369 / RFC 8058)
       await transporter.sendMail({
         from,
-        to: dest.email,
+        to: dest.email.trim(),
         replyTo,
         subject: finalSubject,
         text: plainText,
         html,
         messageId: uniqueMessageId,
         headers: {
-          'X-Mailer': 'LasPalomas-HOA-Notification/2.0',
-          'Precedence': 'bulk',
           'List-Unsubscribe': `<mailto:${replyTo}?subject=Cancelar-Suscripcion>`,
-          'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
           'X-Auto-Response-Suppress': 'OOF, AutoReply'
         }
       });
@@ -181,6 +194,11 @@ export async function sendBroadcastEmail(payload: {
     // Delay preventivo entre envíos para no disparar los filtros de ráfaga/burst de Gmail / Outlook
     if (payload.destinatarios.length > 1) {
       await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+    }
+  } finally {
+    if (typeof transporter?.close === 'function') {
+      transporter.close();
     }
   }
 

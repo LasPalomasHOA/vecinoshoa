@@ -4,6 +4,7 @@ import { useAuth } from './context/AuthContext';
 import { Sidebar } from './components/layout/Sidebar';
 import { Navbar } from './components/layout/Navbar';
 import { ToastContainer } from './components/common/ToastContainer';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { LoginView } from './components/auth/LoginView';
 
 // Views (Primary eager, secondary lazy-loaded to reduce initial bundle egress)
@@ -33,7 +34,7 @@ import { Reservacion, Propiedad, Usuario, SolicitudAcceso } from './types';
 
 export const App: React.FC = () => {
   const { activeTab, setActiveTab } = useApp();
-  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   // Modal states
   const [isResModalOpen, setIsResModalOpen] = useState(false);
@@ -152,11 +153,12 @@ export const App: React.FC = () => {
         {/* Content Container */}
         <main className="flex-1 p-6 max-w-7xl w-full mx-auto print:p-0 print:m-0 print:max-w-none print:w-full print:block">
           
-          <Suspense fallback={
-            <div className="flex items-center justify-center py-20 text-xs font-semibold text-slate-400">
-              Cargando módulo...
-            </div>
-          }>
+          <ErrorBoundary resetKey={activeTab}>
+            <Suspense fallback={
+              <div className="flex items-center justify-center py-20 text-xs font-semibold text-slate-400">
+                Cargando módulo...
+              </div>
+            }>
             {/* Module Views */}
             {activeTab === 'inicio' && (
               <InicioView
@@ -217,7 +219,8 @@ export const App: React.FC = () => {
             {activeTab === 'bitacora' && (
               <BitacoraView />
             )}
-          </Suspense>
+            </Suspense>
+          </ErrorBoundary>
 
         </main>
 

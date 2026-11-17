@@ -44,6 +44,20 @@ export function sendJson(res: ServerResponse, statusCode: number, data: any) {
   res.end(JSON.stringify(data));
 }
 
+function badRequest(res: ServerResponse, message: string): true {
+  sendJson(res, 400, { error: message });
+  return true;
+}
+
+const isNonEmptyString = (val: unknown): val is string =>
+  typeof val === 'string' && val.trim().length > 0;
+
+const isPositiveInt = (val: unknown): boolean =>
+  typeof val === 'number' && Number.isInteger(val) && val > 0;
+
+const isValidDateStr = (val: unknown): val is string =>
+  typeof val === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(val);
+
 export async function handleApiRequest(req: IncomingMessage, res: ServerResponse): Promise<boolean> {
   const method = (req.method || 'GET').toUpperCase();
 
@@ -147,6 +161,9 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
       }
       if (method === 'POST') {
         const body = await parseJsonBody(req);
+        if (!isNonEmptyString(body.nombre)) {
+          return badRequest(res, 'El nombre del edificio es obligatorio.');
+        }
         const created = await hoaService.createEdificio(body);
         sendJson(res, 201, created);
         return true;
@@ -181,6 +198,9 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
       }
       if (method === 'POST') {
         const body = await parseJsonBody(req);
+        if (!isNonEmptyString(body.nombre)) {
+          return badRequest(res, 'El nombre del grupo es obligatorio.');
+        }
         const created = await hoaService.createGrupo(body);
         sendJson(res, 201, created);
         return true;
@@ -215,6 +235,12 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
       }
       if (method === 'POST') {
         const body = await parseJsonBody(req);
+        if (!isNonEmptyString(body.email) || !body.email.includes('@')) {
+          return badRequest(res, 'Un correo electrónico válido es obligatorio.');
+        }
+        if (!isNonEmptyString(body.nombre) || !isNonEmptyString(body.apellido)) {
+          return badRequest(res, 'El nombre y apellido del usuario son obligatorios.');
+        }
         const created = await hoaService.createUsuario(body);
         sendJson(res, 201, created);
         return true;
@@ -250,6 +276,9 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
       if (method === 'POST') {
         const body = await parseJsonBody(req);
         const { ownerId, ...propData } = body;
+        if (!isNonEmptyString(propData.nombre) || !isPositiveInt(Number(propData.edificio_id))) {
+          return badRequest(res, 'El nombre de la propiedad y un edificio_id válido son obligatorios.');
+        }
         const created = await hoaService.createPropiedad(propData, ownerId);
         sendJson(res, 201, created);
         return true;
@@ -307,6 +336,9 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
       }
       if (method === 'POST') {
         const body = await parseJsonBody(req);
+        if (!isNonEmptyString(body.nombres)) {
+          return badRequest(res, 'El nombre del huésped es obligatorio.');
+        }
         const created = await hoaService.createHuesped(body);
         sendJson(res, 201, created);
         return true;
@@ -353,6 +385,18 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
       if (method === 'POST') {
         const body = await parseJsonBody(req);
         const { huespedData, ...resData } = body;
+        if (!isPositiveInt(Number(resData.propiedad_id))) {
+          return badRequest(res, 'Un propiedad_id válido es obligatorio.');
+        }
+        if (!isValidDateStr(resData.fecha_checkin) || !isValidDateStr(resData.fecha_checkout)) {
+          return badRequest(res, 'Las fechas fecha_checkin y fecha_checkout (YYYY-MM-DD) son obligatorias.');
+        }
+        if (resData.fecha_checkout < resData.fecha_checkin) {
+          return badRequest(res, 'La fecha de salida no puede ser anterior a la fecha de entrada.');
+        }
+        if (!isPositiveInt(Number(resData.huesped_id)) && !isNonEmptyString(huespedData?.nombres)) {
+          return badRequest(res, 'Debe especificar un huesped_id o el nombre del huésped.');
+        }
         const created = await hoaService.createReservacion(resData, huespedData);
         sendJson(res, 201, created);
         return true;
@@ -360,6 +404,15 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
       if ((method === 'PUT' || method === 'PATCH') && id) {
         const body = await parseJsonBody(req);
         const { huespedData, ...resData } = body;
+        if (resData.fecha_checkin !== undefined && !isValidDateStr(resData.fecha_checkin)) {
+          return badRequest(res, 'Formato inválido para fecha_checkin (YYYY-MM-DD).');
+        }
+        if (resData.fecha_checkout !== undefined && !isValidDateStr(resData.fecha_checkout)) {
+          return badRequest(res, 'Formato inválido para fecha_checkout (YYYY-MM-DD).');
+        }
+        if (resData.fecha_checkin && resData.fecha_checkout && resData.fecha_checkout < resData.fecha_checkin) {
+          return badRequest(res, 'La fecha de salida no puede ser anterior a la fecha de entrada.');
+        }
         const updated = await hoaService.updateReservacion(id, resData, huespedData);
         sendJson(res, 200, updated);
         return true;
@@ -389,6 +442,9 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
       }
       if (method === 'POST') {
         const body = await parseJsonBody(req);
+        if (!isPositiveInt(Number(body.propiedad_id)) || !isNonEmptyString(body.solicitud) || !isValidDateStr(body.fecha_esperada)) {
+          return badRequest(res, 'propiedad_id, solicitud y fecha_esperada (YYYY-MM-DD) son obligatorios.');
+        }
         const created = await hoaService.createSolicitud(body);
         sendJson(res, 201, created);
         return true;
@@ -429,6 +485,9 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
     if (resource === 'comunicados') {
       if (method === 'POST') {
         const body = await parseJsonBody(req);
+        if (!isNonEmptyString(body.asunto) || !isNonEmptyString(body.contenido) || !Array.isArray(body.destinatarios) || body.destinatarios.length === 0) {
+          return badRequest(res, 'asunto, contenido y al menos un destinatario son obligatorios.');
+        }
         const result = await sendBroadcastEmail(body);
         sendJson(res, 200, result);
         return true;

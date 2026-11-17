@@ -33,6 +33,7 @@ interface AppContextType {
   isLoading: boolean;
   error: string | null;
   refreshAllData: () => Promise<void>;
+  fetchReservacionesByRange: (startDate: string, endDate: string) => Promise<void>;
   
   // Database Tables State
   edificios: Edificio[];
@@ -373,6 +374,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             localStorage.setItem('lp_bitacora_logs', JSON.stringify(sortedBitacora));
           } catch {}
         }
+        fetchedRangesRef.current.clear();
       } catch (err: any) {
         console.error('Error fetching database records:', err);
         setError(err.message || 'Error al conectar con la base de datos');
@@ -383,6 +385,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     })();
 
     inFlightRefreshRef.current = promise;
+    return promise;
+  }, []);
+
+  const fetchedRangesRef = useRef<Set<string>>(new Set());
+  const inFlightRangesRef = useRef<Map<string, Promise<void>>>(new Map());
+
+  const fetchReservacionesByRange = useCallback(async (startDate: string, endDate: string) => {
+    if (!startDate || !endDate) return;
+    const rangeKey = `${startDate}:${endDate}`;
+    if (fetchedRangesRef.current.has(rangeKey)) return;
+    const existing = inFlightRangesRef.current.get(rangeKey);
+    if (existing) return existing;
+
+    const promise = (async () => {
+      try {
+        const rangeData = await api.reservaciones.getAll({ startDate, endDate, limit: 1000 });
+        if (Array.isArray(rangeData) && rangeData.length > 0) {
+          setReservaciones(prev => {
+            const byId = new Map(prev.map(r => [r.id, r]));
+            for (const r of rangeData) {
+              byId.set(r.id, r);
+            }
+            return Array.from(byId.values()).sort((a, b) =>
+              b.fecha_checkin.localeCompare(a.fecha_checkin) || b.id - a.id
+            );
+          });
+        }
+        fetchedRangesRef.current.add(rangeKey);
+      } catch (err: any) {
+        console.warn('[fetchReservacionesByRange]:', err.message);
+      } finally {
+        inFlightRangesRef.current.delete(rangeKey);
+      }
+    })();
+
+    inFlightRangesRef.current.set(rangeKey, promise);
     return promise;
   }, []);
 
@@ -1066,6 +1104,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isLoading,
         error,
         refreshAllData,
+        fetchReservacionesByRange,
         edificios,
         grupos,
         usuarios,

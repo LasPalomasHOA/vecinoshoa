@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, X, Smartphone, Monitor, Copy, Check, Sparkles, Building, User } from 'lucide-react';
+import { Mail, X, Smartphone, Monitor, Copy, Check, Sparkles, Building } from 'lucide-react';
 import { DestinatarioComunicado, CategoriaComunicado } from '../../types';
 
 interface EmailPreviewModalProps {
@@ -18,7 +18,7 @@ export const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
   onClose,
   asunto,
   cuerpo,
-  categoria,
+  categoria: _categoria,
   destinatarios,
   remitenteNombre = 'Administración Las Palomas HOA',
   remitenteEmail = 'admin@laspalomas.com'

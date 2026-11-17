@@ -1,9 +1,9 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
-import { MapPin, KeyRound, Clock, Building2, Sparkles, ShieldCheck } from 'lucide-react';
+import { MapPin, KeyRound, Clock, Building2 } from 'lucide-react';
 
 export const HeroBanner: React.FC = () => {
-  const { reservaciones, propiedades, solicitudes } = useApp();
+  const { reservaciones, propiedades } = useApp();
 
   const inHouseCount = reservaciones.filter(r => r.estado === 'En Casa (Checked-in)').length;
   const pendingCheckins = reservaciones.filter(r => r.estado === 'Confirmada' || r.estado === 'Pendiente').length;

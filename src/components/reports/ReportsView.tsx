@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { 
   Printer, 
@@ -19,7 +19,8 @@ export const ReportsView: React.FC = () => {
     edificios, 
     searchQuery,
     getPropiedadById, 
-    getHuespedById 
+    getHuespedById,
+    fetchReservacionesByRange
   } = useApp();
 
   const [startDate, setStartDate] = useState(() => {
@@ -34,6 +35,12 @@ export const ReportsView: React.FC = () => {
   const [edificioFilter, setEdificioFilter] = useState('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const [tipoFilter, setTipoFilter] = useState('ALL');
+
+  useEffect(() => {
+    if (startDate && endDate && startDate <= endDate) {
+      fetchReservacionesByRange(startDate, endDate);
+    }
+  }, [startDate, endDate, fetchReservacionesByRange]);
 
   // Month formatter helper
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -143,22 +150,8 @@ export const ReportsView: React.FC = () => {
       const rawComps = Array.isArray(res.acompanantes) ? res.acompanantes.filter(a => a.id !== 'titular') : [];
       const numExtra = rawComps.length > 0 ? rawComps.length : (res.numero_ocupantes > 1 ? res.numero_ocupantes - 1 : 0);
       let guestText = `${escapeHtml(guestName)}${numExtra > 0 ? ` +${numExtra}` : ''}`;
-      if (res.codigo === '2551222' || res.notas?.includes('Breneida Camacho')) {
-        guestText = 'Breneida Camacho +6<br/>BRAZALETES ONLY';
-      } else if (res.codigo === '2551271' || res.notas?.includes('Karely Hernandez')) {
-        guestText = 'Karely Hernandez +5<br/>BRAZALETES ONLY';
-      } else if (res.codigo === '2532006' || res.notas?.includes('Eddie Darwin Lacy Jr')) {
-        guestText = 'Eddie Darwin Lacy Jr<br/>+3';
-      } else if (res.codigo === '2565272' || res.notas?.includes('Joel Ramirez')) {
-        guestText = 'Joel Ramirez +7 SOLO<br/>BRAZALETES';
-      } else if (res.codigo === '2569009' || res.notas?.includes('Kim Jensen')) {
-        guestText = 'Kim Jensen and Shelly<br/>Marino SOLO';
-      } else if (res.codigo === '2557584' || res.notas?.includes('Zamorano')) {
-        guestText = 'Verónica Zamorano +<br/>5';
-      } else if (res.codigo === '2566312' || res.notas?.includes('Roberto Dominguez')) {
-        guestText = 'Roberto Dominguez +<br/>1';
-      } else if (res.notas && (res.notas.includes('BRAZALETES') || res.notas.includes('SOLO'))) {
-        guestText = escapeHtml(res.notas);
+      if (res.notas && (res.notas.includes('BRAZALETES') || res.notas.includes('SOLO'))) {
+        guestText = `${guestText}<br/>${escapeHtml(res.notas)}`;
       }
 
       const tipoFormatted = formatTipo(res.tipo_huesped);

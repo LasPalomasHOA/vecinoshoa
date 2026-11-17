@@ -1121,12 +1121,20 @@ async function sendBroadcastEmail(payload) {
   const from = process.env.SMTP_FROM?.trim() || `"Las Palomas HOA" <${user}>`;
   const replyTo = process.env.SMTP_REPLY_TO?.trim() || user;
   const delayMs = parseInt(process.env.SMTP_DELAY_MS || "1200", 10);
+  const userDomain = user.split("@")[1]?.toLowerCase();
+  const fromDomain = (from.match(/@([^\s>]+)/)?.[1] || "").toLowerCase();
+  if ((!host || host.includes("gmail")) && userDomain && fromDomain && userDomain !== fromDomain) {
+    console.warn(`[SMTP Warning] SMTP_FROM (${fromDomain}) no coincide con SMTP_USER (${userDomain}); esto puede provocar fallos DMARC y env\xEDo a spam.`);
+  }
   let transporter;
-  if (host && process.env.SMTP_USER && process.env.SMTP_PASS) {
+  if (host) {
     transporter = nodemailer.createTransport({
       host,
       port,
       secure,
+      pool: true,
+      maxConnections: 3,
+      maxMessages: 50,
       auth: {
         user,
         pass
@@ -1138,23 +1146,29 @@ async function sendBroadcastEmail(payload) {
   } else {
     transporter = nodemailer.createTransport({
       service: "gmail",
+      pool: true,
+      maxConnections: 3,
+      maxMessages: 50,
       auth: {
         user,
         pass
       }
     });
   }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const results = [];
-  for (const dest of payload.destinatarios) {
-    if (!dest.email || !dest.email.includes("@")) continue;
-    const rawSubject = (payload.asunto || "").trim();
-    const finalSubject = rawSubject || "Comunicado Oficial \u2014 Las Palomas Seaside Golf Community";
-    const personalizedBody = payload.contenido.replace(/{nombre_propietario}/g, dest.nombre || "Propietario(a)").replace(/{condominio}/g, dest.condominio || "Condominio").replace(/{torre}/g, dest.torre || "Torre").replace(/{fecha_actual}/g, (/* @__PURE__ */ new Date()).toLocaleDateString("es-MX", { dateStyle: "long" })).replace(/{administrador}/g, "Administraci\xF3n Las Palomas");
-    const previewSnippet = escapeHtml(personalizedBody.replace(/\s+/g, " ").substring(0, 120));
-    const safeSubject = escapeHtml(finalSubject);
-    const plainText = `${finalSubject}
-
-Estimado(a) ${dest.nombre || "Propietario(a)"}:
+  try {
+    for (const dest of payload.destinatarios) {
+      if (!dest.email || !emailRegex.test(dest.email.trim())) {
+        results.push({ email: dest.email || "", success: false, error: "Correo electr\xF3nico inv\xE1lido" });
+        continue;
+      }
+      const rawSubject = (payload.asunto || "").trim();
+      const finalSubject = rawSubject || "Comunicado Oficial \u2014 Las Palomas Seaside Golf Community";
+      const personalizedBody = payload.contenido.replace(/{nombre_propietario}/g, dest.nombre || "Propietario(a)").replace(/{condominio}/g, dest.condominio || "Condominio").replace(/{torre}/g, dest.torre || "Torre").replace(/{fecha_actual}/g, (/* @__PURE__ */ new Date()).toLocaleDateString("es-MX", { dateStyle: "long" })).replace(/{administrador}/g, "Administraci\xF3n Las Palomas");
+      const previewSnippet = escapeHtml(personalizedBody.replace(/\s+/g, " ").substring(0, 120));
+      const safeSubject = escapeHtml(finalSubject);
+      const plainText = `${finalSubject}
 
 ${personalizedBody}
 
@@ -1162,9 +1176,10 @@ ${personalizedBody}
 Asociaci\xF3n de Cond\xF3minos Las Palomas Seaside Golf Community
 Administraci\xF3n HOA
 Blvd. Costero 150, Sandy Beach, C.P. 83550, Puerto Pe\xF1asco, Sonora, M\xE9xico.
-Para actualizar tus preferencias de notificaci\xF3n o aclarar dudas, responde directamente a este correo.`;
-    const formattedParagraphs = escapeHtml(personalizedBody).split("\n\n").map((p) => `<p style="margin: 0 0 16px 0; line-height: 1.6; color: #1e293b; font-size: 15px;">${p.replace(/\n/g, "<br/>")}</p>`).join("");
-    const html = `<!DOCTYPE html>
+Recibes este comunicado oficial como propietario o residente registrado en Las Palomas.
+Si deseas modificar tus canales de contacto o consideras que recibiste esto por error, responde directamente a este correo.`;
+      const formattedParagraphs = escapeHtml(personalizedBody).split("\n\n").map((p) => `<p style="margin: 0 0 16px 0; line-height: 1.6; color: #1e293b; font-size: 15px;">${p.replace(/\n/g, "<br/>")}</p>`).join("");
+      const html = `<!DOCTYPE html>
 <html lang="es" xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="utf-8">
@@ -1218,32 +1233,34 @@ Para actualizar tus preferencias de notificaci\xF3n o aclarar dudas, responde di
   </table>
 </body>
 </html>`;
-    const senderDomain = from.includes("@") ? from.split("@")[1].replace(/>.*/, "").trim() : "laspalomas.com";
-    const uniqueMessageId = `<hoanotif-${Date.now()}-${Math.random().toString(36).substring(2, 9)}@${senderDomain}>`;
-    try {
-      await transporter.sendMail({
-        from,
-        to: dest.email,
-        replyTo,
-        subject: finalSubject,
-        text: plainText,
-        html,
-        messageId: uniqueMessageId,
-        headers: {
-          "X-Mailer": "LasPalomas-HOA-Notification/2.0",
-          "Precedence": "bulk",
-          "List-Unsubscribe": `<mailto:${replyTo}?subject=Cancelar-Suscripcion>`,
-          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-          "X-Auto-Response-Suppress": "OOF, AutoReply"
-        }
-      });
-      results.push({ email: dest.email, success: true });
-    } catch (err) {
-      console.error(`[SMTP Error to ${dest.email}]:`, err.message);
-      results.push({ email: dest.email, success: false, error: err.message });
+      const senderDomain = from.includes("@") ? from.split("@")[1].replace(/>.*/, "").trim() : "laspalomas.com";
+      const uniqueMessageId = `<hoanotif-${Date.now()}-${Math.random().toString(36).substring(2, 9)}@${senderDomain}>`;
+      try {
+        await transporter.sendMail({
+          from,
+          to: dest.email.trim(),
+          replyTo,
+          subject: finalSubject,
+          text: plainText,
+          html,
+          messageId: uniqueMessageId,
+          headers: {
+            "List-Unsubscribe": `<mailto:${replyTo}?subject=Cancelar-Suscripcion>`,
+            "X-Auto-Response-Suppress": "OOF, AutoReply"
+          }
+        });
+        results.push({ email: dest.email, success: true });
+      } catch (err) {
+        console.error(`[SMTP Error to ${dest.email}]:`, err.message);
+        results.push({ email: dest.email, success: false, error: err.message });
+      }
+      if (payload.destinatarios.length > 1) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
     }
-    if (payload.destinatarios.length > 1) {
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
+  } finally {
+    if (typeof transporter?.close === "function") {
+      transporter.close();
     }
   }
   return {
@@ -1280,6 +1297,13 @@ function sendJson(res, statusCode, data) {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.end(JSON.stringify(data));
 }
+function badRequest(res, message) {
+  sendJson(res, 400, { error: message });
+  return true;
+}
+var isNonEmptyString = (val) => typeof val === "string" && val.trim().length > 0;
+var isPositiveInt = (val) => typeof val === "number" && Number.isInteger(val) && val > 0;
+var isValidDateStr = (val) => typeof val === "string" && /^\d{4}-\d{2}-\d{2}$/.test(val);
 async function handleApiRequest(req, res) {
   const method = (req.method || "GET").toUpperCase();
   if (method === "OPTIONS") {
@@ -1356,6 +1380,9 @@ async function handleApiRequest(req, res) {
       }
       if (method === "POST") {
         const body = await parseJsonBody(req);
+        if (!isNonEmptyString(body.nombre)) {
+          return badRequest(res, "El nombre del edificio es obligatorio.");
+        }
         const created = await createEdificio(body);
         sendJson(res, 201, created);
         return true;
@@ -1386,6 +1413,9 @@ async function handleApiRequest(req, res) {
       }
       if (method === "POST") {
         const body = await parseJsonBody(req);
+        if (!isNonEmptyString(body.nombre)) {
+          return badRequest(res, "El nombre del grupo es obligatorio.");
+        }
         const created = await createGrupo(body);
         sendJson(res, 201, created);
         return true;
@@ -1416,6 +1446,12 @@ async function handleApiRequest(req, res) {
       }
       if (method === "POST") {
         const body = await parseJsonBody(req);
+        if (!isNonEmptyString(body.email) || !body.email.includes("@")) {
+          return badRequest(res, "Un correo electr\xF3nico v\xE1lido es obligatorio.");
+        }
+        if (!isNonEmptyString(body.nombre) || !isNonEmptyString(body.apellido)) {
+          return badRequest(res, "El nombre y apellido del usuario son obligatorios.");
+        }
         const created = await createUsuario(body);
         sendJson(res, 201, created);
         return true;
@@ -1447,6 +1483,9 @@ async function handleApiRequest(req, res) {
       if (method === "POST") {
         const body = await parseJsonBody(req);
         const { ownerId, ...propData } = body;
+        if (!isNonEmptyString(propData.nombre) || !isPositiveInt(Number(propData.edificio_id))) {
+          return badRequest(res, "El nombre de la propiedad y un edificio_id v\xE1lido son obligatorios.");
+        }
         const created = await createPropiedad(propData, ownerId);
         sendJson(res, 201, created);
         return true;
@@ -1496,6 +1535,9 @@ async function handleApiRequest(req, res) {
       }
       if (method === "POST") {
         const body = await parseJsonBody(req);
+        if (!isNonEmptyString(body.nombres)) {
+          return badRequest(res, "El nombre del hu\xE9sped es obligatorio.");
+        }
         const created = await createHuesped(body);
         sendJson(res, 201, created);
         return true;
@@ -1538,6 +1580,18 @@ async function handleApiRequest(req, res) {
       if (method === "POST") {
         const body = await parseJsonBody(req);
         const { huespedData, ...resData } = body;
+        if (!isPositiveInt(Number(resData.propiedad_id))) {
+          return badRequest(res, "Un propiedad_id v\xE1lido es obligatorio.");
+        }
+        if (!isValidDateStr(resData.fecha_checkin) || !isValidDateStr(resData.fecha_checkout)) {
+          return badRequest(res, "Las fechas fecha_checkin y fecha_checkout (YYYY-MM-DD) son obligatorias.");
+        }
+        if (resData.fecha_checkout < resData.fecha_checkin) {
+          return badRequest(res, "La fecha de salida no puede ser anterior a la fecha de entrada.");
+        }
+        if (!isPositiveInt(Number(resData.huesped_id)) && !isNonEmptyString(huespedData?.nombres)) {
+          return badRequest(res, "Debe especificar un huesped_id o el nombre del hu\xE9sped.");
+        }
         const created = await createReservacion(resData, huespedData);
         sendJson(res, 201, created);
         return true;
@@ -1545,6 +1599,15 @@ async function handleApiRequest(req, res) {
       if ((method === "PUT" || method === "PATCH") && id) {
         const body = await parseJsonBody(req);
         const { huespedData, ...resData } = body;
+        if (resData.fecha_checkin !== void 0 && !isValidDateStr(resData.fecha_checkin)) {
+          return badRequest(res, "Formato inv\xE1lido para fecha_checkin (YYYY-MM-DD).");
+        }
+        if (resData.fecha_checkout !== void 0 && !isValidDateStr(resData.fecha_checkout)) {
+          return badRequest(res, "Formato inv\xE1lido para fecha_checkout (YYYY-MM-DD).");
+        }
+        if (resData.fecha_checkin && resData.fecha_checkout && resData.fecha_checkout < resData.fecha_checkin) {
+          return badRequest(res, "La fecha de salida no puede ser anterior a la fecha de entrada.");
+        }
         const updated = await updateReservacion(id, resData, huespedData);
         sendJson(res, 200, updated);
         return true;
@@ -1570,6 +1633,9 @@ async function handleApiRequest(req, res) {
       }
       if (method === "POST") {
         const body = await parseJsonBody(req);
+        if (!isPositiveInt(Number(body.propiedad_id)) || !isNonEmptyString(body.solicitud) || !isValidDateStr(body.fecha_esperada)) {
+          return badRequest(res, "propiedad_id, solicitud y fecha_esperada (YYYY-MM-DD) son obligatorios.");
+        }
         const created = await createSolicitud(body);
         sendJson(res, 201, created);
         return true;
@@ -1602,6 +1668,9 @@ async function handleApiRequest(req, res) {
     if (resource === "comunicados") {
       if (method === "POST") {
         const body = await parseJsonBody(req);
+        if (!isNonEmptyString(body.asunto) || !isNonEmptyString(body.contenido) || !Array.isArray(body.destinatarios) || body.destinatarios.length === 0) {
+          return badRequest(res, "asunto, contenido y al menos un destinatario son obligatorios.");
+        }
         const result = await sendBroadcastEmail(body);
         sendJson(res, 200, result);
         return true;

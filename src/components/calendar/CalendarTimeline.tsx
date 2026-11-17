@@ -346,8 +346,8 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
     edificios, 
     huespedes,
     searchQuery,
-    getEdificioById,
-    checkReservationOverlap
+    checkReservationOverlap,
+    fetchReservacionesByRange
   } = useApp();
 
   // Real current date values
@@ -444,7 +444,16 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
     }
     
     return { daysInView: days, monthsInView: months };
-  }, [currentYear, currentMonth, viewMode]);
+  }, [currentYear, currentMonth, viewMode, todayDateStr]);
+
+  const viewStartStrForFetch = daysInView[0]?.dateStr || '';
+  const viewEndStrForFetch = daysInView[daysInView.length - 1]?.dateStr || '';
+
+  useEffect(() => {
+    if (viewStartStrForFetch && viewEndStrForFetch) {
+      fetchReservacionesByRange(viewStartStrForFetch, viewEndStrForFetch);
+    }
+  }, [viewStartStrForFetch, viewEndStrForFetch, fetchReservacionesByRange]);
 
   // Fast O(1) Map: dateStr -> Column Index
   const dateToIndexMap = useMemo(() => {
@@ -739,7 +748,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
         try {
           const d = new Date(d1 + 'T12:00:00');
           d.setDate(d.getDate() + 1);
-          checkout = d.toISOString().split('T')[0];
+          checkout = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         } catch {
           checkout = d1;
         }
@@ -772,7 +781,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
       try {
         const d = new Date(checkin + 'T12:00:00');
         d.setDate(d.getDate() + 1);
-        checkout = d.toISOString().split('T')[0];
+        checkout = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       } catch {
         // fallback
       }
