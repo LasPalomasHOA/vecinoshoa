@@ -151,7 +151,7 @@ export const FrontDeskView: React.FC<FrontDeskViewProps> = ({
             <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Condominios</p>
             <div className="mt-1 flex items-baseline gap-2">
               <span className="text-2xl font-black text-teal-900">{propiedades.length}</span>
-              <span className="text-xs text-teal-700 font-semibold">Torres A - J</span>
+              <span className="text-xs text-teal-700 font-semibold">{edificios.length} {edificios.length === 1 ? 'torre' : 'torres'}</span>
             </div>
           </div>
           <div className="w-10 h-10 rounded-lg bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-700 shadow-xs">

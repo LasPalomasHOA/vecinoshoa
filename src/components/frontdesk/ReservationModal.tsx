@@ -705,10 +705,15 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
                   onChange={(e) => {
                     const newIn = e.target.value;
                     setFechaCheckin(newIn);
-                    if (fechaCheckout && newIn >= fechaCheckout) {
+                    if (newIn && fechaCheckout && newIn >= fechaCheckout) {
                       const d = new Date(newIn + 'T12:00:00');
-                      d.setDate(d.getDate() + 1);
-                      setFechaCheckout(d.toISOString().split('T')[0]);
+                      if (!isNaN(d.getTime())) {
+                        d.setDate(d.getDate() + 1);
+                        const y = d.getFullYear();
+                        const m = String(d.getMonth() + 1).padStart(2, '0');
+                        const day = String(d.getDate()).padStart(2, '0');
+                        setFechaCheckout(`${y}-${m}-${day}`);
+                      }
                     }
                   }}
                   className="w-full px-3 py-2 rounded-lg form-input text-xs font-medium"

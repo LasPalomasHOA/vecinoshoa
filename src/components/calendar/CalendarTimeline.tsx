@@ -989,7 +989,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
               placeholder="Buscar condo (A 101)..."
               value={localSearch}
               onChange={(e) => setLocalSearch(e.target.value)}
-              className="h-9 pl-8 pr-3 text-xs rounded-lg form-input w-40 sm:w-44"
+              className="h-9 pl-8 pr-7 text-xs rounded-lg form-input w-40 sm:w-44"
             />
             {localSearch && (
               <button

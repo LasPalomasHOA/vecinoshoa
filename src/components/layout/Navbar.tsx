@@ -54,25 +54,25 @@ export const Navbar: React.FC = () => {
   const getSearchPlaceholder = () => {
     switch (activeTab) {
       case 'inicio':
-        return 'Buscar llegada o salida por condominio, huésped o folio... (Ctrl+K)';
+        return 'Buscar llegada o salida por condominio, huésped o folio...';
       case 'frontdesk':
-        return 'Buscar reservación por folio, condo (A 101), huésped, placas o brazalete... (Ctrl+K)';
+        return 'Buscar reservación por folio, condo (A 101), huésped, placas o brazalete...';
       case 'calendar':
-        return 'Buscar en calendario por condominio (A 101), torre o rango (A-101 a A-108)... (Ctrl+K)';
+        return 'Buscar en calendario por condominio (A 101), torre o rango (A-101 a A-108)...';
       case 'properties':
-        return 'Buscar propiedad por condominio (A 101), torre, propietario o medidor... (Ctrl+K)';
+        return 'Buscar propiedad por condominio (A 101), torre, propietario o medidor...';
       case 'users':
-        return 'Buscar residente o personal por nombre, correo, rol o #ID... (Ctrl+K)';
+        return 'Buscar residente o personal por nombre, correo, rol o #ID...';
       case 'requests':
-        return 'Buscar pase de acceso por condominio, solicitante o contratista... (Ctrl+K)';
+        return 'Buscar pase de acceso por condominio, solicitante o contratista...';
       case 'reports':
-        return 'Buscar en reporte por folio, condominio, huésped o notas... (Ctrl+K)';
+        return 'Buscar en reporte por folio, condominio, huésped o notas...';
       case 'comunicados':
-        return 'Buscar por propietario, condominio, asunto o plantilla... (Ctrl+K)';
+        return 'Buscar por propietario, condominio, asunto o plantilla...';
       case 'bitacora':
-        return 'Buscar en bitácora por usuario, condominio, acción o módulo... (Ctrl+K)';
+        return 'Buscar en bitácora por usuario, condominio, acción o módulo...';
       default:
-        return 'Buscar... (Ctrl+K)';
+        return 'Buscar...';
     }
   };
 
@@ -98,7 +98,7 @@ export const Navbar: React.FC = () => {
             placeholder={getSearchPlaceholder()}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-9 pl-9 pr-14 text-xs rounded-lg form-input shadow-xs placeholder:text-slate-400"
+            className="w-full h-9 pl-9 pr-16 text-xs rounded-lg form-input shadow-xs placeholder:text-slate-400"
           />
           {searchQuery ? (
             <button
