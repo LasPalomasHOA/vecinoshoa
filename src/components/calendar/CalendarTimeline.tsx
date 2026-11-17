@@ -540,8 +540,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
       if (tableScrollRef.current) {
         const todayIdx = daysInView.findIndex(d => d.isToday);
         if (todayIdx !== -1) {
-          const containerW = tableScrollRef.current.clientWidth || 800;
-          const targetX = Math.max(0, (todayIdx * dayColWidth) - (containerW / 2) + (dayColWidth / 2));
+          const targetX = Math.max(0, (todayIdx * dayColWidth) - (dayColWidth * 2));
           tableScrollRef.current.scrollTo({
             left: targetX,
             behavior: 'smooth'
@@ -556,8 +555,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
     const timer = setTimeout(() => {
       const todayIdx = daysInView.findIndex(d => d.isToday);
       if (todayIdx !== -1 && tableScrollRef.current) {
-        const containerW = tableScrollRef.current.clientWidth || 800;
-        const targetX = Math.max(0, (todayIdx * dayColWidth) - (containerW / 3));
+        const targetX = Math.max(0, (todayIdx * dayColWidth) - (dayColWidth * 2));
         tableScrollRef.current.scrollTo({
           left: targetX,
           behavior: 'smooth'
