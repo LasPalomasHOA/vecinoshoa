@@ -180,15 +180,15 @@ export const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose, sol
 
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1.5">
-              Estatus / Tipo de Pase *
+              Tipo de Acceso *
             </label>
             <select
               value={estatus}
               onChange={(e) => setEstatus(e.target.value as SolicitudAcceso['estatus'])}
               className="w-full px-3.5 py-2 rounded-lg form-input text-xs font-bold text-teal-900 cursor-pointer"
             >
-              <option value="Aprobado">Aprobado</option>
-              <option value="Permanente">Permanente</option>
+              <option value="Aprobado">Acceso Temporal (Fecha programada)</option>
+              <option value="Permanente">Acceso Permanente</option>
             </select>
           </div>
 

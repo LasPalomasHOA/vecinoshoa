@@ -156,11 +156,17 @@ export const ReportsView: React.FC = () => {
 
       const tipoFormatted = formatTipo(res.tipo_huesped);
       const tipoHtml = tipoFormatted === 'Resort Amenity Usage' ? 'Resort Amenity<br/>Usage' : escapeHtml(tipoFormatted);
+      const ownerName = prop?.owner_nombre
+        ? `${prop.owner_nombre} ${prop.owner_apellido || ''}`.trim()
+        : '—';
+      const coOwners = prop?.copropietarios?.trim() || '—';
 
       tableRowsHtml += `
         <tr>
           <td class="${cellClass}" style="mso-number-format:'\\@';">${escapeHtml(String(res.codigo || res.id))}</td>
           <td class="${cellClass}" style="mso-number-format:'\\@';">${escapeHtml(prop?.nombre || `ID: ${res.propiedad_id}`)}</td>
+          <td class="${cellClass}">${escapeHtml(ownerName)}</td>
+          <td class="${cellClass}">${escapeHtml(coOwners)}</td>
           <td class="${cellClass}" style="mso-number-format:'\\@';">${escapeHtml(formatReportDate(res.fecha_checkin))}</td>
           <td class="${cellClass}" style="mso-number-format:'\\@';">${escapeHtml(formatReportDate(res.fecha_checkout))}</td>
           <td class="${cellClass}">${guestText}</td>
@@ -238,29 +244,33 @@ export const ReportsView: React.FC = () => {
             <colgroup>
               <col width="85" />
               <col width="80" />
+              <col width="160" />
+              <col width="170" />
               <col width="95" />
               <col width="95" />
-              <col width="230" />
+              <col width="210" />
               <col width="135" />
               <col width="90" />
               <col width="135" />
             </colgroup>
             <tr>
-              <td colspan="8" class="report-title">${title}</td>
+              <td colspan="10" class="report-title">${title}</td>
             </tr>
             <tr>
-              <td colspan="8" class="report-subtitle">${subtitle}</td>
+              <td colspan="10" class="report-subtitle">${subtitle}</td>
             </tr>
             <tr>
-              <td colspan="8" class="report-dates">${dateRange}</td>
+              <td colspan="10" class="report-dates">${dateRange}</td>
             </tr>
             <tr>
-              <td colspan="8" style="height: 10px;"></td>
+              <td colspan="10" style="height: 10px;"></td>
             </tr>
             <thead>
               <tr>
                 <th class="th-cell">ID</th>
                 <th class="th-cell">Propiedad</th>
+                <th class="th-cell">Propietario Principal</th>
+                <th class="th-cell">Co-propietarios</th>
                 <th class="th-cell">Entrada</th>
                 <th class="th-cell">Salida</th>
                 <th class="th-cell">Huésped</th>
@@ -274,11 +284,11 @@ export const ReportsView: React.FC = () => {
             </tbody>
             <tfoot>
               <tr>
-                <td colspan="8" style="height: 10px;"></td>
+                <td colspan="10" style="height: 10px;"></td>
               </tr>
               <tr>
-                <td colspan="4" style="font-size: 9pt; color: #64748b; font-style: italic; padding: 6px; border-top: 1pt solid #cbd5e1;">Total de registros: ${filteredReservations.length}</td>
-                <td colspan="4" style="font-size: 9pt; color: #64748b; text-align: right; font-style: italic; padding: 6px; border-top: 1pt solid #cbd5e1;">Las Palomas Seaside Golf Community</td>
+                <td colspan="5" style="font-size: 9pt; color: #64748b; font-style: italic; padding: 6px; border-top: 1pt solid #cbd5e1;">Total de registros: ${filteredReservations.length}</td>
+                <td colspan="5" style="font-size: 9pt; color: #64748b; text-align: right; font-style: italic; padding: 6px; border-top: 1pt solid #cbd5e1;">Las Palomas Seaside Golf Community</td>
               </tr>
             </tfoot>
           </table>
@@ -506,6 +516,8 @@ export const ReportsView: React.FC = () => {
                 <tr className="border-t-2 border-b border-slate-900 bg-white text-slate-900 font-bold text-[11px] print:text-[9.5pt]">
                   <th className="py-2.5 px-2.5 whitespace-nowrap print:py-1.5 print:px-1.5">ID</th>
                   <th className="py-2.5 px-2.5 whitespace-nowrap print:py-1.5 print:px-1.5">Propiedad</th>
+                  <th className="py-2.5 px-2.5 whitespace-nowrap print:py-1.5 print:px-1.5">Propietario Principal</th>
+                  <th className="py-2.5 px-2.5 whitespace-nowrap print:py-1.5 print:px-1.5">Co-propietarios</th>
                   <th className="py-2.5 px-2.5 whitespace-nowrap print:py-1.5 print:px-1.5">Entrada</th>
                   <th className="py-2.5 px-2.5 whitespace-nowrap print:py-1.5 print:px-1.5">Salida</th>
                   <th className="py-2.5 px-2.5 whitespace-nowrap print:py-1.5 print:px-1.5">Huésped</th>
@@ -519,7 +531,7 @@ export const ReportsView: React.FC = () => {
               <tbody className="text-[11px] text-slate-900">
                 {filteredReservations.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="py-12 text-center text-slate-400 font-medium">
+                    <td colSpan={10} className="py-12 text-center text-slate-400 font-medium">
                       No se encontraron registros de reservaciones para el periodo seleccionado.
                     </td>
                   </tr>
@@ -528,6 +540,10 @@ export const ReportsView: React.FC = () => {
                     const prop = getPropiedadById(res.propiedad_id);
                     const huesped = getHuespedById(res.huesped_id);
                     const guestName = huesped?.nombres || 'Huésped';
+                    const ownerName = prop?.owner_nombre
+                      ? `${prop.owner_nombre} ${prop.owner_apellido || ''}`.trim()
+                      : '—';
+                    const coOwners = prop?.copropietarios?.trim() || '—';
                     
                     // Alternating background: Light ice-blue tint vs pure white
                     const isEvenRow = index % 2 === 1;
@@ -537,57 +553,13 @@ export const ReportsView: React.FC = () => {
                     const rawComps = Array.isArray(res.acompanantes) ? res.acompanantes.filter(a => a.id !== 'titular') : [];
                     const numExtra = rawComps.length > 0 ? rawComps.length : (res.numero_ocupantes > 1 ? res.numero_ocupantes - 1 : 0);
                     let guestContent: React.ReactNode = `${guestName}${numExtra > 0 ? ` +${numExtra}` : ''}`;
-                    if (res.codigo === '2551222' || res.notas?.includes('Breneida Camacho')) {
+                    if (res.notas && (res.notas.includes('BRAZALETES') || res.notas.includes('SOLO'))) {
                       guestContent = (
                         <div>
-                          <div>Breneida Camacho +6</div>
-                          <div className="font-normal text-slate-800">BRAZALETES ONLY</div>
+                          <div>{guestName}{numExtra > 0 ? ` +${numExtra}` : ''}</div>
+                          <div className="font-normal text-slate-800">{res.notas}</div>
                         </div>
                       );
-                    } else if (res.codigo === '2551271' || res.notas?.includes('Karely Hernandez')) {
-                      guestContent = (
-                        <div>
-                          <div>Karely Hernandez +5</div>
-                          <div className="font-normal text-slate-800">BRAZALETES ONLY</div>
-                        </div>
-                      );
-                    } else if (res.codigo === '2532006' || res.notas?.includes('Eddie Darwin Lacy Jr')) {
-                      guestContent = (
-                        <div>
-                          <div>Eddie Darwin Lacy Jr</div>
-                          <div>+3</div>
-                        </div>
-                      );
-                    } else if (res.codigo === '2565272' || res.notas?.includes('Joel Ramirez')) {
-                      guestContent = (
-                        <div>
-                          <div>Joel Ramirez +7 SOLO</div>
-                          <div>BRAZALETES</div>
-                        </div>
-                      );
-                    } else if (res.codigo === '2569009' || res.notas?.includes('Kim Jensen')) {
-                      guestContent = (
-                        <div>
-                          <div>Kim Jensen and Shelly</div>
-                          <div>Marino SOLO</div>
-                        </div>
-                      );
-                    } else if (res.codigo === '2557584' || res.notas?.includes('Zamorano')) {
-                      guestContent = (
-                        <div>
-                          <div>Verónica Zamorano +</div>
-                          <div>5</div>
-                        </div>
-                      );
-                    } else if (res.codigo === '2566312' || res.notas?.includes('Roberto Dominguez')) {
-                      guestContent = (
-                        <div>
-                          <div>Roberto Dominguez +</div>
-                          <div>1</div>
-                        </div>
-                      );
-                    } else if (res.notas && (res.notas.includes('BRAZALETES') || res.notas.includes('SOLO'))) {
-                      guestContent = res.notas;
                     }
 
                     const tipoFormatted = formatTipo(res.tipo_huesped);
@@ -605,6 +577,16 @@ export const ReportsView: React.FC = () => {
                         {/* Propiedad */}
                         <td className="py-2 px-2.5 font-normal whitespace-nowrap">
                           {prop?.nombre || `ID: ${res.propiedad_id}`}
+                        </td>
+
+                        {/* Propietario Principal */}
+                        <td className="py-2 px-2.5 max-w-[160px] leading-tight break-words">
+                          {ownerName}
+                        </td>
+
+                        {/* Co-propietarios */}
+                        <td className="py-2 px-2.5 max-w-[170px] leading-tight break-words text-slate-700">
+                          {coOwners}
                         </td>
 
                         {/* Entrada */}

@@ -388,6 +388,15 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
                   </option>
                 ))}
               </select>
+              {currentProperty && (
+                <div className="mt-1.5 flex items-center gap-1.5">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-teal-50 text-teal-800 border border-teal-200/80">
+                    Dueño: {currentProperty.owner_nombre
+                      ? `${currentProperty.owner_nombre} ${currentProperty.owner_apellido || ''}`.trim()
+                      : 'Sin propietario asignado'}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div>

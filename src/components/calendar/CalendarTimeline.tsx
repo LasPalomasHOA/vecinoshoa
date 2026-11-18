@@ -6,6 +6,7 @@ import { CalendarLegend } from './CalendarLegend';
 import { 
   ChevronLeft, 
   ChevronRight, 
+  ChevronDown,
   ChevronsLeft,
   ChevronsRight,
   Calendar as CalendarIcon, 
@@ -170,12 +171,20 @@ const CondoRow: React.FC<CondoRowProps> = memo(({
         }`}
         style={{ width: `${condoColWidth}px`, height: `${ROW_HEIGHT}px` }}
       >
-        <div className="min-w-0 pr-1">
+        <div
+          className="min-w-0 pr-1"
+          title={
+            prop.owner_nombre
+              ? `${prop.nombre} — Dueño: ${prop.owner_nombre} ${prop.owner_apellido || ''}`.trim()
+              : prop.nombre
+          }
+        >
           <span className="font-extrabold text-xs text-slate-900 block truncate">
             {prop.nombre}
           </span>
           <span className="text-[10px] text-slate-500 font-medium truncate block">
             Torre {edificioNombre.replace('Torre ', '')}
+            {prop.owner_nombre ? ` · ${prop.owner_nombre} ${prop.owner_apellido || ''}`.trimEnd() : ''}
           </span>
         </div>
         <button
@@ -364,7 +373,9 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
   const [viewMode, setViewMode] = useState<'3months' | '1month'>('3months'); // Default 3 months
   const [dayColWidth, setDayColWidth] = useState<number>(40); // 32 (Compacto), 40 (Normal), or 52 (Amplio) px
   
-  const [selectedEdificioId, setSelectedEdificioId] = useState<string>('ALL');
+  const [selectedEdificioIds, setSelectedEdificioIds] = useState<number[]>([]);
+  const [isTowerMenuOpen, setIsTowerMenuOpen] = useState(false);
+  const towerMenuRef = useRef<HTMLDivElement>(null);
   const [localSearch, setLocalSearch] = useState<string>('');
   const [rangeFrom, setRangeFrom] = useState<string>('');
   const [rangeTo, setRangeTo] = useState<string>('');
@@ -619,6 +630,18 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
     handleScrollToToday();
   };
 
+  // Close tower filter dropdown on outside click
+  useEffect(() => {
+    if (!isTowerMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (towerMenuRef.current && !towerMenuRef.current.contains(e.target as Node)) {
+        setIsTowerMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isTowerMenuOpen]);
+
   // Filtered properties (Sorted naturally: A-101 before A-1001, A then B then C)
   const filteredProperties = useMemo(() => {
     const activeSearch = (localSearch || searchQuery).trim();
@@ -628,7 +651,7 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
 
     return propiedades
       .filter(prop => {
-        if (selectedEdificioId !== 'ALL' && prop.edificio_id !== parseInt(selectedEdificioId)) {
+        if (selectedEdificioIds.length > 0 && !selectedEdificioIds.includes(prop.edificio_id)) {
           return false;
         }
         if (activeSearch && !searchRange) {
@@ -646,16 +669,16 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
         return true;
       })
       .sort((a, b) => compareCondoNames(a.nombre, b.nombre));
-  }, [propiedades, selectedEdificioId, localSearch, searchQuery, rangeFrom, rangeTo, edificioMap]);
+  }, [propiedades, selectedEdificioIds, localSearch, searchQuery, rangeFrom, rangeTo, edificioMap]);
 
   // All condo names for datalist / autocompletion
   const allCondoOptions = useMemo(() => {
-    const relevant = selectedEdificioId === 'ALL'
+    const relevant = selectedEdificioIds.length === 0
       ? propiedades
-      : propiedades.filter(p => p.edificio_id === parseInt(selectedEdificioId));
+      : propiedades.filter(p => selectedEdificioIds.includes(p.edificio_id));
     const unique = Array.from(new Set(relevant.map(p => p.nombre.trim()))).filter(Boolean);
     return unique.sort(compareCondoNames);
-  }, [propiedades, selectedEdificioId]);
+  }, [propiedades, selectedEdificioIds]);
 
   // Statistics for the visible range (3 months or 1 month)
   const rangeStats = useMemo(() => {
@@ -1008,20 +1031,70 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
             )}
           </div>
 
-          <div className="flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-teal-700" />
-            <select
-              value={selectedEdificioId}
-              onChange={(e) => setSelectedEdificioId(e.target.value)}
-              className="h-9 px-3 text-xs rounded-lg form-input font-medium cursor-pointer border-slate-200 max-w-[170px]"
+          <div className="relative" ref={towerMenuRef}>
+            <button
+              type="button"
+              onClick={() => setIsTowerMenuOpen(prev => !prev)}
+              className={`h-9 px-3 text-xs rounded-lg border font-medium cursor-pointer flex items-center gap-2 transition-colors ${
+                selectedEdificioIds.length > 0
+                  ? 'bg-teal-50 border-teal-300 text-teal-900 font-bold'
+                  : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+              }`}
             >
-              <option value="ALL">Todas las Torres (A - J)</option>
-              {edificios.map(ed => (
-                <option key={ed.id} value={ed.id}>
-                  Torre {ed.nombre}
-                </option>
-              ))}
-            </select>
+              <Building2 className="w-4 h-4 text-teal-700 shrink-0" />
+              <span className="truncate max-w-[160px]">
+                {selectedEdificioIds.length === 0
+                  ? 'Todas las Torres'
+                  : selectedEdificioIds.length === 1
+                    ? `Torre ${edificioMap.get(selectedEdificioIds[0])?.nombre.replace(/^Torre\s+/i, '') || ''}`
+                    : `${selectedEdificioIds.length} torres`}
+              </span>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            </button>
+
+            {isTowerMenuOpen && (
+              <div className="absolute left-0 mt-1.5 w-60 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-2 space-y-1">
+                <div className="flex items-center justify-between px-2 py-1 border-b border-slate-100 mb-1">
+                  <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                    Filtrar Torres
+                  </span>
+                  {selectedEdificioIds.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedEdificioIds([])}
+                      className="text-[11px] font-bold text-teal-700 hover:text-teal-900 cursor-pointer"
+                    >
+                      Ver todas
+                    </button>
+                  )}
+                </div>
+                <div className="max-h-60 overflow-y-auto space-y-0.5">
+                  {edificios.map(ed => {
+                    const checked = selectedEdificioIds.includes(ed.id);
+                    return (
+                      <label
+                        key={ed.id}
+                        className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs cursor-pointer transition-colors ${
+                          checked ? 'bg-teal-50 text-teal-900 font-bold' : 'hover:bg-slate-50 text-slate-700'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => {
+                            setSelectedEdificioIds(prev =>
+                              checked ? prev.filter(id => id !== ed.id) : [...prev, ed.id]
+                            );
+                          }}
+                          className="rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer"
+                        />
+                        <span className="truncate">Torre {ed.nombre.replace(/^Torre\s+/i, '')}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           <button
@@ -1329,13 +1402,18 @@ export const CalendarTimeline: React.FC<CalendarTimelineProps> = ({
             </div>
             
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-black text-slate-900">
                   {selectionPreview.prop?.nombre}
                 </span>
                 <span className="text-[10px] font-semibold text-slate-500">
                   (Torre {selectionPreview.ed?.nombre})
                 </span>
+                {selectionPreview.prop?.owner_nombre && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                    Dueño: {selectionPreview.prop.owner_nombre} {selectionPreview.prop.owner_apellido || ''}
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-1.5 text-xs text-teal-900 font-bold mt-0.5">
                 <span>{formatReadableDate(selectionPreview.checkin)}</span>

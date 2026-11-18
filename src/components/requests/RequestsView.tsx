@@ -78,10 +78,10 @@ export const RequestsView: React.FC<RequestsViewProps> = ({ onOpenNewRequest, on
         
         <div className="p-4 rounded-xl glass-card flex items-center justify-between">
           <div>
-            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Pases Aprobados</p>
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Accesos Temporales</p>
             <div className="mt-1 flex items-baseline gap-2">
               <span className="text-2xl font-black text-emerald-800">{aprobadosCount}</span>
-              <span className="text-xs text-emerald-700 font-semibold">autorizados</span>
+              <span className="text-xs text-emerald-700 font-semibold">fecha programada</span>
             </div>
           </div>
           <div className="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-700 shadow-xs">
@@ -91,7 +91,7 @@ export const RequestsView: React.FC<RequestsViewProps> = ({ onOpenNewRequest, on
 
         <div className="p-4 rounded-xl glass-card flex items-center justify-between">
           <div>
-            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Pases Permanentes</p>
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Accesos Permanentes</p>
             <div className="mt-1 flex items-baseline gap-2">
               <span className="text-2xl font-black text-purple-800">{permanentesCount}</span>
               <span className="text-xs text-purple-700 font-semibold">acceso continuo</span>
@@ -137,7 +137,7 @@ export const RequestsView: React.FC<RequestsViewProps> = ({ onOpenNewRequest, on
                 estatusFilter === 'Aprobado' ? 'bg-emerald-600 text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Aprobados ({aprobadosCount})
+              Temporales ({aprobadosCount})
             </button>
             <button
               onClick={() => setEstatusFilter('Permanente')}
@@ -270,8 +270,8 @@ export const RequestsView: React.FC<RequestsViewProps> = ({ onOpenNewRequest, on
                           onChange={(e) => updateSolicitudStatus(sol.id, e.target.value as SolicitudAcceso['estatus'])}
                           className={`px-3 py-1.5 text-xs font-semibold rounded-lg border shadow-2xs cursor-pointer transition-colors ${getStatusBadge(sol.estatus)}`}
                         >
-                          <option value="Aprobado">Aprobado</option>
-                          <option value="Permanente">Permanente</option>
+                          <option value="Aprobado">Acceso Temporal</option>
+                          <option value="Permanente">Acceso Permanente</option>
                         </select>
                       </td>
 
