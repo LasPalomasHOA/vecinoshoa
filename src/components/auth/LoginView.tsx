@@ -224,7 +224,7 @@ export const LoginView: React.FC = () => {
             
             {/* Email / Username Field */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-700">
+              <label htmlFor="login-email" className="block text-xs font-bold text-slate-700">
                 Correo Electrónico o Usuario
               </label>
               <div className="relative">
@@ -232,7 +232,10 @@ export const LoginView: React.FC = () => {
                   <Mail className="w-4 h-4" />
                 </div>
                 <input
+                  id="login-email"
+                  name="email"
                   type="email"
+                  autoComplete="username"
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
@@ -248,7 +251,7 @@ export const LoginView: React.FC = () => {
             {/* Password Field */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="block text-xs font-bold text-slate-700">
+                <label htmlFor="login-password" className="block text-xs font-bold text-slate-700">
                   Contraseña
                 </label>
                 <button
@@ -264,7 +267,10 @@ export const LoginView: React.FC = () => {
                   <Lock className="w-4 h-4" />
                 </div>
                 <input
+                  id="login-password"
+                  name="password"
                   type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
@@ -287,8 +293,10 @@ export const LoginView: React.FC = () => {
 
             {/* Remember Me Checkbox */}
             <div className="flex items-center justify-between pt-1">
-              <label className="flex items-center gap-2 cursor-pointer group select-none">
+              <label htmlFor="login-remember" className="flex items-center gap-2 cursor-pointer group select-none">
                 <input
+                  id="login-remember"
+                  name="rememberMe"
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}

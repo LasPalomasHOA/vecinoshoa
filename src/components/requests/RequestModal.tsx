@@ -122,10 +122,12 @@ export const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose, sol
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+            <label htmlFor="req-propiedad" className="block text-xs font-bold text-slate-700 mb-1.5">
               Condominio / Propiedad *
             </label>
             <select
+              id="req-propiedad"
+              name="propiedad_id"
               value={propiedadId}
               onChange={(e) => setPropiedadId(Number(e.target.value))}
               className="w-full px-3.5 py-2 rounded-lg form-input text-xs font-bold text-teal-900"
@@ -139,10 +141,12 @@ export const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose, sol
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+            <label htmlFor="req-creador" className="block text-xs font-bold text-slate-700 mb-1.5">
               Solicitante / Residente (Opcional)
             </label>
             <input
+              id="req-creador"
+              name="creador_nombre"
               type="text"
               value={creadorNombre}
               onChange={(e) => setCreadorNombre(e.target.value)}
@@ -152,10 +156,12 @@ export const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose, sol
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+            <label htmlFor="req-solicitud" className="block text-xs font-bold text-slate-700 mb-1.5">
               Detalle del Trabajo / Empresa / Contratista *
             </label>
             <textarea
+              id="req-solicitud"
+              name="solicitud"
               required
               rows={3}
               value={solicitud}
@@ -166,10 +172,12 @@ export const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose, sol
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+            <label htmlFor="req-fecha" className="block text-xs font-bold text-slate-700 mb-1.5">
               Fecha Programada de Acceso *
             </label>
             <input
+              id="req-fecha"
+              name="fecha_esperada"
               type="date"
               required
               value={fechaEsperada}
@@ -179,10 +187,12 @@ export const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose, sol
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+            <label htmlFor="req-estatus" className="block text-xs font-bold text-slate-700 mb-1.5">
               Tipo de Acceso *
             </label>
             <select
+              id="req-estatus"
+              name="estatus"
               value={estatus}
               onChange={(e) => setEstatus(e.target.value as SolicitudAcceso['estatus'])}
               className="w-full px-3.5 py-2 rounded-lg form-input text-xs font-bold text-teal-900 cursor-pointer"
@@ -193,10 +203,12 @@ export const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose, sol
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+            <label htmlFor="req-comentario" className="block text-xs font-bold text-slate-700 mb-1.5">
               Comentarios de Recepción / Seguridad (Opcional)
             </label>
             <input
+              id="req-comentario"
+              name="comentario"
               type="text"
               value={comentario}
               onChange={(e) => setComentario(e.target.value)}

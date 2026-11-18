@@ -134,10 +134,13 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">Nombre *</label>
+              <label htmlFor="user-nombre" className="block text-xs font-bold text-slate-700 mb-1.5">Nombre *</label>
               <input
+                id="user-nombre"
+                name="nombre"
                 type="text"
                 required
+                autoComplete="given-name"
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
                 placeholder="ej. Manuel"
@@ -145,10 +148,13 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">Apellido *</label>
+              <label htmlFor="user-apellido" className="block text-xs font-bold text-slate-700 mb-1.5">Apellido *</label>
               <input
+                id="user-apellido"
+                name="apellido"
                 type="text"
                 required
+                autoComplete="family-name"
                 value={apellido}
                 onChange={(e) => setApellido(e.target.value)}
                 placeholder="ej. Garcia"
@@ -159,10 +165,13 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">Correo Electrónico *</label>
+              <label htmlFor="user-email" className="block text-xs font-bold text-slate-700 mb-1.5">Correo Electrónico *</label>
               <input
+                id="user-email"
+                name="email"
                 type="email"
                 required
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="ej. mgarcia@laspalomashoamx.com"
@@ -170,9 +179,12 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">Teléfono / Celular</label>
+              <label htmlFor="user-telefono" className="block text-xs font-bold text-slate-700 mb-1.5">Teléfono / Celular</label>
               <input
+                id="user-telefono"
+                name="telefono"
                 type="text"
+                autoComplete="tel"
                 value={telefono}
                 onChange={(e) => setTelefono(e.target.value)}
                 placeholder="+52 638 100 2233"
