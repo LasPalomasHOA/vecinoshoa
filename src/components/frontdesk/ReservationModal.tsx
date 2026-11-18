@@ -56,9 +56,9 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
   const [fechaCheckin, setFechaCheckin] = useState(() => getLocalDateStr(0));
   const [fechaCheckout, setFechaCheckout] = useState(() => getLocalDateStr(3));
   const [numeroOcupantes, setNumeroOcupantes] = useState<number>(1);
-  const [numeroAutos, setNumeroAutos] = useState<number>(1);
+  const [numeroAutosInput, setNumeroAutosInput] = useState<string>('1');
   const [brazaletes, setBrazaletes] = useState('');
-  const [vehiculoInfo, setVehiculoInfo] = useState('');
+  const [vehiculosList, setVehiculosList] = useState<string[]>(['']);
   const [pagoTipo, setPagoTipo] = useState<'Con pago' | 'Sin pago' | 'Uso de amenidades' | 'Cortesia'>('Sin pago');
   const [estado, setEstado] = useState<EstadoReservacion>('Confirmada');
   const [notas, setNotas] = useState('');
@@ -83,9 +83,15 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
       setFechaCheckin(reservationToEdit.fecha_checkin);
       setFechaCheckout(reservationToEdit.fecha_checkout);
       setNumeroOcupantes(reservationToEdit.numero_ocupantes || 1);
-      setNumeroAutos(reservationToEdit.numero_autos || 0);
+      const initialAutos = reservationToEdit.numero_autos ?? 0;
+      setNumeroAutosInput(String(initialAutos));
       setBrazaletes(reservationToEdit.brazaletes || '');
-      setVehiculoInfo(reservationToEdit.vehiculo_info || '');
+      const parsedVehicles = (reservationToEdit.vehiculo_info || '')
+        .split(/\s*(?:\||,)\s*/)
+        .map(v => v.trim())
+        .filter(Boolean);
+      const targetLen = Math.max(initialAutos, parsedVehicles.length, 1);
+      setVehiculosList(Array.from({ length: targetLen }, (_, idx) => parsedVehicles[idx] || ''));
       setPagoTipo(reservationToEdit.pago_tipo || 'Sin pago');
       setEstado(reservationToEdit.estado);
       setNotas(reservationToEdit.notas || '');
@@ -124,9 +130,9 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
       setFechaCheckin(inDate);
       setFechaCheckout(outDate);
       setNumeroOcupantes(1);
-      setNumeroAutos(1);
+      setNumeroAutosInput('1');
       setBrazaletes('');
-      setVehiculoInfo('');
+      setVehiculosList(['']);
       setPagoTipo('Sin pago');
       setEstado('Confirmada');
       setNotas('');
@@ -288,6 +294,14 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
     // Summary of brazaletes
     const deliveredCount = (titularBrazaleteEntregado ? 1 : 0) + cleanAcompanantes.filter(a => a.brazalete_entregado).length;
     const brazaletesSummary = `${deliveredCount}/${finalOccupantsCount} entregados`;
+    const finalNumeroAutos = Math.max(0, Math.min(5, parseInt(numeroAutosInput, 10) || 0));
+    const finalVehiculoInfo = finalNumeroAutos > 0
+      ? vehiculosList
+          .slice(0, finalNumeroAutos)
+          .map(v => v.trim())
+          .filter(Boolean)
+          .join(', ')
+      : '';
 
     if (reservationToEdit) {
       updateReservacion(
@@ -300,9 +314,9 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
           fecha_checkin: fechaCheckin,
           fecha_checkout: fechaCheckout,
           numero_ocupantes: finalOccupantsCount,
-          numero_autos: Number(numeroAutos) || 0,
+          numero_autos: finalNumeroAutos,
           brazaletes: brazaletes.trim() || brazaletesSummary,
-          vehiculo_info: vehiculoInfo.trim() || undefined,
+          vehiculo_info: finalVehiculoInfo || undefined,
           pago_tipo: pagoTipo,
           estado,
           notas: notas.trim() || undefined,
@@ -323,9 +337,9 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
           fecha_checkin: fechaCheckin,
           fecha_checkout: fechaCheckout,
           numero_ocupantes: finalOccupantsCount,
-          numero_autos: Number(numeroAutos) || 0,
+          numero_autos: finalNumeroAutos,
           brazaletes: brazaletes.trim() || brazaletesSummary,
-          vehiculo_info: vehiculoInfo.trim() || undefined,
+          vehiculo_info: finalVehiculoInfo || undefined,
           pago_tipo: pagoTipo,
           estado,
           notas: notas.trim() || undefined,
@@ -759,34 +773,99 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
             </select>
           </div>
 
-          {/* Autos & Vehículo */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Número de Autos Autorizados
-              </label>
-              <input
-                type="number"
-                min={0}
-                max={5}
-                value={numeroAutos}
-                onChange={(e) => setNumeroAutos(Number(e.target.value))}
-                className="w-full px-3 py-2 rounded-xl form-input text-xs font-semibold"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Vehículo y Placas
-              </label>
-              <input
-                type="text"
-                value={vehiculoInfo}
-                onChange={(e) => setVehiculoInfo(e.target.value)}
-                placeholder="ej. Ford F150 Blue AJM5429"
-                className="w-full px-3 py-2 rounded-lg form-input text-xs"
-              />
-            </div>
-          </div>
+          {/* Autos & Vehículos */}
+          {(() => {
+            const parsedAutos = Math.max(0, Math.min(5, parseInt(numeroAutosInput, 10) || 0));
+            return (
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                      Número de Autos Autorizados (0 - 5)
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-5]?"
+                      maxLength={1}
+                      value={numeroAutosInput}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-5]/g, '');
+                        setNumeroAutosInput(val);
+                        const nextCount = parseInt(val, 10);
+                        if (!isNaN(nextCount) && nextCount > 0) {
+                          setVehiculosList(prev =>
+                            Array.from({ length: Math.max(nextCount, prev.length) }, (_, idx) => prev[idx] || '')
+                          );
+                        }
+                      }}
+                      onBlur={() => {
+                        if (numeroAutosInput === '') {
+                          setNumeroAutosInput('0');
+                        }
+                      }}
+                      placeholder="0 - 5"
+                      className="w-full px-3 py-2 rounded-xl form-input text-xs font-semibold"
+                    />
+                  </div>
+
+                  {parsedAutos === 1 && (
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                        Vehículo y Placas
+                      </label>
+                      <input
+                        type="text"
+                        value={vehiculosList[0] || ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setVehiculosList(prev => {
+                            const next = [...prev];
+                            next[0] = val;
+                            return next;
+                          });
+                        }}
+                        placeholder="ej. Ford F150 Blue AJM5429"
+                        className="w-full px-3 py-2 rounded-lg form-input text-xs"
+                      />
+                    </div>
+                  )}
+
+                  {parsedAutos === 0 && (
+                    <div className="flex items-end pb-2">
+                      <span className="text-xs text-slate-400 italic">Sin vehículos registrados para esta reservación.</span>
+                    </div>
+                  )}
+                </div>
+
+                {parsedAutos > 1 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3 rounded-xl bg-slate-50/80 border border-slate-200/80">
+                    {Array.from({ length: parsedAutos }).map((_, idx) => (
+                      <div key={idx}>
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                          Vehículo {idx + 1} y Placas
+                        </label>
+                        <input
+                          type="text"
+                          value={vehiculosList[idx] || ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setVehiculosList(prev => {
+                              const next = [...prev];
+                              next[idx] = val;
+                              return next;
+                            });
+                          }}
+                          placeholder={idx === 0 ? 'ej. Ford F150 Blue AJM5429' : 'ej. Honda Civic Blanco XYZ123'}
+                          className="w-full px-3 py-2 rounded-lg form-input text-xs bg-white"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Notes */}
           <div>
