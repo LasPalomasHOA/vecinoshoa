@@ -38,6 +38,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
   const [medidorElectricidad, setMedidorElectricidad] = useState('');
   const [empresaManejadora, setEmpresaManejadora] = useState('Las Palomas Rental Pool');
   const [copropietarios, setCopropietarios] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [estado, setEstado] = useState<'Active' | 'Inactive'>('Active');
   const [notas, setNotas] = useState('');
   const [ownerId, setOwnerId] = useState<number>(0);
@@ -99,7 +100,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const data: Omit<Propiedad, 'id'> = {
@@ -122,12 +123,16 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
       notas
     };
 
-    if (propertyToEdit) {
-      updatePropiedad(propertyToEdit.id, data, ownerId);
-    } else {
-      addPropiedad(data, ownerId > 0 ? ownerId : undefined);
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      const ok = propertyToEdit
+        ? await updatePropiedad(propertyToEdit.id, data, ownerId)
+        : await addPropiedad(data, ownerId > 0 ? ownerId : undefined);
+      if (ok) onClose();
+    } finally {
+      setIsSubmitting(false);
     }
-    onClose();
   };
 
   function capacityFix(val: number) {
@@ -364,15 +369,17 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer"
+              disabled={isSubmitting}
+              className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer disabled:opacity-50"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-6 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-700/20 cursor-pointer"
+              disabled={isSubmitting}
+              className="px-6 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-700/20 cursor-pointer disabled:opacity-50"
             >
-              {propertyToEdit ? 'Actualizar Propiedad' : 'Guardar Propiedad'}
+              {isSubmitting ? 'Guardando...' : propertyToEdit ? 'Actualizar Propiedad' : 'Guardar Propiedad'}
             </button>
           </div>
 

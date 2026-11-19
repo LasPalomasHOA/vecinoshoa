@@ -23,6 +23,7 @@ export const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose, sol
   const [fechaEsperada, setFechaEsperada] = useState(() => getLocalTodayStr());
   const [comentario, setComentario] = useState('');
   const [estatus, setEstatus] = useState<SolicitudAcceso['estatus']>('Aprobado');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -62,33 +63,37 @@ export const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose, sol
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     const finalPropId = Number(propiedadId) || propiedades[0]?.id;
     if (!finalPropId) return;
 
-    if (solicitudToEdit) {
-      updateSolicitud(solicitudToEdit.id, {
-        propiedad_id: finalPropId,
-        creador_nombre: creadorNombre.trim() || 'Propietario',
-        solicitud: solicitud.trim(),
-        fecha_esperada: fechaEsperada,
-        comentario: comentario.trim() || undefined,
-        estatus,
-      });
-    } else {
-      addSolicitud({
-        propiedad_id: finalPropId,
-        creador_nombre: creadorNombre.trim() || 'Propietario',
-        solicitud: solicitud.trim(),
-        fecha_esperada: fechaEsperada,
-        comentario: comentario.trim() || undefined,
-        estatus,
-        procesador_nombre: 'Recepción HOA'
-      });
-    }
+    setIsSubmitting(true);
+    try {
+      const ok = solicitudToEdit
+        ? await updateSolicitud(solicitudToEdit.id, {
+            propiedad_id: finalPropId,
+            creador_nombre: creadorNombre.trim() || 'Propietario',
+            solicitud: solicitud.trim(),
+            fecha_esperada: fechaEsperada,
+            comentario: comentario.trim() || undefined,
+            estatus,
+          })
+        : await addSolicitud({
+            propiedad_id: finalPropId,
+            creador_nombre: creadorNombre.trim() || 'Propietario',
+            solicitud: solicitud.trim(),
+            fecha_esperada: fechaEsperada,
+            comentario: comentario.trim() || undefined,
+            estatus,
+            procesador_nombre: 'Recepción HOA'
+          });
 
-    onClose();
+      if (ok) onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -221,15 +226,17 @@ export const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose, sol
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
+              disabled={isSubmitting}
+              className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold disabled:opacity-50"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-6 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-700/20"
+              disabled={isSubmitting}
+              className="px-6 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-700/20 disabled:opacity-50 cursor-pointer"
             >
-              {solicitudToEdit ? 'Guardar Cambios' : 'Registrar Pase'}
+              {isSubmitting ? 'Guardando...' : solicitudToEdit ? 'Guardar Cambios' : 'Registrar Pase'}
             </button>
           </div>
 

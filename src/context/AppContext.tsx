@@ -63,19 +63,19 @@ interface AppContextType {
   limpiarBitacora: () => void;
   
   // CRUD Actions connected to Database Layer
-  addPropiedad: (propiedad: Omit<Propiedad, 'id'>, ownerId?: number) => Promise<void>;
-  updatePropiedad: (id: number, propiedad: Partial<Propiedad>, ownerId?: number) => Promise<void>;
+  addPropiedad: (propiedad: Omit<Propiedad, 'id'>, ownerId?: number) => Promise<boolean>;
+  updatePropiedad: (id: number, propiedad: Partial<Propiedad>, ownerId?: number) => Promise<boolean>;
   deletePropiedad: (id: number, motivo?: string) => Promise<void>;
   
   addEdificio: (nombre: string) => Promise<void>;
   deleteEdificio: (id: number, motivo?: string) => Promise<void>;
   
-  addUsuario: (usuario: Omit<Usuario, 'id'>) => Promise<void>;
-  updateUsuario: (id: number, usuario: Partial<Usuario>) => Promise<void>;
+  addUsuario: (usuario: Omit<Usuario, 'id'>) => Promise<boolean>;
+  updateUsuario: (id: number, usuario: Partial<Usuario>) => Promise<boolean>;
   deleteUsuario: (id: number, motivo?: string) => Promise<void>;
   
-  addReservacion: (reservacion: Omit<Reservacion, 'id'>, huespedData?: Partial<Huesped>) => Promise<void>;
-  updateReservacion: (id: number, reservacion: Partial<Reservacion>, huespedData?: Partial<Huesped>) => Promise<void>;
+  addReservacion: (reservacion: Omit<Reservacion, 'id'>, huespedData?: Partial<Huesped>) => Promise<boolean>;
+  updateReservacion: (id: number, reservacion: Partial<Reservacion>, huespedData?: Partial<Huesped>) => Promise<boolean>;
   checkInReservacion: (
     id: number, 
     brazaletes?: string, 
@@ -83,12 +83,12 @@ interface AppContextType {
     acompanantes?: Acompanante[], 
     titularBrazaleteEntregado?: boolean,
     acompanantes_amenidades?: AcompananteAmenidad[]
-  ) => Promise<void>;
+  ) => Promise<boolean>;
   checkOutReservacion: (id: number) => Promise<void>;
   deleteReservacion: (id: number, motivo?: string) => Promise<void>;
   
-  addSolicitud: (solicitud: Omit<SolicitudAcceso, 'id' | 'created_at'>) => Promise<void>;
-  updateSolicitud: (id: number, data: Partial<SolicitudAcceso>) => Promise<void>;
+  addSolicitud: (solicitud: Omit<SolicitudAcceso, 'id' | 'created_at'>) => Promise<boolean>;
+  updateSolicitud: (id: number, data: Partial<SolicitudAcceso>) => Promise<boolean>;
   updateSolicitudStatus: (id: number, estatus: SolicitudAcceso['estatus'], comentario?: string) => Promise<void>;
   deleteSolicitud: (id: number, motivo: string) => Promise<void>;
   
@@ -487,8 +487,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
 
       showToast(`Propiedad ${created.nombre} creada exitosamente`, 'success');
+      return true;
     } catch (err: any) {
       showToast(err.message || 'Error al crear la propiedad', 'error');
+      return false;
     }
   };
 
@@ -528,8 +530,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
 
       showToast(`Propiedad ${updated.nombre} actualizada`, 'success');
+      return true;
     } catch (err: any) {
       showToast(err.message || 'Error al actualizar propiedad', 'error');
+      return false;
     }
   };
 
@@ -618,8 +622,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
 
       showToast(`Usuario ${created.nombre} ${created.apellido} registrado`, 'success');
+      return true;
     } catch (err: any) {
       showToast(err.message || 'Error al registrar usuario', 'error');
+      return false;
     }
   };
 
@@ -639,8 +645,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
 
       showToast('Usuario actualizado correctamente', 'success');
+      return true;
     } catch (err: any) {
       showToast(err.message || 'Error al actualizar usuario', 'error');
+      return false;
     }
   };
 
@@ -736,11 +744,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
 
       showToast(`Reservación #${newRes.codigo || newRes.id} registrada con éxito`, 'success');
+      return true;
     } catch (err: any) {
       if (!err.message?.includes('Conflicto')) {
         showToast(err.message || 'Error al guardar reservación', 'error');
       }
-      throw err;
+      return false;
     }
   };
 
@@ -790,11 +799,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
 
       showToast(`Reservación #${updated.codigo || updated.id} actualizada`, 'success');
+      return true;
     } catch (err: any) {
       if (!err.message?.includes('Superposición')) {
         showToast(err.message || 'Error al actualizar reservación', 'error');
       }
-      throw err;
+      return false;
     }
   };
 
@@ -844,8 +854,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
 
       showToast('Check-In completado exitosamente. Huésped En Casa.', 'success');
+      return true;
     } catch (err: any) {
       showToast(err.message || 'Error al procesar Check-in', 'error');
+      return false;
     }
   };
 
@@ -913,8 +925,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
 
       showToast('Solicitud de acceso enviada', 'success');
+      return true;
     } catch (err: any) {
       showToast(err.message || 'Error al registrar solicitud', 'error');
+      return false;
     }
   };
 
@@ -968,8 +982,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
 
       showToast('Solicitud actualizada con éxito', 'success');
+      return true;
     } catch (err: any) {
       showToast(err.message || 'Error al actualizar solicitud', 'error');
+      return false;
     }
   };
 

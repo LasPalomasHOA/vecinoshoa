@@ -67,6 +67,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
   const [acompanantes, setAcompanantes] = useState<Acompanante[]>([]);
   const [titularBrazaleteEntregado, setTitularBrazaleteEntregado] = useState<boolean>(false);
   const [acompanantesAmenidades, setAcompanantesAmenidades] = useState<AcompananteAmenidad[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   useEffect(() => {
     if (reservationToEdit) {
@@ -258,9 +259,14 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
   const maxCapacity = currentProperty?.capacidad_personas || 8;
   const totalOccupants = 1 + acompanantes.length;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const isDateRangeInvalid = Boolean(fechaCheckin && fechaCheckout && fechaCheckout <= fechaCheckin);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (conflictReservation) return;
+    if (isSubmitting || isDateRangeInvalid || conflictReservation) return;
+
+    setIsSubmitting(true);
+    try {
 
     // Keep all companions even if name is left blank for later check-in registration
     const cleanAcompanantes = acompanantes
@@ -303,8 +309,9 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
           .join(', ')
       : '';
 
+    let ok = false;
     if (reservationToEdit) {
-      updateReservacion(
+      ok = await updateReservacion(
         reservationToEdit.id, 
         {
           propiedad_id: Number(propiedadId),
@@ -328,7 +335,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
         { nombres: finalTitularName }
       );
     } else {
-      addReservacion(
+      ok = await addReservacion(
         {
           propiedad_id: Number(propiedadId) || propiedades[0]?.id || 101,
           huesped_id: 0,
@@ -353,7 +360,12 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
         }
       );
     }
-    onClose();
+    if (ok) {
+      onClose();
+    }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -881,6 +893,19 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
             />
           </div>
 
+          {/* Invalid Date Range Alert */}
+          {isDateRangeInvalid && (
+            <div className="p-3.5 rounded-lg bg-amber-50/90 border border-amber-200 text-amber-900 text-xs flex items-start gap-2.5">
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-amber-950 block">Rango de fechas inválido:</span>
+                <span className="text-amber-800 text-[11px] leading-relaxed">
+                  La fecha de Check-out debe ser posterior a la fecha de Check-in (mínimo 1 noche).
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Conflict Error Alert if overlap detected */}
           {conflictReservation && (
             <div className="p-3.5 rounded-lg bg-rose-50/90 border border-rose-200 text-rose-900 text-xs flex items-start gap-2.5 animate-fadeIn">
@@ -899,20 +924,29 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
+              disabled={isSubmitting}
+              className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold disabled:opacity-50"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              disabled={!!conflictReservation}
+              disabled={isDateRangeInvalid || !!conflictReservation || isSubmitting}
               className={`px-6 py-2 rounded-lg font-bold text-xs shadow-md transition-all ${
-                conflictReservation
+                isDateRangeInvalid || conflictReservation || isSubmitting
                   ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'
-                  : 'bg-teal-600 hover:bg-teal-700 text-white shadow-teal-700/20 active:scale-95'
+                  : 'bg-teal-600 hover:bg-teal-700 text-white shadow-teal-700/20 active:scale-95 cursor-pointer'
               }`}
             >
-              {conflictReservation ? 'Fechas No Disponibles' : reservationToEdit ? 'Guardar Cambios' : 'Confirmar Reservación'}
+              {isSubmitting
+                ? 'Guardando...'
+                : isDateRangeInvalid
+                  ? 'Fechas Inválidas'
+                  : conflictReservation
+                    ? 'Fechas No Disponibles'
+                    : reservationToEdit
+                      ? 'Guardar Cambios'
+                      : 'Confirmar Reservación'}
             </button>
           </div>
 

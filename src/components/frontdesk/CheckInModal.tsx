@@ -26,6 +26,7 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({
   const [acompanantesList, setAcompanantesList] = useState<Acompanante[]>([]);
   const [amenidadesList, setAmenidadesList] = useState<AcompananteAmenidad[]>([]);
   const [openQrAfterCheckIn, setOpenQrAfterCheckIn] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (currentReservation) {
@@ -125,7 +126,7 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({
     })));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const summary = `${deliveredCount}/${totalPeople} brazaletes entregados`;
@@ -141,28 +142,35 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({
 
     const finalAcompList = [titularItem, ...acompanantesList];
 
-    checkInReservacion(
-      currentReservation.id, 
-      finalBrazaleteNote,
-      vehiculoInfo,
-      finalAcompList,
-      titularEntregado,
-      amenidadesList
-    );
-    onClose();
-
-    if (openQrAfterCheckIn && onOpenQrPass) {
-      setTimeout(() => {
-        onOpenQrPass({
-          ...currentReservation,
-          estado: 'En Casa (Checked-in)',
-          brazaletes: finalBrazaleteNote,
-          vehiculo_info: vehiculoInfo,
-          acompanantes: finalAcompList,
-          acompanantes_amenidades: amenidadesList,
-          titular_brazalete_entregado: titularEntregado
-        });
-      }, 100);
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      const ok = await checkInReservacion(
+        currentReservation.id, 
+        finalBrazaleteNote,
+        vehiculoInfo,
+        finalAcompList,
+        titularEntregado,
+        amenidadesList
+      );
+      if (ok) {
+        onClose();
+        if (openQrAfterCheckIn && onOpenQrPass) {
+          setTimeout(() => {
+            onOpenQrPass({
+              ...currentReservation,
+              estado: 'En Casa (Checked-in)',
+              brazaletes: finalBrazaleteNote,
+              vehiculo_info: vehiculoInfo,
+              acompanantes: finalAcompList,
+              acompanantes_amenidades: amenidadesList,
+              titular_brazalete_entregado: titularEntregado
+            });
+          }, 100);
+        }
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -468,16 +476,18 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer"
+              disabled={isSubmitting}
+              className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer disabled:opacity-50"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-700/20 flex items-center gap-1.5 active:scale-95 cursor-pointer"
+              disabled={isSubmitting}
+              className="px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-700/20 flex items-center gap-1.5 active:scale-95 cursor-pointer disabled:opacity-50"
             >
               <CheckCircle2 className="w-4 h-4" />
-              <span>Confirmar Check-In</span>
+              <span>{isSubmitting ? 'Procesando...' : 'Confirmar Check-In'}</span>
             </button>
           </div>
 
